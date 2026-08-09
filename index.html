@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Team Performance Command Center</title>
-<link rel="stylesheet" href="styles.css?v=7">
+<link rel="stylesheet" href="styles.css?v=8">
 </head>
 <body>
 
@@ -24,6 +24,7 @@
     <button class="nav-btn" data-page="scorecards"><span>&#9878;</span>Scorecards</button>
     <button class="nav-btn" data-page="schedule"><span>&#9200;</span>Team Schedule</button>
     <button class="nav-btn" data-page="otbreak"><span>&#9203;</span>OT &amp; Break</button>
+    <button class="nav-btn" data-page="leave"><span>&#9786;</span>Leave Requests</button>
   </nav>
   <div class="side-foot">Created by Danielle Ann Mari Crizaldo &mdash; Call Team Lead</div>
 </aside>
@@ -156,6 +157,10 @@
       <div class="kpis" id="otKpis"></div>
       <div class="card"><h3>OT Hours by Agent</h3><div class="chartbox"><canvas id="chOt"></canvas></div></div>
       <div class="card">
+        <div class="card-head"><h3>OT Schedule</h3></div>
+        <div class="tscroll" id="otGrid"></div>
+      </div>
+      <div class="card">
         <div class="card-head"><h3>OT Records</h3><input class="search" id="otSearch" placeholder="Search&hellip;"></div>
         <div class="tscroll" id="otTable"></div>
       </div>
@@ -168,7 +173,47 @@
     </div>
   </section>
 
-  <!-- LEAVE -->
+  <!-- LEAVE REQUESTS -->
+  <section class="page" id="pageLeave" hidden>
+    <div class="kpis" id="lvKpis"></div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-head"><h3>File a Leave Request</h3></div>
+        <form id="leaveForm" class="leave-form">
+          <label>Agent
+            <select id="lvAgent" required></select>
+          </label>
+          <label>Leave Type
+            <select id="lvType" required>
+              <option value="Off Adjustment">Off Adjustment</option>
+              <option value="Half Day LWOP">Half Day LWOP</option>
+              <option value="Whole Day LWOP">Whole Day LWOP</option>
+            </select>
+          </label>
+          <label>Reason
+            <select id="lvReason" required>
+              <option value="Birthday/Family Celebration">Birthday/Family Celebration</option>
+              <option value="Medical Appointment">Medical Appointment</option>
+              <option value="Personal Emergency">Personal Emergency</option>
+              <option value="Others">Others</option>
+            </select>
+          </label>
+          <label>Date (Manila)
+            <input type="date" id="lvDate" required>
+          </label>
+          <label>Details
+            <input type="text" id="lvDetails" placeholder="Optional notes">
+          </label>
+          <button type="submit" class="btn-refresh">Submit Request</button>
+          <p class="leave-note" id="leaveNote"></p>
+        </form>
+      </div>
+      <div class="card">
+        <h3>Leave Requests</h3>
+        <div class="tscroll" id="lvTable"></div>
+      </div>
+    </div>
+  </section>
 
   <footer class="foot">Created by Danielle Ann Mari Crizaldo &mdash; Call Team Lead</footer>
 </main>
@@ -177,12 +222,12 @@
 <div class="toast" id="toast" hidden></div>
 
 <script src="chart.umd.min.js"></script>
-<script src="config.js?v=7"></script>
-<script src="data.js?v=7"></script>
-<script src="app-core.js?v=7"></script>
-<script src="app-charts.js?v=7"></script>
-<script src="app-render.js?v=7"></script>
-<script src="app-render2.js?v=7"></script>
-<script src="app-init.js?v=7"></script>
+<script src="config.js?v=8"></script>
+<script src="data.js?v=8"></script>
+<script src="app-core.js?v=8"></script>
+<script src="app-charts.js?v=8"></script>
+<script src="app-render.js?v=8"></script>
+<script src="app-render2.js?v=8"></script>
+<script src="app-init.js?v=8"></script>
 </body>
 </html>

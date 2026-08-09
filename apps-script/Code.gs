@@ -29,6 +29,11 @@ function getSchedSheetId() { return secret('SCHED_SHEET_ID'); }
  * so everything before 2026-08-01 is excluded (per request). */
 var DATA_FROM = '2026-08-01';
 
+/** Schedule-type datasets (Team Schedule, OT, Break) are capped at this date so
+ * far-future roster weeks don't clutter the dashboard. Other datasets keep their
+ * DATA_FROM lower bound only. */
+var DATA_TO = '2026-08-31';
+
 /** Publish only this calendar year's data. Change in one place if needed. */
 var DATA_YEAR = 2026;
 
@@ -198,8 +203,14 @@ function buildData() {
   var scorecardsFull = d.scorecards;
   d = restrictFrom(d, DATA_FROM);
   d.scorecards = scorecardsFull;
+  // Schedule-type datasets are also capped at DATA_TO so far-future roster
+  // weeks (Sep/Oct) don't clutter the dashboard.
+  ['teamSchedule', 'otSchedule', 'breakSchedule'].forEach(function (k) {
+    if (Array.isArray(d[k])) d[k] = d[k].filter(function (r) { return rowFrom(r, DATA_FROM) && beforeTo(r, DATA_TO); });
+  });
   d.dataYear = DATA_YEAR;
   d.dataFrom = DATA_FROM;
+  d.dataTo = DATA_TO;
   d.warnings = WARN;
   return d;
 }
@@ -218,7 +229,7 @@ var DATE_KEYS = ['date', 'week', 'dateManila', 'datePST', 'approvedOn', 'weekSta
 
 function inYear(v, year) {
   if (!v) return false;
-  var s = isDate(v) ? v.getFullYear() + '' : S(v);
+  var s = toISO(v) || S(v);   // toISO handles real Dates, {"__d":...} AND plain strings
   var m = s.match(/(19|20)\d{2}/);
   return !!m && m[0] === String(year);
 }
@@ -276,8 +287,28 @@ function rowFrom(r, fromISO) {
     var v = r[DATE_KEYS[i]];
     if (v === null || v === undefined || v === '') continue;
     sawDate = true;
-    var t = isDate(v) ? v.getTime() : new Date(String(v) + 'T00:00:00').getTime();
+    var isoStr = toISO(v);                     // handles real Date, {"__d":...} AND plain strings
+    if (!isoStr) continue;
+    var t = new Date(isoStr + 'T00:00:00').getTime();
     if (!isNaN(t) && t >= from.getTime()) return true;
+  }
+  return !sawDate;
+}
+
+/* Keep only rows whose date is on/before DATA_TO (inclusive). Used to cap
+ * schedule datasets so future roster weeks don't appear. Undated rows kept. */
+function beforeTo(r, toISOStr) {
+  if (!r || typeof r !== 'object') return true;
+  var to = new Date(toISOStr + 'T00:00:00');
+  var sawDate = false;
+  for (var i = 0; i < DATE_KEYS.length; i++) {
+    var v = r[DATE_KEYS[i]];
+    if (v === null || v === undefined || v === '') continue;
+    sawDate = true;
+    var isoStr = toISO(v);
+    if (!isoStr) continue;
+    var t = new Date(isoStr + 'T00:00:00').getTime();
+    if (!isNaN(t) && t <= to.getTime()) return true;
   }
   return !sawDate;
 }

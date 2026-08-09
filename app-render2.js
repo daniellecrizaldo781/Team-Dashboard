@@ -146,13 +146,43 @@ function renderOtBreak() {
   barChart('chOt', ag, ag.map(function (a) { return sum(byAg.map[a].map(function (r) { return r.hours; })); }),
     { horizontal: true, label: 'OT Hours', unit: 'hrs' });
 
+  // OT schedule grid: one row per agent, columns = Hotline | Mon..Sun (otTime) | Hours
+  var weeks = uniq(ot.map(function (r) { return r.week; })).sort().reverse();
+  var target = F.week !== 'ALL' && weeks.indexOf(F.week) >= 0 ? F.week : weeks[0];
+  var grid = $('otGrid');
+  if (!target) {
+    grid.innerHTML = '<div class="empty"><b>No OT schedule</b>No OT records available for the selected filters.</div>';
+  } else {
+    var wkRows = ot.filter(function (r) { return r.week === target; });
+    var dayKeys = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    var agents = uniq(wkRows.map(function (r) { return r.agent; })).sort();
+    var idx = {};
+    var hotlineOf = {};
+    wkRows.forEach(function (r) { idx[r.agent + '|' + r.day] = r; if (r.hotline) hotlineOf[r.agent] = r.hotline; });
+    var h = '<table><thead><tr><th>Agent</th><th>Hotline Assignment</th>';
+    dayKeys.forEach(function (d) { h += '<th>' + d + '</th>'; });
+    h += '<th>Hours</th></tr></thead><tbody>';
+    agents.forEach(function (a) {
+      var wkHours = sum(wkRows.filter(function (r) { return r.agent === a; }).map(function (r) { return r.hours || 0; }));
+      h += '<tr><td><b>' + esc(a) + '</b></td>' +
+           '<td>' + (hotlineOf[a] ? '<span class="pill n">' + esc(hotlineOf[a]) + '</span>' : '—') + '</td>';
+      dayKeys.forEach(function (d) {
+        var r = idx[a + '|' + d];
+        h += '<td>' + (r ? esc(r.otTime) : '—') + '</td>';
+      });
+      h += '<td><b>' + n1(wkHours) + '</b></td></tr>';
+    });
+    h += '</tbody></table>';
+    grid.innerHTML = h;
+  }
+
   makeTable('otTable', [
     { key: 'date', label: 'Date', fmt: function (r) { return fmtDate(r.date); }, sortVal: function (r) { return r.date; } },
     { key: 'day', label: 'Day' },
     { key: 'agent', label: 'Agent' },
     { key: 'otTime', label: 'OT Schedule', fmt: function (r) { return '<span class="pill n">' + esc(r.otTime) + '</span>'; } },
-    { key: 'hours', label: 'Hours', num: true, fmt: function (r) { return r.hours === null ? '\u2014' : n1(r.hours); } },
-    { key: 'hotline', label: 'Hotline', fmt: function (r) { return esc(r.hotline || '\u2014'); } },
+    { key: 'hours', label: 'Hours', num: true, fmt: function (r) { return r.hours === null ? '—' : n1(r.hours); } },
+    { key: 'hotline', label: 'Hotline', fmt: function (r) { return esc(r.hotline || '—'); } },
     { key: 'week', label: 'Week', fmt: function (r) { return fmtWeek(r.week); }, sortVal: function (r) { return r.week; } }
   ], ot, { sort: 'date', dir: 'desc', empty: 'No OT records available for the selected filters.' });
 
@@ -161,14 +191,65 @@ function renderOtBreak() {
   makeTable('bkTable', [
     { key: 'agent', label: 'Agent' },
     { key: 'day', label: 'Day' },
-    { key: 'firstBreak', label: 'First Break', fmt: function (r) { return r.off ? '<span class="pill off">OFF</span>' : esc(r.firstBreak || '\u2014'); } },
-    { key: 'lunchBreak', label: 'Lunch Break', fmt: function (r) { return esc(r.lunchBreak || '\u2014'); } },
-    { key: 'lastBreak', label: 'Last Break', fmt: function (r) { return esc(r.lastBreak || '\u2014'); } },
-    { key: 'team', label: 'Team', fmt: function (r) { return r.team ? '<span class="pill n">' + esc(r.team) + '</span>' : '\u2014'; } },
+    { key: 'firstBreak', label: 'First Break', fmt: function (r) { return r.off ? '<span class="pill off">OFF</span>' : esc(r.firstBreak || '—'); } },
+    { key: 'lunchBreak', label: 'Lunch Break', fmt: function (r) { return esc(r.lunchBreak || '—'); } },
+    { key: 'lastBreak', label: 'Last Break', fmt: function (r) { return esc(r.lastBreak || '—'); } },
+    { key: 'team', label: 'Team', fmt: function (r) { return r.team ? '<span class="pill n">' + esc(r.team) + '</span>' : '—'; } },
     { key: 'source', label: 'Source' }
   ], bk, { sort: 'agent', dir: 'asc', empty: 'No break schedule available for this agent.' });
 }
 
 /* ---------------- LEAVE REQUESTS ---------------- */
 var STATUS_CLASS = { Approved: 'ok', Pending: 'warn', Declined: 'bad' };
+
+function renderLeaves() {
+  var lv = slice(DATA.leaveRequests);
+
+  kpi('lvKpis', [
+    { label: 'Total Requests', value: n0(lv.length), sub: 'in current view' },
+    { label: 'Approved', value: n0(lv.filter(function (r) { return r.statusNorm === 'Approved'; }).length), sub: 'approved', tone: 'good' },
+    { label: 'Pending', value: n0(lv.filter(function (r) { return r.statusNorm === 'Pending'; }).length), sub: 'awaiting', tone: 'warn' },
+    { label: 'Declined', value: n0(lv.filter(function (r) { return r.statusNorm === 'Declined'; }).length), sub: 'declined', tone: 'bad' }
+  ]);
+
+  makeTable('lvTable', [
+    { key: 'agent', label: 'Agent' },
+    { key: 'leaveType', label: 'Type' },
+    { key: 'reason', label: 'Reason' },
+    { key: 'date', label: 'Date (Manila)', fmt: function (r) { return r.dateManila ? fmtDate(r.dateManila) : (r.date ? fmtDate(r.date) : '—'); }, sortVal: function (r) { return r.date || r.dateManila || ''; } },
+    { key: 'status', label: 'Status', fmt: function (r) {
+        var k = STATUS_CLASS[r.statusNorm] || 'n';
+        return '<span class="pill ' + k + '">' + esc(r.statusNorm || r.status || '—') + '</span>';
+      } }
+  ], lv, { sort: 'date', dir: 'desc', per: 25, pagerId: 'lvPager', empty: 'No leave requests available for the selected filters.' });
+
+  // populate agent dropdown from known agents
+  var sel = $('lvAgent');
+  if (sel && !sel.dataset.filled) {
+    var agents = uniq(lv.map(function (r) { return r.agent; })).sort();
+    sel.innerHTML = agents.map(function (a) { return '<option value="' + esc(a) + '">' + esc(a) + '</option>'; }).join('');
+    sel.dataset.filled = '1';
+  }
+}
+
+/** Submit a leave request: POST to a web-app endpoint if configured, else
+ *  keep a local draft. The dashboard is a static snapshot, so a live write to
+ *  the Google Sheet requires a tiny Apps Script web app (see DEPLOY notes). */
+function submitLeave(payload) {
+  var url = (window.DASHBOARD_CONFIG && window.DASHBOARD_CONFIG.leaveWebAppUrl) || '';
+  if (!url) {
+    // no endpoint configured - store locally so it still shows on the dashboard
+    try {
+      var drafts = JSON.parse(localStorage.getItem('leaveDrafts') || '[]');
+      drafts.push(payload);
+      localStorage.setItem('leaveDrafts', JSON.stringify(drafts));
+    } catch (e) {}
+    return Promise.resolve({ ok: true, local: true });
+  }
+  return fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(function (r) { return r.json(); }).catch(function () { return { ok: false }; });
+}
 

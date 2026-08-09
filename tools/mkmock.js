@@ -40,8 +40,13 @@ restrictToYear(out, DATA_YEAR);
 const scorecardsFull = out.scorecards;
 restrictFrom(out, DATA_FROM);
 out.scorecards = scorecardsFull;
+// Schedule-type datasets capped at DATA_TO (August) so future roster weeks drop.
+['teamSchedule', 'otSchedule', 'breakSchedule'].forEach(k => {
+  if (Array.isArray(out[k])) out[k] = out[k].filter(r => rowFrom(r, DATA_FROM) && beforeTo(r, DATA_TO));
+});
 out.dataYear = DATA_YEAR;
 out.dataFrom = DATA_FROM;
+out.dataTo = DATA_TO;
 console.log('year filter (before -> after):');
 Object.keys(before).forEach(k=>{ if(before[k]!==out[k].length) console.log('  '+k+': '+before[k]+' -> '+out[k].length); });
 fs.writeFileSync('../mock-api.json', JSON.stringify(out));

@@ -10,6 +10,7 @@ var PAGE_META = {
   scorecards:   ['Scorecards', 'Official overall scores and team ranking'],
   schedule:     ['Team Schedule', 'Shifts and rest days by agent'],
   otbreak:      ['OT & Break Schedule', 'Overtime and break assignments'],
+  leave:        ['Leave Requests', 'File and view leave requests'],
 };
 
 /** Single dispatcher - every page re-renders from current filter state. */
@@ -22,6 +23,7 @@ function render() {
   try { renderScorecards(); }   catch (e) { console.error('scorecards', e); }
   try { renderSchedule(); }     catch (e) { console.error('schedule', e); }
   try { renderOtBreak(); }      catch (e) { console.error('otbreak', e); }
+  try { renderLeaves(); }       catch (e) { console.error('leave', e); }
   setTimeout(resizeCharts, 30);
 }
 
@@ -104,9 +106,9 @@ function wire() {
     F = { agent: 'ALL', week: 'ALL', from: '', to: '' };
     $('fAgent').value = 'ALL'; $('fWeek').value = 'ALL';
     $('fFrom').value = ''; $('fTo').value = '';
-    ['prSearch', 'clSearch', 'qaSearch', 'scSearch', 'tsSearch', 'otSearch', 'bkSearch']
+    ['prSearch', 'clSearch', 'qaSearch', 'scSearch', 'tsSearch', 'otSearch', 'bkSearch', 'lvSearch']
       .forEach(function (id) { if ($(id)) $(id).value = ''; });
-    ['prTable', 'clTable', 'qaTable', 'qaRank', 'scTable', 'scDetail', 'tsTable', 'otTable', 'bkTable']
+    ['prTable', 'clTable', 'qaTable', 'qaRank', 'scTable', 'scDetail', 'tsTable', 'otTable', 'bkTable', 'lvTable']
       .forEach(function (id) { if ($(id) && $(id)._st) { $(id)._st.q = ''; $(id)._st.page = 1; } });
     render();
     toast('Filters reset.');
@@ -132,6 +134,33 @@ function wire() {
   wireSearch('tsSearch', 'tsTable');
   wireSearch('otSearch', 'otTable');
   wireSearch('bkSearch', 'bkTable');
+  wireSearch('lvSearch', 'lvTable');
+
+  var lf = $('leaveForm');
+  if (lf) lf.onsubmit = function (e) {
+    e.preventDefault();
+    var payload = {
+      agent: $('lvAgent').value,
+      leaveType: $('lvType').value,
+      reason: $('lvReason').value,
+      dateManila: $('lvDate').value,
+      details: $('lvDetails').value
+    };
+    submitLeave(payload).then(function (res) {
+      var note = $('leaveNote');
+      if (res && res.ok) {
+        note.textContent = res.local
+          ? 'Saved locally (no sheet endpoint configured). It will appear after the next sync once wired.'
+          : 'Submitted to the leave sheet.';
+        note.className = 'leave-note ok';
+        lf.reset();
+        renderLeaves();
+      } else {
+        note.textContent = 'Submission failed. Please try again.';
+        note.className = 'leave-note bad';
+      }
+    });
+  };
 
   var rt;
   window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(resizeCharts, 160); });
