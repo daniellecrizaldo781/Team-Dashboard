@@ -74,13 +74,6 @@ function renderOverview() {
 
   topPerformerCard('topPerformer', rank);
 
-  // QA trend by week (team-wide)
-  var g = groupBy(qa, function (r) { return r.week; });
-  var wk = g.keys.slice().sort();
-  lineChart('chOvQa', wk.map(fmtWeek),
-    [{ label: 'Team QA Score', data: wk.map(function (k) { return avg(g.map[k].map(function (r) { return r.score; })); }) }],
-    { percent: true, noZero: true });
-
   var withProd = rank.filter(function (r) { return r.prod !== null; });
   barChart('chOvProd', withProd.map(function (r) { return r.agent; }),
     withProd.map(function (r) { return r.prod; }),
@@ -278,12 +271,6 @@ function renderQa() {
     { percent: true, horizontal: true, label: 'QA Score',
       colors: ranked.map(function (r) { return r.score >= 0.95 ? PINK.rose : (r.score >= 0.85 ? PINK.dusty : PINK.bad); }) });
 
-  var byWk = groupBy(qa, function (r) { return r.week; });
-  var wk = byWk.keys.slice().sort();
-  lineChart('chQaTrend', wk.map(fmtWeek),
-    [{ label: 'QA Score', data: wk.map(function (k) { return avg(byWk.map[k].map(function (r) { return r.score; })); }) }],
-    { percent: true, noZero: true });
-
   makeTable('qaRank', [
     { key: 'rank', label: 'Rank', num: true,
       fmt: function (r) { return r.rank <= 3 ? ['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'][r.rank - 1] + ' ' + r.rank : '<span class="rank">' + r.rank + '</span>'; } },
@@ -299,7 +286,33 @@ function renderQa() {
     { key: 'agent', label: 'Agent' },
     { key: 'score', label: 'Score', num: true, fmt: function (r) { return scorePill(r.score, 0); }, sortVal: function (r) { return r.score; } },
     { key: 'link', label: 'Ticket', fmt: function (r) {
-        return r.link ? '<a href="' + esc(r.link) + '" target="_blank" rel="noopener" style="color:#C93B72">View</a>' : '\u2014'; } },
-    { key: 'notes', label: 'Notes', fmt: function (r) { return esc(r.notes || '\u2014'); } }
+        return r.link ? '<a href="' + esc(r.link) + '" target="_blank" rel="noopener" style="color:#C93B72">View</a>' : '—'; } },
+    { key: 'notes', label: 'Notes', fmt: function (r) { return esc(r.notes || '—'); } }
   ], qa, { sort: 'date', dir: 'desc', per: 25, pagerId: 'qaPager', empty: 'No QA records available for this agent.' });
+
+  renderQaJacky();
+}
+
+/* QA Jacky / TL breakdown - mirrors the sheet's QA JACKY SCORE 30% / QA TL SCORE 10% block. */
+function renderQaJacky() {
+  var rows = slice(DATA.qaBreakdown);
+  // show the latest week first; if a specific week is selected, respect it
+  var wk = uniq(rows.map(function (r) { return r.week; })).sort().reverse();
+  var target = F.week !== 'ALL' && wk.indexOf(F.week) >= 0 ? F.week : wk[0];
+  var view = target ? rows.filter(function (r) { return r.week === target; }) : rows;
+
+  var pctv = function (v) {
+    if (v === null || v === undefined) return '—';
+    var p = (v > 1.5 ? v : v * 100);          // sheet stores 1.0 = 100%
+    return pct(p / 100, 0);
+  };
+
+  makeTable('qaJacky', [
+    { key: 'agent', label: 'Name of Agent' },
+    { key: 'jacky', label: 'QA Jacky Score 30%', num: true, fmt: function (r) { return pctv(r.jacky); }, sortVal: function (r) { return r.jacky; } },
+    { key: 'tl', label: 'QA TL Score 10%', num: true, fmt: function (r) { return pctv(r.tl); }, sortVal: function (r) { return r.tl; } },
+    { key: 'finalQA', label: 'Final QA Score', num: true, fmt: function (r) { return pctv(r.finalQA); }, sortVal: function (r) { return r.finalQA; } },
+    { key: 'productivityPct', label: 'Productivity % (30%)', num: true, fmt: function (r) { return pctv(r.productivityPct); }, sortVal: function (r) { return r.productivityPct; } },
+    { key: 'finalProductivity', label: 'Final Productivity Score', num: true, fmt: function (r) { return pctv(r.finalProductivity); }, sortVal: function (r) { return r.finalProductivity; } }
+  ], view, { sort: 'agent', dir: 'asc', empty: 'No QA Jacky/TL scores available for the selected filters.' });
 }

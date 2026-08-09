@@ -26,6 +26,7 @@ const T = {
   weeklyCallStats:   ['agent','week','attempts','pickedUp','notPickedUp','pickupRate','aht'],
   // 'criteria' is a big per-call object the dashboard never renders - dropped
   qaScores:          ['agent','date','week','day','score','link','notes'],
+  qaBreakdown:       ['agent','week','jacky','tl','finalQA','productivityPct','finalProductivity'],
   scorecards:        ['week','weekLabel','section','agent','metric','value','raw'],
   monthlyScores:     ['agent','period','metric','value','raw'],
   teamSchedule:      ['agent','date','week','day','shift','off','source'],

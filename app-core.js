@@ -81,7 +81,7 @@ function groupBy(arr, keyFn) {
 /** Every agent seen anywhere in the payload. */
 function allAgents(d) {
   var a = [];
-  ['dailyProductivity', 'weeklyCallStats', 'qaScores', 'scorecards',
+  ['dailyProductivity', 'weeklyCallStats', 'qaScores', 'qaBreakdown', 'scorecards',
    'teamSchedule', 'otSchedule', 'breakSchedule', 'leaveRequests']
     .forEach(function (k) { (d[k] || []).forEach(function (r) { if (r.agent) a.push(r.agent); }); });
   (((d.officialScorecard || {}).weekly) || []).forEach(function (r) { a.push(r.agent); });

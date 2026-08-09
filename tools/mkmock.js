@@ -24,6 +24,7 @@ const out = {
   dailyProductivity: parseDailyProductivity(PERF),
   weeklyCallStats: parseWeeklyCallStats(PERF),
   qaScores: parseQA(PERF),
+  qaBreakdown: parseQaJacky(PERF),
   scorecards: parseScorecards(PERF),
   monthlyScores: parseMonthly(PERF),
   officialScorecard: os,

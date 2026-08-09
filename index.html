@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Team Performance Command Center</title>
-<link rel="stylesheet" href="styles.css?v=8">
+<link rel="stylesheet" href="styles.css?v=9">
 </head>
 <body>
 
@@ -71,10 +71,7 @@
   <section class="page" id="pageOverview">
     <div class="kpis" id="ovKpis"></div>
     <div class="top-performer" id="topPerformer"></div>
-    <div class="grid2">
-      <div class="card"><h3>Team QA Trend</h3><div class="chartbox"><canvas id="chOvQa"></canvas></div></div>
-      <div class="card"><h3>Productivity by Agent</h3><div class="chartbox"><canvas id="chOvProd"></canvas></div></div>
-    </div>
+    <div class="card"><h3>Productivity by Agent</h3><div class="chartbox"><canvas id="chOvProd"></canvas></div></div>
     <div class="card"><h3>Team Leaderboard</h3><div class="tscroll" id="ovBoard"></div></div>
   </section>
 
@@ -109,15 +106,16 @@
   <section class="page" id="pageQa" hidden>
     <div class="kpis" id="qaKpis"></div>
     <div class="podium" id="qaPodium"></div>
-    <div class="grid2">
-      <div class="card"><h3>QA Score by Agent</h3><div class="chartbox"><canvas id="chQaAgent"></canvas></div></div>
-      <div class="card"><h3>Weekly QA Trend</h3><div class="chartbox"><canvas id="chQaTrend"></canvas></div></div>
-    </div>
+    <div class="card"><h3>QA Score by Agent</h3><div class="chartbox"><canvas id="chQaAgent"></canvas></div></div>
     <div class="card"><h3>QA Ranking</h3><div class="tscroll" id="qaRank"></div></div>
     <div class="card">
       <div class="card-head"><h3>QA Evaluations</h3><input class="search" id="qaSearch" placeholder="Search&hellip;"></div>
       <div class="tscroll" id="qaTable"></div>
       <div class="pager" id="qaPager"></div>
+    </div>
+    <div class="card">
+      <h3>QA from Jacky &amp; TL</h3>
+      <div class="tscroll" id="qaJacky"></div>
     </div>
   </section>
 
@@ -222,12 +220,12 @@
 <div class="toast" id="toast" hidden></div>
 
 <script src="chart.umd.min.js"></script>
-<script src="config.js?v=8"></script>
-<script src="data.js?v=8"></script>
-<script src="app-core.js?v=8"></script>
-<script src="app-charts.js?v=8"></script>
-<script src="app-render.js?v=8"></script>
-<script src="app-render2.js?v=8"></script>
-<script src="app-init.js?v=8"></script>
+<script src="config.js?v=9"></script>
+<script src="data.js?v=9"></script>
+<script src="app-core.js?v=9"></script>
+<script src="app-charts.js?v=9"></script>
+<script src="app-render.js?v=9"></script>
+<script src="app-render2.js?v=9"></script>
+<script src="app-init.js?v=9"></script>
 </body>
 </html>

@@ -165,6 +165,68 @@ function parseWeeklyCallStats(ss) {
                 function (x) { return x.agent + '|' + x.week; });
 }
 
+/* ============ QA JACKY / TL SCORES ============
+ * Same 'Daily and Weekly Call Stats' tab, bottom block headed
+ *   NAME OF AGENT | QA JACKY SCORE 30% | QA TL SCORE 10% | Final QA Score |
+ *   Productivity % (30%) | FINAL Productivity Score
+ * Values are fractions (1 = 100%). Week comes from the productivity header
+ * above the block, tracked the same way as parseWeeklyCallStats.
+ * Emits one row per agent per WEEK.
+ */
+function parseQaJacky(ss) {
+  var out = [];
+  ['Daily and Weekly Call Stats'].forEach(function (tab) {
+    var g = grid(ss, tab);
+    var curWeek = '';
+
+    for (var r = 0; r < g.length; r++) {
+      var first = S(g[r][0]);
+
+      // track week from the productivity header (7 real date cells)
+      if (/^(name of agent)$/i.test(first) &&
+          g[r].some(function (h) { return /weekly target/i.test(S(h)); })) {
+        for (var dc = 1; dc < g[r].length; dc++) {
+          if (isDate(g[r][dc])) { curWeek = weekStart(iso(g[r][dc])); break; }
+        }
+        continue;
+      }
+
+      // QA Jacky block header
+      if (!/^(name of agent)$/i.test(first)) continue;
+      if (!/qa\s*jacky/i.test(g[r].map(S).join(' '))) continue;
+
+      var col = {};
+      for (var c = 1; c < g[r].length; c++) {
+        var h = S(g[r][c]).replace(/\s+/g, ' ').trim().toLowerCase();
+        if (/^qa\s*jacky/.test(h))            col.jacky = c;
+        else if (/^qa\s*tl/.test(h))          col.tl = c;
+        else if (/final\s*qa/.test(h))        col.finalQA = c;
+        else if (/productivity\s*%\s*\(/.test(h)) col.prodPct = c;
+        else if (/final\s*productivity/.test(h)) col.finalProd = c;
+      }
+      if (col.jacky === undefined) continue;
+
+      for (var i = r + 1; i < g.length; i++) {
+        var nm = S(g[i][0]);
+        if (!nm) continue;
+        if (notAgentRow(nm)) break;
+        out.push({
+          agent: canonAgent(nm),
+          week: curWeek,
+          jacky: num(g[i][col.jacky]),
+          tl: col.tl !== undefined ? num(g[i][col.tl]) : null,
+          finalQA: col.finalQA !== undefined ? num(g[i][col.finalQA]) : null,
+          productivityPct: col.prodPct !== undefined ? num(g[i][col.prodPct]) : null,
+          finalProductivity: col.finalProd !== undefined ? num(g[i][col.finalProd]) : null,
+          source: tab
+        });
+      }
+    }
+  });
+  return dedupe(out.filter(function (r) { return r.week; }),
+                function (x) { return x.agent + '|' + x.week; });
+}
+
 /* ============ QA SCORES ============
  * One tab per agent. Header row contains 'Ticket Link' and 'Date'.
  * Emits one row per evaluated call.

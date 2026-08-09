@@ -188,6 +188,7 @@ function buildData() {
     weeklyCallStats:   safe(function () { return parseWeeklyCallStats(perf); },   [], 'weeklyCallStats'),
     officialScorecard: safe(function () { return parseOfficialScorecard(perf); }, {weekly:[],monthly:[]}, 'officialScorecard'),
     qaScores:          safe(function () { return parseQA(perf); },                [], 'qaScores'),
+    qaBreakdown:       safe(function () { return parseQaJacky(perf); },           [], 'qaBreakdown'),
     scorecards:        safe(function () { return parseScorecards(perf); },        [], 'scorecards'),
     monthlyScores:     safe(function () { return parseMonthly(perf); },           [], 'monthlyScores'),
     teamSchedule:      safe(function () { return parseTeamSchedule(sched); },     [], 'teamSchedule'),
