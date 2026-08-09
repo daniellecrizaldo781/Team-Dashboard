@@ -184,6 +184,14 @@ var STATUS_CLASS = { Approved: 'ok', Pending: 'warn', Declined: 'bad' };
 
 function renderLeaves() {
   var lv = slice(DATA.leaveRequests);
+  // chronological order: by leave date (Manila), oldest first; undated sink to end
+  lv.sort(function (a, b) {
+    var da = a.dateManila || a.date || '', db = b.dateManila || b.date || '';
+    if (da && db) return da < db ? -1 : (da > db ? 1 : 0);
+    if (da) return -1;
+    if (db) return 1;
+    return 0;
+  });
 
   kpi('lvKpis', [
     { label: 'Total Requests', value: n0(lv.length), sub: 'in current view' },

@@ -173,6 +173,15 @@ function wire() {
     e.preventDefault();
     if (lvFormLocked || !lvAgent.value) {
       if (pinMsg) { pinMsg.hidden = false; pinMsg.className = 'cf-msg err'; pinMsg.textContent = 'Enter your 4-digit PIN to unlock the form first.'; }
+      toast('Enter your 4-digit PIN to unlock the form first.', 'err');
+      return;
+    }
+    var details = ($('lvDetails').value || '').trim();
+    if (!details) {
+      $('lvDetails').className = 'err-input';
+      if (pinMsg) { pinMsg.hidden = false; pinMsg.className = 'cf-msg err'; pinMsg.textContent = 'Details are required. Please add a note before submitting.'; }
+      toast('Details are required - please add a note before submitting.', 'err');
+      $('lvDetails').focus();
       return;
     }
     var payload = {
@@ -180,7 +189,7 @@ function wire() {
       leaveType: $('lvType').value,
       reason: $('lvReason').value,
       date: $('lvDate').value,
-      details: $('lvDetails').value
+      details: details
     };
     submitLeave(payload).then(function (res) {
       var note = $('leaveNote');
@@ -189,6 +198,7 @@ function wire() {
           ? 'Saved locally (no sheet endpoint configured). It will appear after the next sync once wired.'
           : 'Submitted to the leave sheet as ' + lvAgent.value + '.';
         note.className = 'cf-msg ok';
+        toast('Your leave request has been processed. ' + lvAgent.value + ', it is now Pending approval.', 'ok');
         lf.reset();
         lvFormLocked = true;
         lvAgent.value = '';
@@ -198,6 +208,7 @@ function wire() {
       } else {
         note.textContent = 'Submission failed. Please try again.';
         note.className = 'cf-msg err';
+        toast('Submission failed. Please try again.', 'err');
       }
     });
   };
