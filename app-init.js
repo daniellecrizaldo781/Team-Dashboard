@@ -105,10 +105,10 @@ function wire() {
     render();
   };
   $('btnReset').onclick = function () {
-    F = { agent: 'ALL', week: 'ALL', from: '', to: '' };
+    F = { agent: 'ALL', week: 'ALL', moMonth: '', lvMonth: '', qaAgent: 'ALL', from: '', to: '' };
     $('fAgent').value = 'ALL'; $('fWeek').value = 'ALL';
     $('fFrom').value = ''; $('fTo').value = '';
-    ['prSearch', 'clSearch', 'qaSearch', 'scSearch', 'bkSearch']
+    ['prSearch', 'clSearch', 'scSearch', 'bkSearch']
       .forEach(function (id) { if ($(id)) $(id).value = ''; });
     ['prTable', 'clTable', 'scTable', 'scDetail', 'bkTable']
       .forEach(function (id) { if ($(id) && $(id)._st) { $(id)._st.q = ''; $(id)._st.page = 1; } });
@@ -131,8 +131,6 @@ function wire() {
 
   wireSearch('prSearch', 'prTable');
   wireSearch('clSearch', 'clTable');
-  var qs = $('qaSearch');
-  if (qs) qs.oninput = function () { try { renderQa(); } catch (e) { console.error('qa', e); } };
   wireSearch('scSearch', 'scTable');
   wireSearch('bkSearch', 'bkTable');
 

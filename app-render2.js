@@ -124,7 +124,6 @@ function renderMonthly() {
     var rows = months.filter(function (r) { return r.period === cur; })
       .sort(function (a, b) { return b.score - a.score; });
     makeTable('moTable', [
-      { key: 'rank', label: 'Rank', num: true, fmt: function (r, i) { return '<span class="rank">' + (i + 1) + '</span>'; } },
       { key: 'agent', label: 'Agent' },
       { key: 'period', label: 'Month', fmt: function (r) { return esc(r.period); } },
       { key: 'score', label: 'Overall Score', num: true, fmt: function (r) { return scorePill(r.score, 2); } }
@@ -276,8 +275,27 @@ function renderLeaves() {
 
   // leave list is rendered as vertical cards below (see lvList)
 
+  // build month toggle bar (one button per month that has leaves)
+  var monthMap = {};
+  lv.forEach(function (r) { var m = (r.dateManila || r.date || '').slice(0, 7); if (m) (monthMap[m] = monthMap[m] || []).push(r); });
+  var mKeys = Object.keys(monthMap).sort();
+  if (!F.lvMonth || mKeys.indexOf(F.lvMonth) < 0) F.lvMonth = mKeys[mKeys.length - 1] || '';
+  var bar = $('lvMonthBar');
+  if (bar) {
+    bar.innerHTML = mKeys.map(function (m) {
+      var y = +m.slice(0, 4), mo = +m.slice(5, 7) - 1;
+      var name = new Date(y, mo, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      return '<button type="button" class="lv-mbtn' + (m === F.lvMonth ? ' active' : '') + '" data-m="' + esc(m) + '">' + esc(name) + '</button>';
+    }).join('');
+    bar.querySelectorAll('.lv-mbtn').forEach(function (btn) {
+      btn.onclick = function () { F.lvMonth = btn.getAttribute('data-m'); renderLeaves(); };
+    });
+  }
+  // filter to selected month for calendar + list
+  var lvMonth = lv.filter(function (r) { return (r.dateManila || r.date || '').slice(0, 7) === F.lvMonth; });
+
   // month calendar grid (at-a-glance leaves per date)
-  renderLeaveCalendar(lv);
+  renderLeaveCalendar(lvMonth);
 
   // PIN gate: lvAgent is a locked text field, filled by verifyPin() in app-init.
   // (no dropdown population needed)
@@ -285,10 +303,10 @@ function renderLeaves() {
   // leave list as cute vertical cards (one per request, stacked)
   var list = $('lvList');
   if (list) {
-    if (!lv.length) {
-      list.innerHTML = '<div class="empty"><b>No leave requests</b>No leave requests available for the selected filters.</div>';
+    if (!lvMonth.length) {
+      list.innerHTML = '<div class="empty"><b>No leave requests</b>No leave requests for ' + esc(F.lvMonth) + '.</div>';
     } else {
-      list.innerHTML = lv.map(function (r) {
+      list.innerHTML = lvMonth.map(function (r) {
         var k = STATUS_CLASS[r.statusNorm] || 'n';
         var when = r.dateManila ? fmtDate(r.dateManila) : (r.date ? fmtDate(r.date) : '—');
         return '<div class="leave-card">' +

@@ -265,23 +265,28 @@ function renderQa() {
     { key: 'perfect', label: 'Perfect', num: true, fmt: function (r) { return n0(r.perfect); } }
   ], ranked, { sort: 'rank', dir: 'asc', empty: 'No QA records available for this agent.' });
 
-  // Per-agent QA tables: each agent gets their own table for an at-a-glance overview
+  // QA evaluations: pick one agent from the dropdown, show only their table
   var wrap = $('qaByAgent');
-  if (!wrap) return;
-  var q = $('qaSearch') && $('qaSearch').value ? $('qaSearch').value.toLowerCase() : '';
-  var html = '';
-  ranked.forEach(function (r) {
-    var rows = byAg.map[r.agent].slice().sort(function (a, b) { return (b.date || '').localeCompare(a.date || ''); });
-    if (q) rows = rows.filter(function (x) {
-      return [x.date, x.day, x.agent, x.score, x.link, x.notes].some(function (v) {
-        return String(v === null || v === undefined ? '' : v).toLowerCase().indexOf(q) >= 0;
-      });
-    });
-    if (!rows.length) return;
-    html += '<div class="qa-agent-block">';
-    html += '<div class="qa-agent-head"><span class="qa-agent-name">' + esc(r.agent) + '</span>' +
+  var sel = $('qaAgentSel');
+  if (!wrap || !sel) return;
+  if (ranked.length) {
+    sel.innerHTML = ranked.map(function (r) {
+      return '<option value="' + esc(r.agent) + '">' + esc(r.agent) + ' (' + pct(r.score) + ')</option>';
+    }).join('');
+    if (F.qaAgent !== 'ALL' && ranked.filter(function (r) { return r.agent === F.qaAgent; }).length === 0) F.qaAgent = 'ALL';
+    sel.value = (F.qaAgent && F.qaAgent !== 'ALL') ? F.qaAgent : ranked[0].agent;
+    sel.onchange = function () { F.qaAgent = this.value; renderQa(); };
+  }
+  var chosen = (F.qaAgent && F.qaAgent !== 'ALL') ? F.qaAgent : (ranked[0] && ranked[0].agent);
+  var rows = chosen ? (byAg.map[chosen] || []).slice().sort(function (a, b) { return (b.date || '').localeCompare(a.date || ''); }) : [];
+  if (!rows.length) {
+    wrap.innerHTML = '<div class="empty"><b>No QA records</b>No QA evaluations for ' + esc(chosen || 'this agent') + '.</div>';
+  } else {
+    var avgSc = avg(rows.map(function (r) { return r.score; }));
+    var html = '<div class="qa-agent-block">';
+    html += '<div class="qa-agent-head"><span class="qa-agent-name">' + esc(chosen) + '</span>' +
             '<span class="qa-agent-meta">' + n0(rows.length) + ' evaluation' + (rows.length > 1 ? 's' : '') +
-            ' &middot; avg ' + pct(r.score) + '</span></div>';
+            ' &middot; avg ' + pct(avgSc) + '</span></div>';
     html += '<div class="tscroll"><table class="qa-agent-table"><thead><tr>' +
             '<th>Date</th><th>Day</th><th>Score</th><th>Ticket</th><th>Notes</th></tr></thead><tbody>';
     rows.forEach(function (x) {
@@ -294,8 +299,8 @@ function renderQa() {
       '</tr>';
     });
     html += '</tbody></table></div></div>';
-  });
-  wrap.innerHTML = html || '<div class="empty"><b>No QA records</b>No QA evaluations match the current filters.</div>';
+    wrap.innerHTML = html;
+  }
 
   renderQaJacky();
 }

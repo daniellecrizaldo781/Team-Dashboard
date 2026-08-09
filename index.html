@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Team Danielle Dashboard</title>
-<link rel="stylesheet" href="styles.css?v=24">
+<link rel="stylesheet" href="styles.css?v=25">
 </head>
 <body>
 
@@ -109,11 +109,13 @@
     <div class="card"><h3>QA Score by Agent</h3><div class="chartbox"><canvas id="chQaAgent"></canvas></div></div>
     <div class="card"><h3>QA Ranking</h3><div class="tscroll" id="qaRank"></div></div>
     <div class="card">
-      <h3>QA Scores from Jacky &amp; TL Danielle</h3>
+      <h3>QA Scores from Ms. Jacky &amp; TL Danielle</h3>
       <div class="tscroll" id="qaJacky"></div>
     </div>
     <div class="card">
-      <div class="card-head"><h3>QA Evaluations by Agent</h3><input class="search" id="qaSearch" placeholder="Search&hellip;"></div>
+      <div class="card-head"><h3>QA Evaluations by Agent</h3>
+        <select class="search" id="qaAgentSel"></select>
+      </div>
       <div id="qaByAgent" class="qa-by-agent"></div>
       <div class="pager" id="qaPager"></div>
     </div>
@@ -202,6 +204,7 @@
     </div>
     <div class="card">
       <h3>Leave Requests</h3>
+      <div class="lv-monthbar" id="lvMonthBar"></div>
       <div class="cal-wrap" id="lvCalWrap"></div>
       <div class="leave-cards" id="lvList"></div>
     </div>
@@ -229,12 +232,12 @@
 <div class="toast" id="toast" hidden></div>
 
 <script src="chart.umd.min.js"></script>
-<script src="config.js?v=24"></script>
-<script src="data.js?v=24"></script>
-<script src="app-core.js?v=24"></script>
-<script src="app-charts.js?v=24"></script>
-<script src="app-render.js?v=24"></script>
-<script src="app-render2.js?v=24"></script>
-<script src="app-init.js?v=24"></script>
+<script src="config.js?v=25"></script>
+<script src="data.js?v=25"></script>
+<script src="app-core.js?v=25"></script>
+<script src="app-charts.js?v=25"></script>
+<script src="app-render.js?v=25"></script>
+<script src="app-render2.js?v=25"></script>
+<script src="app-init.js?v=25"></script>
 </body>
 </html>

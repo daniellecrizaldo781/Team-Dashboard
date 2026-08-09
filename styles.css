@@ -307,6 +307,11 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 
 /* ---------- leave calendar (at-a-glance per date) ---------- */
 .cal-wrap{display:flex;flex-direction:column;gap:16px;margin-bottom:14px}
+.lv-monthbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.lv-mbtn{border:1.5px solid var(--line);background:#fff;color:var(--ink2);font-weight:700;font-size:12.5px;
+  padding:8px 13px;border-radius:11px;cursor:pointer;transition:.15s;font-family:inherit}
+.lv-mbtn:hover{border-color:var(--rose)}
+.lv-mbtn.active{background:linear-gradient(135deg,var(--rose),var(--rose-d));border-color:var(--rose-d);color:#fff;box-shadow:0 4px 12px rgba(232,87,142,.3)}
 .cal-month{background:#FBF7FA;border:1.5px solid var(--line);border-radius:14px;padding:11px 12px}
 .cal-title{font-weight:800;font-size:14px;color:var(--ink);margin-bottom:8px;text-align:center}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
