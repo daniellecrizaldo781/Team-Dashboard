@@ -255,6 +255,11 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 
 /* ---------- cute vertical leave form ---------- */
 .cute-form{display:flex;flex-direction:column;gap:14px;margin-top:6px}
+/* landscape (wide) layout: fields flow in a responsive grid */
+.cute-form.landscape{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;align-items:end}
+.cute-form.landscape .cf-submit{grid-column:1 / -1;justify-self:start}
+.cute-form.landscape #leaveNote{grid-column:1 / -1}
+.cute-form.landscape #pinMsg{grid-column:1 / -1}
 .cf-field{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;
   color:var(--ink2);text-transform:uppercase;letter-spacing:.03em}
 .cf-field select,.cf-field input{width:100%;padding:11px 13px;border:1.5px solid var(--line);

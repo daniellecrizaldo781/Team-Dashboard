@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Team Performance Command Center</title>
-<link rel="stylesheet" href="styles.css?v=17">
+<link rel="stylesheet" href="styles.css?v=18">
 </head>
 <body>
 
@@ -165,47 +165,45 @@
   <!-- LEAVE REQUESTS -->
   <section class="page" id="pageLeave" hidden>
     <div class="kpis" id="lvKpis"></div>
-    <div class="grid2">
-      <div class="card">
-        <div class="card-head"><h3>File a Leave Request</h3></div>
-        <form id="leaveForm" class="cute-form">
-          <label class="cf-field">Your 4-digit PIN
-            <input type="text" id="lvPin" inputmode="numeric" maxlength="4" placeholder="Enter your PIN to unlock" autocomplete="off">
-          </label>
-          <div class="cf-msg" id="pinMsg" hidden></div>
-          <label class="cf-field">Agent
-            <input type="text" id="lvAgent" class="locked" placeholder="Locked - enter PIN" readonly>
-          </label>
-          <label class="cf-field">Leave Type
-            <select id="lvType" required>
+    <div class="card">
+      <div class="card-head"><h3>File a Leave Request</h3></div>
+      <form id="leaveForm" class="cute-form landscape">
+        <label class="cf-field">Your 4-digit PIN
+          <input type="text" id="lvPin" inputmode="numeric" maxlength="4" placeholder="Enter your PIN to unlock" autocomplete="off">
+        </label>
+        <div class="cf-msg" id="pinMsg" hidden></div>
+        <label class="cf-field">Agent
+          <input type="text" id="lvAgent" class="locked" placeholder="Locked - enter PIN" readonly>
+        </label>
+        <label class="cf-field">Leave Type
+          <select id="lvType" required>
               <option value="Off Adjustment">Off Adjustment</option>
               <option value="Half Day LWOP">Half Day LWOP</option>
               <option value="Whole Day LWOP">Whole Day LWOP</option>
             </select>
-          </label>
-          <label class="cf-field">Reason
-            <select id="lvReason" required>
+        </label>
+        <label class="cf-field">Reason
+          <select id="lvReason" required>
               <option value="Birthday/Family Celebration">Birthday/Family Celebration</option>
               <option value="Medical Appointment">Medical Appointment</option>
               <option value="Personal Emergency">Personal Emergency</option>
               <option value="Others">Others</option>
             </select>
-          </label>
-          <label class="cf-field">Date (Manila Time)
-            <input type="date" id="lvDate" required>
-          </label>
-          <label class="cf-field">Details <span class="req">*</span>
-            <input type="text" id="lvDetails" placeholder="Required - explain your leave (e.g. reason, coverage)">
-          </label>
-          <button type="submit" class="cf-submit">Submit Request</button>
-          <p class="cf-msg" id="leaveNote" hidden></p>
-        </form>
-      </div>
-      <div class="card">
-        <h3>Leave Requests</h3>
-        <div class="cal-wrap" id="lvCalWrap"></div>
-        <div class="leave-cards" id="lvList"></div>
-      </div>
+        </label>
+        <label class="cf-field">Date (Manila Time)
+          <input type="date" id="lvDate" required>
+        </label>
+        <label class="cf-field">Details <span class="req">*</span>
+          <input type="text" id="lvDetails" placeholder="Required - explain your leave (e.g. reason, coverage)">
+        </label>
+        <button type="submit" class="cf-submit">Submit Request</button>
+        <p class="cf-msg" id="leaveNote" hidden></p>
+      </form>
+    </div>
+    <div class="card">
+      <h3>Leave Requests</h3>
+      <div class="cal-wrap" id="lvCalWrap"></div>
+      <div class="leave-cards" id="lvList"></div>
     </div>
   </section>
 
@@ -216,12 +214,12 @@
 <div class="toast" id="toast" hidden></div>
 
 <script src="chart.umd.min.js"></script>
-<script src="config.js?v=17"></script>
-<script src="data.js?v=17"></script>
-<script src="app-core.js?v=17"></script>
-<script src="app-charts.js?v=17"></script>
-<script src="app-render.js?v=17"></script>
-<script src="app-render2.js?v=17"></script>
-<script src="app-init.js?v=17"></script>
+<script src="config.js?v=18"></script>
+<script src="data.js?v=18"></script>
+<script src="app-core.js?v=18"></script>
+<script src="app-charts.js?v=18"></script>
+<script src="app-render.js?v=18"></script>
+<script src="app-render2.js?v=18"></script>
+<script src="app-init.js?v=18"></script>
 </body>
 </html>
