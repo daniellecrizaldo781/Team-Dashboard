@@ -1,0 +1,12 @@
+const fs = require('fs');
+const d = JSON.parse(fs.readFileSync('../mock-api.json', 'utf8'));
+const u = a => [...new Set(a)].sort();
+console.log('officialScorecard.weekly agents:');
+console.log(u(d.officialScorecard.weekly.map(r => r.agent)).join('\n'));
+console.log('\nlatest weeks in official:', u(d.officialScorecard.weekly.map(r=>r.week)).slice(-4));
+console.log('\nqaScores agents:', u(d.qaScores.map(r=>r.agent)).join(' | '));
+console.log('\ndailyProductivity agents:', u(d.dailyProductivity.map(r=>r.agent)).join(' | '));
+console.log('\nweeks (dailyProductivity) last 5:', u(d.dailyProductivity.map(r=>r.week)).slice(-5));
+console.log('weeks (teamSchedule) last 5:', u(d.teamSchedule.map(r=>r.week)).slice(-5));
+console.log('\nAngel rows in official:');
+d.officialScorecard.weekly.filter(r=>/Angel|Pamaong/i.test(r.agent)).slice(0,6).forEach(r=>console.log(JSON.stringify(r).slice(0,190)));

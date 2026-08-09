@@ -1,0 +1,347 @@
+/* ============================================================
+ * app-core.js - state, fetching, caching, filtering, helpers
+ * ============================================================ */
+
+var DATA = null;                 // last good payload
+var F = { agent: 'ALL', week: 'ALL', from: '', to: '' };
+var PAGE = 'overview';
+var CACHE_KEY = 'tpcc_cache_v1'; // data cache only - never a credential
+
+/* ---------------- helpers ---------------- */
+function $(id) { return document.getElementById(id); }
+function el(tag, cls, html) {
+  var e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (html !== undefined) e.innerHTML = html;
+  return e;
+}
+function esc(s) {
+  return String(s === null || s === undefined ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+function uniq(arr) { var s = {}, o = []; arr.forEach(function (v) { if (v && !s[v]) { s[v] = 1; o.push(v); } }); return o; }
+function sum(a) { return a.reduce(function (x, y) { return x + (y || 0); }, 0); }
+function avg(a) { var v = a.filter(function (x) { return typeof x === 'number' && !isNaN(x); }); return v.length ? sum(v) / v.length : null; }
+
+/** Parse ISO as LOCAL date - never through Date.parse (UTC drift). */
+function ymd(s) { if (!s) return null; var p = String(s).split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+
+function pct(v, d) {
+  if (v === null || v === undefined || isNaN(v)) return '\u2014';
+  return (v * 100).toFixed(d === undefined ? 1 : d) + '%';
+}
+function n0(v) { return (v === null || v === undefined || isNaN(v)) ? '\u2014' : Math.round(v).toLocaleString(); }
+function n1(v) { return (v === null || v === undefined || isNaN(v)) ? '\u2014' : (Math.round(v * 10) / 10).toLocaleString(); }
+
+function fmtDate(s) {
+  var d = ymd(s);
+  if (!d || isNaN(d)) return esc(s || '\u2014');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+function fmtWeek(s) {
+  var d = ymd(s);
+  if (!d || isNaN(d)) return esc(s || '\u2014');
+  var e = new Date(d); e.setDate(e.getDate() + 6);
+  var sameM = d.getMonth() === e.getMonth();
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' \u2013 ' +
+         e.toLocaleDateString('en-US', sameM ? { day: 'numeric' } : { month: 'short', day: 'numeric' });
+}
+function fmtStamp(iso) {
+  var d = new Date(iso);
+  if (isNaN(d)) return '\u2014';
+  return d.toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
+
+/* ---------------- filtering ---------------- */
+/** opts.ignoreAgent / opts.ignoreWeek let a view opt out of a filter. */
+function pass(r, opts) {
+  opts = opts || {};
+  if (!opts.ignoreAgent && F.agent !== 'ALL' && r.agent !== F.agent) return false;
+  if (!opts.ignoreWeek && F.week !== 'ALL' && r.week !== F.week) return false;
+  if (r.date) {
+    if (F.from && r.date < F.from) return false;
+    if (F.to && r.date > F.to) return false;
+  }
+  return true;
+}
+function slice(arr, opts) { return (arr || []).filter(function (r) { return pass(r, opts); }); }
+
+function groupBy(arr, keyFn) {
+  var m = {}, order = [];
+  (arr || []).forEach(function (r) {
+    var k = keyFn(r);
+    if (k === '' || k === null || k === undefined) return;
+    if (!m[k]) { m[k] = []; order.push(k); }
+    m[k].push(r);
+  });
+  return { keys: order, map: m };
+}
+
+/** Every agent seen anywhere in the payload. */
+function allAgents(d) {
+  var a = [];
+  ['dailyProductivity', 'weeklyCallStats', 'qaScores', 'scorecards',
+   'teamSchedule', 'otSchedule', 'breakSchedule', 'leaveRequests']
+    .forEach(function (k) { (d[k] || []).forEach(function (r) { if (r.agent) a.push(r.agent); }); });
+  (((d.officialScorecard || {}).weekly) || []).forEach(function (r) { a.push(r.agent); });
+  return uniq(a).sort();
+}
+/** Monday of the current real-world week. */
+function thisWeekStart() {
+  var d = new Date(), dow = (d.getDay() + 6) % 7;
+  d.setDate(d.getDate() - dow);
+  var m = d.getMonth() + 1, day = d.getDate();
+  return d.getFullYear() + '-' + (m < 10 ? '0' + m : m) + '-' + (day < 10 ? '0' + day : day);
+}
+
+function allWeeks(d) {
+  var w = [];
+  ['dailyProductivity', 'weeklyCallStats', 'qaScores', 'scorecards',
+   'teamSchedule', 'otSchedule', 'leaveRequests']
+    .forEach(function (k) { (d[k] || []).forEach(function (r) { if (r.week) w.push(r.week); }); });
+  return uniq(w).sort().reverse();
+}
+
+/* ---------------- ranking (uses the sheet's OFFICIAL score) ---------------- */
+/**
+ * Official score priority (never a home-made formula):
+ *   1. WEEKLY SCORECARD tab -> 'Overall %' (current; runs to the latest week)
+ *   2. Team Weekly and Monthly Stats -> 'OVERALL SCORE' (older block layout)
+ * A week whose Overall % is still all zeros is "in progress" and is skipped
+ * in favour of that agent's last completed scorecard.
+ */
+function officialRows() {
+  var out = [];
+  // source 1 - WEEKLY SCORECARD tab
+  (DATA.scorecards || []).forEach(function (r) {
+    if (!/^overall\s*%$/i.test(r.metric || '')) return;
+    if (r.value === null || r.value === undefined) return;
+    out.push({ agent: r.agent, week: r.week, overall: r.value > 1.5 ? r.value / 100 : r.value, src: 'WEEKLY SCORECARD' });
+  });
+  // source 2 - older OVERALL SCORE blocks
+  (((DATA.officialScorecard || {}).weekly) || []).forEach(function (r) {
+    out.push({ agent: r.agent, week: r.week, overall: r.overall, components: r.components, src: 'Team Stats' });
+  });
+  return out;
+}
+
+/** The sheet's own text rating (e.g. 'Top Performer', 'Good') if present. */
+function sheetRating(agent, week) {
+  var hit = null;
+  (DATA.scorecards || []).forEach(function (r) {
+    if (r.agent === agent && r.week === week && /team ranking/i.test(r.metric || '') && r.raw) hit = r.raw;
+  });
+  return hit;
+}
+
+/** Per-agent components from the WEEKLY SCORECARD tab for a given week. */
+function scorecardComponents(agent, week) {
+  var want = /weighted|qa score|productivity %|attendance %|quality %|work ethic %|pick up %|total score/i;
+  var o = {};
+  (DATA.scorecards || []).forEach(function (r) {
+    if (r.agent !== agent || r.week !== week) return;
+    if (!want.test(r.metric || '')) return;
+    if (r.value === null || r.value === undefined) return;
+    o[r.metric] = r.value;
+  });
+  return Object.keys(o).length ? o : null;
+}
+
+function buildRanking() {
+  if (!DATA) return [];
+  var off = officialRows();
+
+  // drop weeks that are entirely zero (scorecard not filled in yet)
+  var byWeek = groupBy(off, function (r) { return r.week; });
+  var liveWeeks = {};
+  byWeek.keys.forEach(function (w) {
+    if (byWeek.map[w].some(function (r) { return r.overall > 0; })) liveWeeks[w] = 1;
+  });
+  off = off.filter(function (r) { return liveWeeks[r.week]; });
+
+  var scoped;
+  if (F.week !== 'ALL') {
+    scoped = slice(off, {});
+  } else {
+    // each agent's MOST RECENT completed scorecard - never a cross-month average
+    var byA0 = groupBy(off.filter(function (r) { return F.agent === 'ALL' || r.agent === F.agent; }),
+                       function (r) { return r.agent; });
+    scoped = byA0.keys.map(function (a) {
+      var rows = byA0.map[a].slice().sort(function (x, y) { return (x.week || '').localeCompare(y.week || ''); });
+      return rows[rows.length - 1];
+    });
+  }
+  if (!scoped.length) {
+    var byA = groupBy(off.filter(function (r) { return F.agent === 'ALL' || r.agent === F.agent; }), function (r) { return r.agent; });
+    scoped = byA.keys.map(function (a) {
+      var rows = byA.map[a].slice().sort(function (x, y) { return (x.week || '').localeCompare(y.week || ''); });
+      return rows[rows.length - 1];
+    });
+  }
+
+  var qaBy = groupBy(slice(DATA.qaScores), function (r) { return r.agent; });
+  var prBy = groupBy(slice(DATA.dailyProductivity), function (r) { return r.agent; });
+  var clBy = groupBy(slice(DATA.weeklyCallStats), function (r) { return r.agent; });
+
+  var agents = uniq(scoped.map(function (r) { return r.agent; })
+    .concat(qaBy.keys).concat(prBy.keys));
+
+  var rows = agents.map(function (a) {
+    var offRows = scoped.filter(function (r) { return r.agent === a; });
+    var qa = qaBy.map[a] || [], pr = prBy.map[a] || [], cl = clBy.map[a] || [];
+    return {
+      agent: a,
+      overall: offRows.length ? avg(offRows.map(function (r) { return r.overall; })) : null,
+      components: offRows.length
+        ? (scorecardComponents(a, offRows[offRows.length - 1].week) || offRows[offRows.length - 1].components)
+        : null,
+      scoreWeek: offRows.length ? offRows[offRows.length - 1].week : null,
+      rating: offRows.length ? sheetRating(a, offRows[offRows.length - 1].week) : null,
+      qa: qa.length ? avg(qa.map(function (r) { return r.score; })) : null,
+      evals: qa.length,
+      prod: pr.length ? avg(uniq(pr.map(function (r) { return r.week + '|' + r.productivityPct; }))
+              .map(function (k) { var v = parseFloat(k.split('|')[1]); return isNaN(v) ? null : v; })) : null,
+      tickets: pr.length ? sum(pr.map(function (r) { return r.tickets; })) : null,
+      calls: cl.length ? sum(cl.map(function (r) { return r.pickedUp; })) : null,
+      attempts: cl.length ? sum(cl.map(function (r) { return r.attempts; })) : null
+    };
+  });
+
+  // rank on the official score; agents without one sort last
+  rows.sort(function (x, y) {
+    var a = x.overall, b = y.overall;
+    if (a === null && b === null) return (y.qa || 0) - (x.qa || 0);
+    if (a === null) return 1;
+    if (b === null) return -1;
+    return b - a;
+  });
+  rows.forEach(function (r, i) { r.rank = i + 1; });
+  return rows;
+}
+
+/* ---------------- snapshot expansion ---------------- */
+/**
+ * data.js ships compressed: tables are columnar and repeated strings live in
+ * one shared table, referenced by index. Undo both to get normal objects.
+ */
+function expandSnapshot(raw) {
+  if (!raw) return null;
+  if (!raw.packed) return raw;                 // already plain
+
+  var strings = raw.strings || [];
+  // an interned string was written as a one-element array [i]; anything else
+  // (number, boolean, null, plain string) is a literal value.
+  // Array.isArray, not instanceof - the latter is false across JS realms.
+  function dec(v) {
+    return Array.isArray(v) ? strings[v[0]] : v;
+  }
+
+  var out = {
+    lastUpdated: raw.lastUpdated,
+    dataYear: raw.dataYear,
+    mode: raw.mode,
+    warnings: raw.warnings || [],
+    officialScorecard: raw.officialScorecard || { weekly: [], monthly: [] },
+    leaveFormOptions: raw.leaveFormOptions || { leaveTypes: [], reasons: [] }
+  };
+
+  Object.keys(raw.packed).forEach(function (name) {
+    var t = raw.packed[name], cols = t.c;
+    out[name] = (t.r || []).map(function (arr) {
+      var o = {};
+      for (var i = 0; i < cols.length; i++) {
+        // trailing nulls were trimmed when packing - restore them
+        o[cols[i]] = i < arr.length ? dec(arr[i]) : null;
+      }
+      return o;
+    });
+  });
+  return out;
+}
+
+/* ---------------- data load ---------------- */
+function setSync(state, text) {
+  var d = $('syncDot'), t = $('syncText');
+  d.className = 'dot' + (state ? ' ' + state : '');
+  t.textContent = text;
+}
+function toast(msg, kind) {
+  var t = $('toast');
+  t.className = 'toast' + (kind ? ' ' + kind : '');
+  t.textContent = msg;
+  t.hidden = false;
+  clearTimeout(t._h);
+  t._h = setTimeout(function () { t.hidden = true; }, 3600);
+}
+function banner(msg, kind) {
+  var b = $('banner');
+  if (!msg) { b.hidden = true; return; }
+  b.className = 'banner' + (kind ? ' ' + kind : '');
+  b.textContent = msg;
+  b.hidden = false;
+}
+
+function readCache() {
+  try {
+    var raw = localStorage.getItem(CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+function writeCache(d) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(d)); } catch (e) { /* quota - non-fatal */ }
+}
+
+/**
+ * Load the baked-in snapshot from data.js. There is no network call and no
+ * Apps Script: data.js is part of the site, so this always succeeds unless
+ * the file itself failed to load.
+ *
+ * isManual = true when the user pressed Refresh Data.
+ */
+function fetchData(isManual) {
+  if (isManual) { $('loader').hidden = false; $('btnRefresh').disabled = true; }
+  setSync('busy', 'Updating\u2026');
+
+  return new Promise(function (resolve) {
+    // let the browser paint the loader before the (synchronous) expand
+    setTimeout(function () {
+      try {
+        if (!window.DASHBOARD_DATA) throw new Error('data.js did not load');
+
+        DATA = expandSnapshot(window.DASHBOARD_DATA);
+        writeCache(window.DASHBOARD_DATA);
+
+        setSync('ok', 'Last Updated: ' + fmtStamp(DATA.lastUpdated) +
+                      (window.DATA_SOURCE_NOTE ? ' \u00b7 ' + window.DATA_SOURCE_NOTE : ''));
+        banner('');
+        if (DATA.warnings && DATA.warnings.length) {
+          banner('Some sections could not be read: ' + DATA.warnings.join('; ') +
+                 '. The rest of the dashboard is up to date.', '');
+        }
+        fillSelects();
+        render();
+        if (isManual) toast('Dashboard updated successfully.', 'ok');
+      } catch (err) {
+        var cached = readCache();
+        if (cached) {
+          DATA = expandSnapshot(cached);
+          setSync('err', 'Last Updated: ' + fmtStamp(DATA.lastUpdated) + ' (cached)');
+          banner('We\u2019re having trouble loading the latest data. Showing the last ' +
+                 'successfully loaded data from ' + fmtStamp(DATA.lastUpdated) + '.', 'err');
+          fillSelects();
+          render();
+          if (isManual) toast('Unable to load new data. Showing last successful data.', 'err');
+        } else {
+          setSync('err', 'Unable to load data');
+          banner('We\u2019re having trouble connecting to the latest data. The data file ' +
+                 '(data.js) could not be loaded. (' + err.message + ')', 'err');
+          if (isManual) toast('Unable to load data.', 'err');
+        }
+      }
+      $('loader').hidden = true;
+      $('btnRefresh').disabled = false;
+      resolve();
+    }, isManual ? 260 : 0);
+  });
+}

@@ -1,0 +1,278 @@
+/* ============================================================
+ * app-render.js - Overview, Daily Productivity, Weekly Calls, QA
+ * ============================================================ */
+
+function kpi(mountId, items) {
+  var m = $(mountId);
+  if (!m) return;
+  m.innerHTML = items.map(function (k) {
+    return '<div class="kpi' + (k.tone ? ' ' + k.tone : '') + '">' +
+      '<div class="lbl">' + esc(k.label) + '</div>' +
+      '<div class="val">' + (k.html || esc(k.value)) + '</div>' +
+      (k.sub ? '<div class="sub">' + esc(k.sub) + '</div>' : '') + '</div>';
+  }).join('');
+}
+
+function topPerformerCard(mountId, rank) {
+  var m = $(mountId);
+  if (!m) return;
+  var t = rank[0];
+  if (!t) {
+    m.innerHTML = '<div class="empty"><b>No top performer yet</b>No scorecard data available for the selected filters.</div>';
+    return;
+  }
+  var stats = [];
+  if (t.qa !== null)     stats.push({ l: 'QA Score', v: pct(t.qa) });
+  if (t.prod !== null)   stats.push({ l: 'Productivity', v: pct(t.prod) });
+  if (t.calls !== null)  stats.push({ l: 'Calls Handled', v: n0(t.calls) });
+  if (t.tickets !== null && t.tickets !== 0) stats.push({ l: 'Tickets', v: n0(t.tickets) });
+  if (t.evals)           stats.push({ l: 'QA Evaluations', v: n0(t.evals) });
+
+  m.innerHTML = '<div class="tp">' +
+    '<div class="tp-tag">\uD83C\uDFC6 Top Performing CSR</div>' +
+    '<div class="tp-name">' + esc(t.agent) + (t.rating ? ' \u00b7 ' + esc(t.rating) : '') + '</div>' +
+    '<div class="tp-score">' + (t.overall !== null ? pct(t.overall, 2) + ' Overall Score' : 'Ranked on QA score') +
+      (t.scoreWeek ? ' \u00b7 scorecard week of ' + fmtWeek(t.scoreWeek) : '') + '</div>' +
+    (stats.length ? '<div class="tp-stats">' + stats.map(function (s) {
+      return '<div><span>' + esc(s.l) + '</span><b>' + s.v + '</b></div>';
+    }).join('') + '</div>' : '') +
+    '</div>';
+}
+
+/* ---------------- OVERVIEW ---------------- */
+function renderOverview() {
+  var rank = buildRanking();
+  var dp = slice(DATA.dailyProductivity);
+  var qa = slice(DATA.qaScores);
+  var cl = slice(DATA.weeklyCallStats);
+  // derive from PERFORMANCE rows in view - schedule rows run into future weeks
+  var perfWeeks = uniq(dp.map(function (r) { return r.week; })
+    .concat(qa.map(function (r) { return r.week; }))
+    .concat(cl.map(function (r) { return r.week; }))).sort();
+  var curWeek = F.week !== 'ALL' ? F.week : (perfWeeks[perfWeeks.length - 1] || '');
+
+  var items = [
+    { label: 'Total Agents', value: n0(rank.length), sub: 'in current view' },
+    { label: 'Average QA Score', html: qa.length ? pct(avg(qa.map(function (r) { return r.score; }))) : '\u2014',
+      sub: qa.length ? n0(qa.length) + ' evaluations' : 'no QA records',
+      tone: qa.length && avg(qa.map(function (r) { return r.score; })) >= 0.95 ? 'good' : '' }
+  ];
+  var prodVals = rank.map(function (r) { return r.prod; }).filter(function (v) { return v !== null; });
+  items.push({ label: 'Average Productivity', html: prodVals.length ? pct(avg(prodVals)) : '\u2014',
+               sub: prodVals.length ? 'vs weekly target' : 'no productivity data' });
+  if (cl.length) {
+    items.push({ label: 'Total Calls Handled', value: n0(sum(cl.map(function (r) { return r.pickedUp; }))), sub: 'picked up' });
+    items.push({ label: 'Total Call Attempts', value: n0(sum(cl.map(function (r) { return r.attempts; }))), sub: 'ringing attempts' });
+  }
+  if (dp.length) {
+    items.push({ label: 'Tickets Handled', value: n0(sum(dp.map(function (r) { return r.tickets; }))), sub: 'in current view' });
+  }
+  items.push({ label: 'Top Performing CSR', html: rank[0] ? '<span style="font-size:18px">' + esc(rank[0].agent) + '</span>' : '\u2014',
+               sub: rank[0] && rank[0].overall !== null ? pct(rank[0].overall, 2) + ' overall' : '' , tone: 'good' });
+  items.push({ label: 'Current Week', html: curWeek ? fmtWeek(curWeek) : '\u2014', sub: curWeek || 'all weeks' });
+  kpi('ovKpis', items);
+
+  topPerformerCard('topPerformer', rank);
+
+  // QA trend by week (team-wide)
+  var g = groupBy(qa, function (r) { return r.week; });
+  var wk = g.keys.slice().sort();
+  lineChart('chOvQa', wk.map(fmtWeek),
+    [{ label: 'Team QA Score', data: wk.map(function (k) { return avg(g.map[k].map(function (r) { return r.score; })); }) }],
+    { percent: true, noZero: true });
+
+  var withProd = rank.filter(function (r) { return r.prod !== null; });
+  barChart('chOvProd', withProd.map(function (r) { return r.agent; }),
+    withProd.map(function (r) { return r.prod; }),
+    { percent: true, horizontal: true, label: 'Productivity' });
+
+  makeTable('ovBoard', [
+    { key: 'rank', label: '#', num: true, fmt: function (r) { return '<span class="rank">' + r.rank + '</span>'; } },
+    { key: 'agent', label: 'Agent' },
+    { key: 'overall', label: 'Overall', num: true, fmt: function (r) { return scorePill(r.overall, 2); } },
+    { key: 'qa', label: 'QA', num: true, fmt: function (r) { return scorePill(r.qa); } },
+    { key: 'prod', label: 'Productivity', num: true, fmt: function (r) { return r.prod === null ? '\u2014' : pct(r.prod); } },
+    { key: 'calls', label: 'Calls', num: true, fmt: function (r) { return n0(r.calls); } },
+    { key: 'evals', label: 'QA Evals', num: true, fmt: function (r) { return n0(r.evals); } }
+  ], rank, { sort: 'rank', dir: 'asc' });
+}
+
+/* ---------------- DAILY PRODUCTIVITY ---------------- */
+function renderProductivity() {
+  var dp = slice(DATA.dailyProductivity);
+  var worked = dp.filter(function (r) { return !r.off && r.tickets !== null; });
+
+  // weekly summary rows (target/actual/% are per agent-week, not per day)
+  var wkKeys = {}, wkRows = [];
+  dp.forEach(function (r) {
+    var k = r.agent + '|' + r.week;
+    if (wkKeys[k]) return;
+    wkKeys[k] = 1;
+    wkRows.push({ agent: r.agent, week: r.week, target: r.weeklyTarget, actual: r.weeklyActual,
+                  prod: r.productivityPct, score: r.finalScore });
+  });
+
+  kpi('prKpis', [
+    { label: 'Tickets Handled', value: n0(sum(worked.map(function (r) { return r.tickets; }))), sub: n0(worked.length) + ' working days' },
+    { label: 'Avg Tickets / Day', value: n1(avg(worked.map(function (r) { return r.tickets; }))), sub: 'per agent per day' },
+    { label: 'Avg Productivity', html: wkRows.length ? pct(avg(wkRows.map(function (r) { return r.prod; }))) : '\u2014',
+      sub: 'actual vs target',
+      tone: wkRows.length && avg(wkRows.map(function (r) { return r.prod; })) >= 1 ? 'good' : 'warn' },
+    { label: 'Weekly Target', value: n0(sum(wkRows.map(function (r) { return r.target; }))), sub: 'combined target' },
+    { label: 'Weekly Actual', value: n0(sum(wkRows.map(function (r) { return r.actual; }))), sub: 'combined actual' },
+    { label: 'Avg Final Score', value: n1(avg(wkRows.map(function (r) { return r.score; }))), sub: 'out of 5' },
+    { label: 'Days Off', value: n0(dp.filter(function (r) { return r.off; }).length), sub: 'in current view' }
+  ]);
+
+  var byDate = groupBy(worked, function (r) { return r.date; });
+  var ds = byDate.keys.slice().sort();
+  lineChart('chPrTrend', ds.map(fmtDate),
+    [{ label: 'Tickets Handled', data: ds.map(function (k) { return sum(byDate.map[k].map(function (r) { return r.tickets; })); }) }], {});
+
+  var byAg = groupBy(worked, function (r) { return r.agent; });
+  var ag = byAg.keys.slice().sort(function (a, b) {
+    return sum(byAg.map[b].map(function (r) { return r.tickets; })) - sum(byAg.map[a].map(function (r) { return r.tickets; }));
+  });
+  barChart('chPrAgent', ag, ag.map(function (a) { return sum(byAg.map[a].map(function (r) { return r.tickets; })); }),
+    { horizontal: true, label: 'Tickets' });
+
+  makeTable('prTable', [
+    { key: 'date', label: 'Date', fmt: function (r) { return fmtDate(r.date); }, sortVal: function (r) { return r.date; } },
+    { key: 'day', label: 'Day' },
+    { key: 'agent', label: 'Agent' },
+    { key: 'tickets', label: 'Tickets', num: true,
+      fmt: function (r) { return r.off ? '<span class="pill off">OFF</span>' : n0(r.tickets); },
+      sortVal: function (r) { return r.tickets === null ? -1 : r.tickets; } },
+    { key: 'week', label: 'Week', fmt: function (r) { return fmtWeek(r.week); }, sortVal: function (r) { return r.week; } },
+    { key: 'weeklyTarget', label: 'Wk Target', num: true, fmt: function (r) { return n0(r.weeklyTarget); } },
+    { key: 'weeklyActual', label: 'Wk Actual', num: true, fmt: function (r) { return n0(r.weeklyActual); } },
+    { key: 'productivityPct', label: 'Productivity', num: true,
+      fmt: function (r) { return r.productivityPct === null ? '\u2014' : scorePill(r.productivityPct); },
+      sortVal: function (r) { return r.productivityPct; } },
+    { key: 'finalScore', label: 'Score', num: true, fmt: function (r) { return n1(r.finalScore); } }
+  ], dp, { sort: 'date', dir: 'desc', per: 25, pagerId: 'prPager' });
+}
+
+/* ---------------- WEEKLY CALL STATS ---------------- */
+function renderCalls() {
+  var cl = slice(DATA.weeklyCallStats);
+
+  if (!cl.length) {
+    var all = DATA.weeklyCallStats || [];
+    var why = all.length
+      ? 'No call statistics match the selected filters.'
+      : 'The source sheet has no call-statistics blocks for ' + (DATA.dataYear || 2026) +
+        ' yet. Fill in a \u201cWeekly Call Stats\u201d block (Ringing Attempts \u00b7 Picked Up \u00b7 AHT) ' +
+        'under any week and it will appear here automatically after the next sync.';
+    kpi('clKpis', [{ label: 'Weekly Call Stats', html: '\u2014', sub: 'nothing to show yet' }]);
+    chartEmpty('chClTrend'); chartEmpty('chClAgent');
+    makeTable('clTable', [{ key: 'agent', label: 'Agent' }], [], { empty: why });
+    return;
+  }
+
+  var attempts = sum(cl.map(function (r) { return r.attempts; }));
+  var picked = sum(cl.map(function (r) { return r.pickedUp; }));
+  var agents = uniq(cl.map(function (r) { return r.agent; }));
+  var weeks = uniq(cl.map(function (r) { return r.week; }));
+
+  kpi('clKpis', [
+    { label: 'Total Calls Handled', value: n0(picked), sub: 'picked up' },
+    { label: 'Total Call Volume', value: n0(attempts), sub: 'ringing attempts' },
+    { label: 'Not Picked Up', value: n0(sum(cl.map(function (r) { return r.notPickedUp; }))), sub: 'missed' },
+    { label: 'Pickup Rate', html: attempts ? pct(picked / attempts) : '\u2014', sub: 'team average',
+      tone: attempts && picked / attempts >= 0.95 ? 'good' : 'warn' },
+    { label: 'Avg Calls / Agent', value: agents.length ? n1(picked / agents.length) : '\u2014', sub: n0(agents.length) + ' agents' },
+    { label: 'Weeks Covered', value: n0(weeks.length), sub: 'in current view' }
+  ]);
+
+  var byWk = groupBy(cl, function (r) { return r.week; });
+  var wk = byWk.keys.slice().sort();
+  lineChart('chClTrend', wk.map(fmtWeek), [
+    { label: 'Calls Handled', data: wk.map(function (k) { return sum(byWk.map[k].map(function (r) { return r.pickedUp; })); }) },
+    { label: 'Call Volume', data: wk.map(function (k) { return sum(byWk.map[k].map(function (r) { return r.attempts; })); }) }
+  ], {});
+
+  var byAg = groupBy(cl, function (r) { return r.agent; });
+  var ag = byAg.keys.slice().sort(function (a, b) {
+    return sum(byAg.map[b].map(function (r) { return r.pickedUp; })) - sum(byAg.map[a].map(function (r) { return r.pickedUp; }));
+  });
+  barChart('chClAgent', ag, ag.map(function (a) { return sum(byAg.map[a].map(function (r) { return r.pickedUp; })); }),
+    { horizontal: true, label: 'Calls Handled' });
+
+  makeTable('clTable', [
+    { key: 'week', label: 'Week', fmt: function (r) { return fmtWeek(r.week); }, sortVal: function (r) { return r.week; } },
+    { key: 'agent', label: 'Agent' },
+    { key: 'attempts', label: 'Attempts', num: true, fmt: function (r) { return n0(r.attempts); } },
+    { key: 'pickedUp', label: 'Picked Up', num: true, fmt: function (r) { return n0(r.pickedUp); } },
+    { key: 'notPickedUp', label: 'Not Picked', num: true, fmt: function (r) { return n0(r.notPickedUp); } },
+    { key: 'pickupRate', label: 'Pickup Rate', num: true, fmt: function (r) { return scorePill(r.pickupRate); }, sortVal: function (r) { return r.pickupRate; } },
+    { key: 'aht', label: 'AHT' }
+  ], cl, { sort: 'week', dir: 'desc' });
+}
+
+/* ---------------- QA SCORES (all agents, one page) ---------------- */
+function renderQa() {
+  var qa = slice(DATA.qaScores);
+  var byAg = groupBy(qa, function (r) { return r.agent; });
+  var ranked = byAg.keys.map(function (a) {
+    var rows = byAg.map[a];
+    return { agent: a, score: avg(rows.map(function (r) { return r.score; })), evals: rows.length,
+             perfect: rows.filter(function (r) { return r.score >= 1; }).length };
+  }).sort(function (x, y) { return y.score - x.score; });
+  ranked.forEach(function (r, i) { r.rank = i + 1; });
+
+  kpi('qaKpis', [
+    { label: 'Average QA Score', html: qa.length ? pct(avg(qa.map(function (r) { return r.score; }))) : '\u2014',
+      sub: 'team average', tone: qa.length && avg(qa.map(function (r) { return r.score; })) >= 0.95 ? 'good' : 'warn' },
+    { label: 'Total Evaluations', value: n0(qa.length), sub: 'calls evaluated' },
+    { label: 'Agents Evaluated', value: n0(ranked.length), sub: 'with QA records' },
+    { label: 'Perfect Scores', value: n0(qa.filter(function (r) { return r.score >= 1; }).length),
+      sub: qa.length ? pct(qa.filter(function (r) { return r.score >= 1; }).length / qa.length, 0) + ' of evaluations' : '', tone: 'good' },
+    { label: 'Below 85%', value: n0(qa.filter(function (r) { return r.score < 0.85; }).length), sub: 'need attention', tone: 'warn' },
+    { label: 'Highest QA Score', html: ranked[0] ? pct(ranked[0].score) : '\u2014', sub: ranked[0] ? ranked[0].agent : '' }
+  ]);
+
+  // podium
+  var pod = $('qaPodium');
+  if (!ranked.length) {
+    pod.innerHTML = '<div class="empty"><b>No QA rankings</b>No QA records available for the selected filters.</div>';
+  } else {
+    var medals = ['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'];
+    pod.innerHTML = ranked.slice(0, 3).map(function (r, i) {
+      return '<div class="pod' + (i === 0 ? ' p1' : '') + '">' +
+        '<div class="medal">' + medals[i] + '</div>' +
+        '<div class="nm">' + esc(r.agent) + '</div>' +
+        '<div class="sc">' + pct(r.score) + '</div>' +
+        '<div class="mt">' + n0(r.evals) + ' evaluations</div></div>';
+    }).join('');
+  }
+
+  barChart('chQaAgent', ranked.map(function (r) { return r.agent; }), ranked.map(function (r) { return r.score; }),
+    { percent: true, horizontal: true, label: 'QA Score',
+      colors: ranked.map(function (r) { return r.score >= 0.95 ? PINK.rose : (r.score >= 0.85 ? PINK.dusty : PINK.bad); }) });
+
+  var byWk = groupBy(qa, function (r) { return r.week; });
+  var wk = byWk.keys.slice().sort();
+  lineChart('chQaTrend', wk.map(fmtWeek),
+    [{ label: 'QA Score', data: wk.map(function (k) { return avg(byWk.map[k].map(function (r) { return r.score; })); }) }],
+    { percent: true, noZero: true });
+
+  makeTable('qaRank', [
+    { key: 'rank', label: 'Rank', num: true,
+      fmt: function (r) { return r.rank <= 3 ? ['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'][r.rank - 1] + ' ' + r.rank : '<span class="rank">' + r.rank + '</span>'; } },
+    { key: 'agent', label: 'Agent' },
+    { key: 'score', label: 'QA Score', num: true, fmt: function (r) { return scorePill(r.score); } },
+    { key: 'evals', label: 'Evaluations', num: true, fmt: function (r) { return n0(r.evals); } },
+    { key: 'perfect', label: 'Perfect', num: true, fmt: function (r) { return n0(r.perfect); } }
+  ], ranked, { sort: 'rank', dir: 'asc', empty: 'No QA records available for this agent.' });
+
+  makeTable('qaTable', [
+    { key: 'date', label: 'Date', fmt: function (r) { return fmtDate(r.date); }, sortVal: function (r) { return r.date; } },
+    { key: 'day', label: 'Day' },
+    { key: 'agent', label: 'Agent' },
+    { key: 'score', label: 'Score', num: true, fmt: function (r) { return scorePill(r.score, 0); }, sortVal: function (r) { return r.score; } },
+    { key: 'link', label: 'Ticket', fmt: function (r) {
+        return r.link ? '<a href="' + esc(r.link) + '" target="_blank" rel="noopener" style="color:#C93B72">View</a>' : '\u2014'; } },
+    { key: 'notes', label: 'Notes', fmt: function (r) { return esc(r.notes || '\u2014'); } }
+  ], qa, { sort: 'date', dir: 'desc', per: 25, pagerId: 'qaPager', empty: 'No QA records available for this agent.' });
+}

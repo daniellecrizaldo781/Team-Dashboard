@@ -1,0 +1,11 @@
+const fs = require('fs');
+const d = JSON.parse(fs.readFileSync('../mock-api.json', 'utf8'));
+const u = a => [...new Set(a)].sort();
+const sd = d.scorecards;
+console.log('WEEKLY SCORECARD metrics:');
+console.log(u(sd.map(r => r.metric)).join('\n'));
+console.log('\nsections:', u(sd.map(r=>r.section)).join(' | '));
+console.log('weeks:', u(sd.map(r=>r.week)).slice(-8).join(' | '));
+const ov = sd.filter(r=>/overall/i.test(r.metric));
+console.log('\noverall-ish rows:', ov.length);
+ov.slice(-8).forEach(r=>console.log(' ', JSON.stringify(r)));
