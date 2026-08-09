@@ -15,3 +15,20 @@ window.DATA_SOURCE_NOTE = 'Auto-updates hourly';
  * from the leave-request sheet and paste its URL here. */
 window.DASHBOARD_CONFIG = window.DASHBOARD_CONFIG || {};
 window.DASHBOARD_CONFIG.leaveWebAppUrl = 'https://script.google.com/macros/s/AKfycbxBF0FZwUavwneXqr9w4iDZXHGm2y0cZowJt8T7YVEfq8BlL1-h-F_EZ00YMHkJ17Emgw/exec';
+
+/* Per-agent passcode gate for the Leave Request tab (Option B).
+ * Each agent types their 4-digit PIN; the Agent field then locks to their name.
+ * NOTE: this is a lightweight gate, NOT real security - the map is public in the
+ * page source, so anyone can read it. It stops accidental wrong-agent filing.
+ * Generated 4-digit PINs; tell each agent their code. */
+window.DASHBOARD_CONFIG.agentPins = {
+  'Danielle Mae David': '4821',
+  'Godwin Arellano Reasol': '7730',
+  'Candy Laid': '3196',
+  'Mary Claudette Ibong': '6458',
+  'Sofhia Mae Santiago': '2047',
+  'Cherry Tubongbanua': '8913',
+  'Lyra Miclat': '5529',
+  'Joemica Cariño': '1364'
+};
+

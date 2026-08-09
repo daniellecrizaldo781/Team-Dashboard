@@ -133,11 +133,50 @@ function wire() {
   wireSearch('scSearch', 'scTable');
   wireSearch('bkSearch', 'bkTable');
 
+  // ---- Leave Request PIN gate (Option B) ----
   var lf = $('leaveForm');
+  var lvPin = $('lvPin');
+  var lvAgent = $('lvAgent');
+  var pinMsg = $('pinMsg');
+  var lvFormLocked = true; // agent must unlock with PIN before submitting
+
+  function verifyPin() {
+    var pins = (window.DASHBOARD_CONFIG && window.DASHBOARD_CONFIG.agentPins) || {};
+    var code = (lvPin.value || '').trim();
+    if (!code) {
+      lvFormLocked = true;
+      lvAgent.value = '';
+      lvAgent.placeholder = 'Locked - enter PIN';
+      lvPin.className = '';
+      if (pinMsg) { pinMsg.hidden = true; }
+      return;
+    }
+    var matched = null;
+    for (var name in pins) { if (pins[name] === code) { matched = name; break; } }
+    if (matched) {
+      lvFormLocked = false;
+      lvAgent.value = matched;
+      lvAgent.placeholder = matched;
+      lvPin.className = 'ok-input';
+      if (pinMsg) { pinMsg.hidden = false; pinMsg.className = 'cf-msg ok'; pinMsg.textContent = 'Unlocked as ' + matched + '.'; }
+    } else {
+      lvFormLocked = true;
+      lvAgent.value = '';
+      lvAgent.placeholder = 'Locked - wrong PIN';
+      lvPin.className = 'err-input';
+      if (pinMsg) { pinMsg.hidden = false; pinMsg.className = 'cf-msg err'; pinMsg.textContent = 'Wrong PIN. Try again.'; }
+    }
+  }
+  if (lvPin) lvPin.addEventListener('input', verifyPin);
+
   if (lf) lf.onsubmit = function (e) {
     e.preventDefault();
+    if (lvFormLocked || !lvAgent.value) {
+      if (pinMsg) { pinMsg.hidden = false; pinMsg.className = 'cf-msg err'; pinMsg.textContent = 'Enter your 4-digit PIN to unlock the form first.'; }
+      return;
+    }
     var payload = {
-      agent: $('lvAgent').value,
+      agent: lvAgent.value,
       leaveType: $('lvType').value,
       reason: $('lvReason').value,
       date: $('lvDate').value,
@@ -148,13 +187,17 @@ function wire() {
       if (res && res.ok) {
         note.textContent = res.local
           ? 'Saved locally (no sheet endpoint configured). It will appear after the next sync once wired.'
-          : 'Submitted to the leave sheet.';
-        note.className = 'leave-note ok';
+          : 'Submitted to the leave sheet as ' + lvAgent.value + '.';
+        note.className = 'cf-msg ok';
         lf.reset();
+        lvFormLocked = true;
+        lvAgent.value = '';
+        lvAgent.placeholder = 'Locked - enter PIN';
+        if (pinMsg) { pinMsg.hidden = true; }
         renderLeaves();
       } else {
         note.textContent = 'Submission failed. Please try again.';
-        note.className = 'leave-note bad';
+        note.className = 'cf-msg err';
       }
     });
   };

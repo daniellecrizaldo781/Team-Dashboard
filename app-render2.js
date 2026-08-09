@@ -194,13 +194,8 @@ function renderLeaves() {
 
   // leave list is rendered as vertical cards below (see lvList)
 
-  // populate agent dropdown from ALL known agents (not just those with prior leaves)
-  var sel = $('lvAgent');
-  if (sel && !sel.dataset.filled) {
-    var agents = allAgents(DATA);
-    sel.innerHTML = agents.map(function (a) { return '<option value="' + esc(a) + '">' + esc(a) + '</option>'; }).join('');
-    sel.dataset.filled = '1';
-  }
+  // PIN gate: lvAgent is a locked text field, filled by verifyPin() in app-init.
+  // (no dropdown population needed)
 
   // leave list as cute vertical cards (one per request, stacked)
   var list = $('lvList');

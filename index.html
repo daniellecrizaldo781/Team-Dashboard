@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Team Performance Command Center</title>
-<link rel="stylesheet" href="styles.css?v=12">
+<link rel="stylesheet" href="styles.css?v=13">
 </head>
 <body>
 
@@ -169,8 +169,12 @@
       <div class="card">
         <div class="card-head"><h3>File a Leave Request</h3></div>
         <form id="leaveForm" class="cute-form">
+          <label class="cf-field">Your 4-digit PIN
+            <input type="text" id="lvPin" inputmode="numeric" maxlength="4" placeholder="Enter your PIN to unlock" autocomplete="off">
+          </label>
+          <div class="cf-msg" id="pinMsg" hidden></div>
           <label class="cf-field">Agent
-            <select id="lvAgent" required></select>
+            <input type="text" id="lvAgent" class="locked" placeholder="Locked - enter PIN" readonly>
           </label>
           <label class="cf-field">Leave Type
             <select id="lvType" required>
@@ -211,12 +215,12 @@
 <div class="toast" id="toast" hidden></div>
 
 <script src="chart.umd.min.js"></script>
-<script src="config.js?v=12"></script>
-<script src="data.js?v=12"></script>
-<script src="app-core.js?v=12"></script>
-<script src="app-charts.js?v=12"></script>
-<script src="app-render.js?v=12"></script>
-<script src="app-render2.js?v=12"></script>
-<script src="app-init.js?v=12"></script>
+<script src="config.js?v=13"></script>
+<script src="data.js?v=13"></script>
+<script src="app-core.js?v=13"></script>
+<script src="app-charts.js?v=13"></script>
+<script src="app-render.js?v=13"></script>
+<script src="app-render2.js?v=13"></script>
+<script src="app-init.js?v=13"></script>
 </body>
 </html>

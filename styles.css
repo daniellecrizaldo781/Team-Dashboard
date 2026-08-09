@@ -273,6 +273,9 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .cf-msg{margin:0;font-size:13px;font-weight:600;padding:11px 14px;border-radius:11px}
 .cf-msg.ok{background:#EAF7EF;color:#2E7D53;border:1px solid #BFE6CF}
 .cf-msg.err{background:#FDECEC;color:#B04141;border:1px solid #F3C9C9}
+.cf-field input.locked{background:#F6F2F5;color:#8a7d85;border-style:dashed;cursor:not-allowed}
+.cf-field input.ok-input{border-color:#2E7D53;background:#EAF7EF}
+.cf-field input.err-input{border-color:#B04141;background:#FDECEC}
 
 /* ---------- leave request cards (vertical stack) ---------- */
 .leave-cards{display:flex;flex-direction:column;gap:11px;max-height:560px;overflow-y:auto;padding-right:2px}
