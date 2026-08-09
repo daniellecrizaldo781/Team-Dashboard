@@ -175,6 +175,14 @@ select,input{font:inherit;color:var(--ink)}
 
 /* ---------- tables ---------- */
 .tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:11px}
+.qa-by-agent{display:flex;flex-direction:column;gap:16px}
+.qa-agent-block{background:#FBF7FA;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.qa-agent-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:10px 14px;background:linear-gradient(180deg,#FFF0F6,#FDEAF3)}
+.qa-agent-name{font-weight:800;font-size:14.5px;color:var(--ink)}
+.qa-agent-meta{font-size:12px;color:var(--ink3);font-weight:600}
+.qa-agent-table{min-width:520px}
+.qa-agent-table tbody tr:nth-child(even){background:#FCF4F8}
+.qa-agent-table td{padding:8px 13px;border-top:1px solid var(--line)}
 table{border-collapse:collapse;width:100%;min-width:560px;font-size:13.5px}
 thead th{
   position:sticky;top:0;z-index:2;background:var(--blush2);color:var(--rose-d);

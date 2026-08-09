@@ -110,7 +110,7 @@ function wire() {
     $('fFrom').value = ''; $('fTo').value = '';
     ['prSearch', 'clSearch', 'qaSearch', 'scSearch', 'bkSearch']
       .forEach(function (id) { if ($(id)) $(id).value = ''; });
-    ['prTable', 'clTable', 'qaTable', 'qaRank', 'scTable', 'scDetail', 'bkTable']
+    ['prTable', 'clTable', 'scTable', 'scDetail', 'bkTable']
       .forEach(function (id) { if ($(id) && $(id)._st) { $(id)._st.q = ''; $(id)._st.page = 1; } });
     render();
     toast('Filters reset.');
@@ -131,7 +131,8 @@ function wire() {
 
   wireSearch('prSearch', 'prTable');
   wireSearch('clSearch', 'clTable');
-  wireSearch('qaSearch', 'qaTable');
+  var qs = $('qaSearch');
+  if (qs) qs.oninput = function () { try { renderQa(); } catch (e) { console.error('qa', e); } };
   wireSearch('scSearch', 'scTable');
   wireSearch('bkSearch', 'bkTable');
 

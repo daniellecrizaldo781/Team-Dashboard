@@ -233,14 +233,8 @@ function renderQa() {
   ranked.forEach(function (r, i) { r.rank = i + 1; });
 
   kpi('qaKpis', [
-    { label: 'Average QA Score', html: qa.length ? pct(avg(qa.map(function (r) { return r.score; }))) : '\u2014',
-      sub: 'team average', tone: qa.length && avg(qa.map(function (r) { return r.score; })) >= 0.95 ? 'good' : 'warn' },
-    { label: 'Total Evaluations', value: n0(qa.length), sub: 'calls evaluated' },
-    { label: 'Agents Evaluated', value: n0(ranked.length), sub: 'with QA records' },
-    { label: 'Perfect Scores', value: n0(qa.filter(function (r) { return r.score >= 1; }).length),
-      sub: qa.length ? pct(qa.filter(function (r) { return r.score >= 1; }).length / qa.length, 0) + ' of evaluations' : '', tone: 'good' },
-    { label: 'Below 85%', value: n0(qa.filter(function (r) { return r.score < 0.85; }).length), sub: 'need attention', tone: 'warn' },
-    { label: 'Highest QA Score', html: ranked[0] ? pct(ranked[0].score) : '\u2014', sub: ranked[0] ? ranked[0].agent : '' }
+    { label: 'Average QA Score', html: qa.length ? pct(avg(qa.map(function (r) { return r.score; }))) : '—',
+      sub: 'team average', tone: qa.length && avg(qa.map(function (r) { return r.score; })) >= 0.95 ? 'good' : 'warn' }
   ]);
 
   // podium
@@ -271,15 +265,37 @@ function renderQa() {
     { key: 'perfect', label: 'Perfect', num: true, fmt: function (r) { return n0(r.perfect); } }
   ], ranked, { sort: 'rank', dir: 'asc', empty: 'No QA records available for this agent.' });
 
-  makeTable('qaTable', [
-    { key: 'date', label: 'Date', fmt: function (r) { return fmtDate(r.date); }, sortVal: function (r) { return r.date; } },
-    { key: 'day', label: 'Day' },
-    { key: 'agent', label: 'Agent' },
-    { key: 'score', label: 'Score', num: true, fmt: function (r) { return scorePill(r.score, 0); }, sortVal: function (r) { return r.score; } },
-    { key: 'link', label: 'Ticket', fmt: function (r) {
-        return r.link ? '<a href="' + esc(r.link) + '" target="_blank" rel="noopener" style="color:#C93B72">View</a>' : '—'; } },
-    { key: 'notes', label: 'Notes', fmt: function (r) { return esc(r.notes || '—'); } }
-  ], qa, { sort: 'date', dir: 'desc', per: 25, pagerId: 'qaPager', empty: 'No QA records available for this agent.' });
+  // Per-agent QA tables: each agent gets their own table for an at-a-glance overview
+  var wrap = $('qaByAgent');
+  if (!wrap) return;
+  var q = $('qaSearch') && $('qaSearch').value ? $('qaSearch').value.toLowerCase() : '';
+  var html = '';
+  ranked.forEach(function (r) {
+    var rows = byAg.map[r.agent].slice().sort(function (a, b) { return (b.date || '').localeCompare(a.date || ''); });
+    if (q) rows = rows.filter(function (x) {
+      return [x.date, x.day, x.agent, x.score, x.link, x.notes].some(function (v) {
+        return String(v === null || v === undefined ? '' : v).toLowerCase().indexOf(q) >= 0;
+      });
+    });
+    if (!rows.length) return;
+    html += '<div class="qa-agent-block">';
+    html += '<div class="qa-agent-head"><span class="qa-agent-name">' + esc(r.agent) + '</span>' +
+            '<span class="qa-agent-meta">' + n0(rows.length) + ' evaluation' + (rows.length > 1 ? 's' : '') +
+            ' &middot; avg ' + pct(r.score) + '</span></div>';
+    html += '<div class="tscroll"><table class="qa-agent-table"><thead><tr>' +
+            '<th>Date</th><th>Day</th><th>Score</th><th>Ticket</th><th>Notes</th></tr></thead><tbody>';
+    rows.forEach(function (x) {
+      html += '<tr>' +
+        '<td>' + fmtDate(x.date) + '</td>' +
+        '<td>' + esc(x.day || '—') + '</td>' +
+        '<td>' + scorePill(x.score, 0) + '</td>' +
+        '<td>' + (x.link ? '<a href="' + esc(x.link) + '" target="_blank" rel="noopener" style="color:#C93B72">View</a>' : '—') + '</td>' +
+        '<td>' + esc(x.notes || '—') + '</td>' +
+      '</tr>';
+    });
+    html += '</tbody></table></div></div>';
+  });
+  wrap.innerHTML = html || '<div class="empty"><b>No QA records</b>No QA evaluations match the current filters.</div>';
 
   renderQaJacky();
 }
