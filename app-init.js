@@ -140,7 +140,7 @@ function wire() {
       agent: $('lvAgent').value,
       leaveType: $('lvType').value,
       reason: $('lvReason').value,
-      dateManila: $('lvDate').value,
+      date: $('lvDate').value,
       details: $('lvDetails').value
     };
     submitLeave(payload).then(function (res) {

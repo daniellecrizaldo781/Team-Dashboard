@@ -8,7 +8,7 @@ const HDR = ['w','Agent Name','Advise For','Reason','Details',
 let GRID = [HDR,
   ['August','Lyra Miclat','Off Adjustment','Birthday/Family Celebration','',
    new Date(2026,7,2,12),new Date(2026,7,1,12),'Yes','',''],
-  ['November','Dan Mae David','Whole Day LWOP','Birthday/Family Celebration','',
+  ['November','Danielle Mae David','Whole Day LWOP','Birthday/Family Celebration','',
    new Date(2026,10,17,12),new Date(2026,10,16,12),'Pending','','Will plot Soon'],
 ];
 while (GRID.length < 40) GRID.push(new Array(10).fill(''));
@@ -29,14 +29,17 @@ function mkSheet() {
     }
   };
 }
-global.SpreadsheetApp = { openById: () => ({ getSheetByName: n => n === 'Leave Request Sheet' ? mkSheet() : null }) };
+global.SpreadsheetApp = {
+  getActiveSpreadsheet: () => null,
+  openById: () => ({ getSheetByName: n => n === 'Leave Request Sheet' ? mkSheet() : null })
+};
 global.PropertiesService = { getScriptProperties: () => ({ getProperty: k => 'FAKE_ID_' + k }) };
 global.ContentService = { createTextOutput: t => ({ setMimeType: () => t }), MimeType: { JSON: 'json' } };
 global.Utilities = { formatDate: (d,tz,f) => 'Aug 9, 2026' };
 global.Session = { getScriptTimeZone: () => 'Asia/Manila' };
 global.Logger = { log: () => {} };
 
-const src = ['Code.gs','LeaveSubmit.gs'].map(f => fs.readFileSync('../apps-script/'+f,'utf8')).join('\n');
+const src = ['LeaveSubmit.gs'].map(f => fs.readFileSync('../apps-script/'+f,'utf8')).join('\n');
 eval(src);
 
 let pass = 0, fail = 0;
@@ -104,8 +107,8 @@ t("full name maps to sheet's own spelling", () => {
   const r = JSON.parse(doPost({ postData: { contents:
     JSON.stringify({...good, agent:'Danielle Mae David', date:'2026-09-22'}) } }));
   if (!r.ok) throw new Error(r.error);
-  if (r.saved.agent !== 'Dan Mae David')
-    throw new Error("expected sheet spelling 'Dan Mae David', got '" + r.saved.agent + "'");
+  if (r.saved.agent !== 'Danielle Mae David')
+    throw new Error("expected sheet spelling 'Danielle Mae David', got '" + r.saved.agent + "'");
 });
 
 console.log('\n--- form-encoded body (no-preflight path) ---');

@@ -223,9 +223,10 @@ function renderLeaves() {
   }
 }
 
-/** Submit a leave request: POST to a web-app endpoint if configured, else
- *  keep a local draft. The dashboard is a static snapshot, so a live write to
- *  the Google Sheet requires a tiny Apps Script web app (see DEPLOY notes). */
+/** Submit a leave request: POST to the configured web-app endpoint, else keep
+ *  a local draft. The dashboard is a static snapshot, so a live write to the
+ *  Google Sheet needs a tiny Apps Script web app (see LeaveSubmit.gs). The body
+ *  is form-encoded (payload=<json>) to avoid a CORS preflight on the web app. */
 function submitLeave(payload) {
   var url = (window.DASHBOARD_CONFIG && window.DASHBOARD_CONFIG.leaveWebAppUrl) || '';
   if (!url) {
@@ -237,10 +238,11 @@ function submitLeave(payload) {
     } catch (e) {}
     return Promise.resolve({ ok: true, local: true });
   }
+  var body = 'action=submitLeave&payload=' + encodeURIComponent(JSON.stringify(payload));
   return fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: body
   }).then(function (r) { return r.json(); }).catch(function () { return { ok: false }; });
 }
 

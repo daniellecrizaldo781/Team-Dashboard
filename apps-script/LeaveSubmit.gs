@@ -1,35 +1,62 @@
 /**
- * Team Weekly QA & Performance Dashboard
- * FILE 5 of 6  ->  LeaveSubmit.gs
+ * Team Performance Dashboard - Leave Request submitter (SELF-CONTAINED)
  *
- * Lets an agent file a leave request from the dashboard. The new row is
- * appended to the 'Leave Request Sheet' with status Pending, exactly matching
- * the sheet's existing column order and value vocabulary.
+ * Paste this ENTIRE file into a new Apps Script project bound to your
+ * schedule spreadsheet (the one that holds the "Leave Request Sheet" tab),
+ * then Deploy > New deployment > Web app:
+ *   - Execute as:  Me
+ *   - Who has access: Anyone
+ * Copy the Web app URL and paste it into the dashboard's config.js:
+ *   window.DASHBOARD_CONFIG.leaveWebAppUrl = 'https://script.google.com/...';
  *
- * SECURITY NOTES
- *  - The browser never learns the Sheet ID; it only calls the Web App URL.
- *  - This endpoint can ONLY append a leave row. It cannot read, edit or
- *    delete anything else in either spreadsheet.
- *  - Every submission is validated against the sheet's real dropdown values,
- *    so a crafted request cannot inject arbitrary content.
- *  - Nothing is ever auto-approved: status is always forced to 'Pending'.
+ * What it does:
+ *   - Appends one row to "Leave Request Sheet" with status forced to Pending.
+ *   - Validates every field against the sheet's real dropdown vocabulary, so a
+ *     crafted request can't inject bad values.
+ *   - Cannot read, edit or delete anything else in the spreadsheet.
+ *   - Never auto-approves.
+ *
+ * SECURITY: the browser only ever sees this Web App URL - never a Sheet ID or
+ * credentials. The endpoint can ONLY append a leave row.
  */
 
 var LEAVE_TAB = 'Leave Request Sheet';
 
-/* The sheet's own vocabulary - submissions must match these exactly. */
+/* The schedule spreadsheet that holds the Leave Request Sheet tab.
+ * (Sheet IDs are not secrets - the same value is already referenced by the
+ * dashboard's GitHub Action. Binding the script to that spreadsheet lets
+ * getActiveSpreadsheet() work too, so this is only a fallback.) */
+var SCHED_SHEET_ID = '1rLP2iXwK_0bjEOXt2_rH9brqcXecdrkVupVk2U1-5L8';
+var DATA_YEAR = 2026;
+
+/* Must match the dashboard's leave-form dropdowns EXACTLY. */
 var LEAVE_TYPES   = ['Off Adjustment', 'Half Day LWOP', 'Whole Day LWOP'];
 var LEAVE_REASONS = ['Birthday/Family Celebration', 'Medical Appointment',
-                     'Personal Errands', 'Attending an Event'];
+                     'Personal Emergency', 'Others'];
 
-/** Column order of 'Leave Request Sheet' (0-based), verified against the sheet. */
+/* Column order of "Leave Request Sheet" (0-based), verified against the tab. */
 var LV_MONTH = 0, LV_AGENT = 1, LV_TYPE = 2, LV_REASON = 3, LV_DETAILS = 4,
     LV_MANILA = 5, LV_PST = 6, LV_STATUS = 7, LV_APPROVED_ON = 8, LV_NOTES = 9;
 
-/**
- * POST handler. Accepts form-encoded or JSON body:
- *   { action:'submitLeave', agent, leaveType, reason, date:'YYYY-MM-DD', details }
- */
+/* ---------------- tiny helpers (self-contained) ---------------- */
+function S(v) { return (v === undefined || v === null) ? '' : String(v).trim(); }
+
+function canonAgent(v) {
+  return S(v).toLowerCase()
+    .replace(/[^a-z ]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function isDate(v) {
+  if (v instanceof Date) return !isNaN(v.getTime());
+  var d = new Date(v);
+  return !isNaN(d.getTime());
+}
+
+function getSchedSheetId() { return SCHED_SHEET_ID; }
+
+/* ---------------- POST handler ---------------- */
 function doPost(e) {
   var out = { ok: false };
   try {
@@ -45,11 +72,16 @@ function doPost(e) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+function doGet() {
+  return ContentService.createTextOutput(JSON.stringify({ ok: true, service: 'leave-submit' }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
 function parseBody(e) {
   if (!e) return {};
   if (e.postData && e.postData.contents) {
     var raw = e.postData.contents;
-    // form-encoded (used by the dashboard to avoid a CORS preflight)
+    // form-encoded wrapper (used by the dashboard to avoid a CORS preflight)
     if (raw.indexOf('=') > -1 && raw.indexOf('{') !== 0) {
       var o = {};
       raw.split('&').forEach(function (kv) {
@@ -73,7 +105,6 @@ function oneOf(v, list, label) {
   throw new Error('Please choose a valid ' + label + '.');
 }
 
-/** 'YYYY-MM-DD' -> Date at local noon (noon avoids timezone date-shift). */
 function parseYmd(s) {
   var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(S(s));
   if (!m) throw new Error('Please choose a valid leave date.');
@@ -83,11 +114,15 @@ function parseYmd(s) {
 }
 
 function submitLeave(p) {
-  var ss = SpreadsheetApp.openById(getSchedSheetId());
+  var ss = (typeof SpreadsheetApp !== 'undefined' && SpreadsheetApp.getActiveSpreadsheet())
+           ? SpreadsheetApp.getActiveSpreadsheet()
+           : SpreadsheetApp.openById(getSchedSheetId());
   var sh = ss.getSheetByName(LEAVE_TAB);
   if (!sh) throw new Error('Leave Request Sheet not found.');
 
-  // ---- validate every field against the sheet's real vocabulary ----
+  // accept either dashboard field name
+  var dateStr = p.date || p.dateManila;
+
   var agent = S(p.agent);
   if (!agent) throw new Error('Please select your name.');
   agent = matchExistingAgent(sh, agent);
@@ -95,16 +130,16 @@ function submitLeave(p) {
   var type   = oneOf(p.leaveType, LEAVE_TYPES, 'leave type');
   var reason = oneOf(p.reason, LEAVE_REASONS, 'reason');
 
-  var manila = parseYmd(p.date);
+  var manila = parseYmd(dateStr);
   if (manila.getFullYear() !== DATA_YEAR) {
     throw new Error('Leave dates must be within ' + DATA_YEAR + '.');
   }
-  // PST date is one day behind Manila (matches every existing row)
+  // PST is one day behind Manila (matches every existing row)
   var pst = new Date(manila.getTime() - 24 * 60 * 60 * 1000);
 
   var details = S(p.details).slice(0, 300);
 
-  // ---- duplicate guard ----
+  // duplicate guard
   var last = sh.getLastRow();
   if (last > 1) {
     var existing = sh.getRange(2, 1, last - 1, 8).getValues();
@@ -117,18 +152,17 @@ function submitLeave(p) {
     }
   }
 
-  // ---- append, matching the existing column layout ----
   var row = [];
-  row[LV_MONTH]  = monthName(manila);
-  row[LV_AGENT]  = agent;
-  row[LV_TYPE]   = type;
-  row[LV_REASON] = reason;
-  row[LV_DETAILS] = details;
-  row[LV_MANILA] = manila;
-  row[LV_PST]    = pst;
-  row[LV_STATUS] = 'Pending';          // never auto-approved
+  row[LV_MONTH]       = monthName(manila);
+  row[LV_AGENT]       = agent;
+  row[LV_TYPE]        = type;
+  row[LV_REASON]      = reason;
+  row[LV_DETAILS]     = details;
+  row[LV_MANILA]      = manila;
+  row[LV_PST]         = pst;
+  row[LV_STATUS]      = 'Pending';   // never auto-approved
   row[LV_APPROVED_ON] = '';
-  row[LV_NOTES]  = 'Filed via dashboard ' + fmtStampSheet(new Date());
+  row[LV_NOTES]       = 'Filed via dashboard ' + fmtStampSheet(new Date());
   for (var c = 0; c < 10; c++) if (row[c] === undefined) row[c] = '';
 
   var target = firstEmptyLeaveRow(sh);
@@ -139,16 +173,10 @@ function submitLeave(p) {
   return {
     message: 'Leave request submitted and is now Pending approval.',
     row: target,
-    saved: { agent: agent, leaveType: type, reason: reason,
-             date: p.date, status: 'Pending' }
+    saved: { agent: agent, leaveType: type, reason: reason, date: dateStr, status: 'Pending' }
   };
 }
 
-/**
- * The sheet uses short names ('Dan Mae David', 'Claudette Ibong') while the
- * dashboard shows full names. Reuse the sheet's own spelling when we can, so
- * the new row groups with that agent's existing rows.
- */
 function matchExistingAgent(sh, incoming) {
   var last = sh.getLastRow();
   if (last > 1) {
@@ -164,7 +192,6 @@ function matchExistingAgent(sh, incoming) {
 
 function firstEmptyLeaveRow(sh) {
   var last = sh.getLastRow();
-  // the tab has ~893 blank formatted rows; find the first truly empty one
   if (last > 1) {
     var vals = sh.getRange(2, 1, last - 1, 8).getValues();
     for (var i = 0; i < vals.length; i++) {
@@ -189,10 +216,7 @@ function monthName(d) {
 }
 
 function fmtStampSheet(d) {
-  return Utilities.formatDate(d, Session.getScriptTimeZone() || 'Asia/Manila', 'MMM d, yyyy');
-}
-
-/** Options for the dashboard's leave form - always from the live sheet. */
-function leaveFormOptions() {
-  return { leaveTypes: LEAVE_TYPES, reasons: LEAVE_REASONS };
+  try {
+    return Utilities.formatDate(d, Session.getScriptTimeZone() || 'Asia/Manila', 'MMM d, yyyy');
+  } catch (e) { return String(d); }
 }
