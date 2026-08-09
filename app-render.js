@@ -64,10 +64,7 @@ function renderOverview() {
     items.push({ label: 'Total Calls Handled', value: n0(sum(cl.map(function (r) { return r.pickedUp; }))), sub: 'picked up' });
     items.push({ label: 'Total Call Attempts', value: n0(sum(cl.map(function (r) { return r.attempts; }))), sub: 'ringing attempts' });
   }
-  if (dp.length) {
-    items.push({ label: 'Calls Handled', value: n0(sum(cl.length ? cl.map(function (r) { return r.pickedUp; }) : [0])), sub: 'all agents, current week' });
-  }
-  items.push({ label: 'Top Performing CSR', html: rank[0] ? '<span style="font-size:18px">' + esc(rank[0].agent) + '</span>' : '\u2014',
+  items.push({ label: 'Top Performing CSR', html: rank[0] ? '<span style="font-size:18px">' + esc(rank[0].agent) + '</span>' : '—',
                sub: rank[0] && rank[0].overall !== null ? pct(rank[0].overall, 2) + ' overall' : '' , tone: 'good' });
   items.push({ label: 'Current Week', html: curWeek ? fmtWeek(curWeek) : '\u2014', sub: curWeek || 'all weeks' });
   kpi('ovKpis', items);
