@@ -253,7 +253,39 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   .formbtns .btn,.formbtns .btn-ghost{flex:1}
 }
 
-/* ---------- overlays ---------- */
+/* ---------- cute vertical leave form ---------- */
+.cute-form{display:flex;flex-direction:column;gap:14px;margin-top:6px}
+.cf-field{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;
+  color:var(--ink2);text-transform:uppercase;letter-spacing:.03em}
+.cf-field select,.cf-field input{width:100%;padding:11px 13px;border:1.5px solid var(--line);
+  border-radius:13px;background:#fff;color:var(--ink);font-size:14.5px;font-weight:500;
+  font-family:inherit;text-transform:none;letter-spacing:normal;min-width:0;transition:.15s}
+.cf-field select:focus,.cf-field input:focus{outline:none;border-color:var(--rose);
+  box-shadow:0 0 0 4px rgba(232,87,142,.16)}
+.cf-field select{appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23C93B72' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>");
+  background-repeat:no-repeat;background-position:right 12px center;padding-right:34px}
+.cf-submit{align-self:flex-start;margin-top:4px;background:linear-gradient(100deg,var(--rose),var(--rose-d));
+  color:#fff;border:none;border-radius:13px;padding:12px 26px;font-size:14px;font-weight:700;
+  font-family:inherit;cursor:pointer;box-shadow:0 6px 18px rgba(232,87,142,.36);transition:.15s}
+.cf-submit:hover{transform:translateY(-2px);box-shadow:0 9px 24px rgba(232,87,142,.46)}
+.cf-submit:active{transform:translateY(0)}
+.cf-msg{margin:0;font-size:13px;font-weight:600;padding:11px 14px;border-radius:11px}
+.cf-msg.ok{background:#EAF7EF;color:#2E7D53;border:1px solid #BFE6CF}
+.cf-msg.err{background:#FDECEC;color:#B04141;border:1px solid #F3C9C9}
+
+/* ---------- leave request cards (vertical stack) ---------- */
+.leave-cards{display:flex;flex-direction:column;gap:11px;max-height:560px;overflow-y:auto;padding-right:2px}
+.leave-card{background:linear-gradient(180deg,#fff,#FFF6FA);border:1.5px solid var(--line);
+  border-radius:14px;padding:13px 15px;box-shadow:0 3px 10px rgba(232,87,142,.08);transition:.15s}
+.leave-card:hover{border-color:var(--dusty);box-shadow:0 5px 16px rgba(232,87,142,.16);transform:translateY(-1px)}
+.lc-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.lc-agent{font-weight:800;font-size:15px;color:var(--ink)}
+.lc-meta{margin-top:5px;font-size:13.5px;color:var(--ink2)}
+.lc-date{margin-top:4px;font-size:13px;color:var(--ink3);font-weight:600}
+.lc-details{margin-top:6px;font-size:12.5px;color:var(--ink3);background:#FFF0F6;border-radius:9px;padding:7px 10px}
+
+
 /* display:grid/flex would override the [hidden] attribute and leave an
    invisible overlay swallowing every click - keep these rules. */
 [hidden]{display:none !important}

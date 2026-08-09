@@ -106,9 +106,9 @@ function wire() {
     F = { agent: 'ALL', week: 'ALL', from: '', to: '' };
     $('fAgent').value = 'ALL'; $('fWeek').value = 'ALL';
     $('fFrom').value = ''; $('fTo').value = '';
-    ['prSearch', 'clSearch', 'qaSearch', 'scSearch', 'tsSearch', 'otSearch', 'bkSearch', 'lvSearch']
+    ['prSearch', 'clSearch', 'qaSearch', 'scSearch', 'tsSearch', 'otSearch', 'bkSearch']
       .forEach(function (id) { if ($(id)) $(id).value = ''; });
-    ['prTable', 'clTable', 'qaTable', 'qaRank', 'scTable', 'scDetail', 'tsTable', 'otTable', 'bkTable', 'lvTable']
+    ['prTable', 'clTable', 'qaTable', 'qaRank', 'scTable', 'scDetail', 'tsTable', 'otTable', 'bkTable']
       .forEach(function (id) { if ($(id) && $(id)._st) { $(id)._st.q = ''; $(id)._st.page = 1; } });
     render();
     toast('Filters reset.');
@@ -134,7 +134,6 @@ function wire() {
   wireSearch('tsSearch', 'tsTable');
   wireSearch('otSearch', 'otTable');
   wireSearch('bkSearch', 'bkTable');
-  wireSearch('lvSearch', 'lvTable');
 
   var lf = $('leaveForm');
   if (lf) lf.onsubmit = function (e) {

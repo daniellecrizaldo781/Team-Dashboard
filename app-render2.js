@@ -212,23 +212,34 @@ function renderLeaves() {
     { label: 'Declined', value: n0(lv.filter(function (r) { return r.statusNorm === 'Declined'; }).length), sub: 'declined', tone: 'bad' }
   ]);
 
-  makeTable('lvTable', [
-    { key: 'agent', label: 'Agent' },
-    { key: 'leaveType', label: 'Type' },
-    { key: 'reason', label: 'Reason' },
-    { key: 'date', label: 'Date (Manila)', fmt: function (r) { return r.dateManila ? fmtDate(r.dateManila) : (r.date ? fmtDate(r.date) : '—'); }, sortVal: function (r) { return r.date || r.dateManila || ''; } },
-    { key: 'status', label: 'Status', fmt: function (r) {
-        var k = STATUS_CLASS[r.statusNorm] || 'n';
-        return '<span class="pill ' + k + '">' + esc(r.statusNorm || r.status || '—') + '</span>';
-      } }
-  ], lv, { sort: 'date', dir: 'desc', per: 25, pagerId: 'lvPager', empty: 'No leave requests available for the selected filters.' });
+  // leave list is rendered as vertical cards below (see lvList)
 
-  // populate agent dropdown from known agents
+  // populate agent dropdown from ALL known agents (not just those with prior leaves)
   var sel = $('lvAgent');
   if (sel && !sel.dataset.filled) {
-    var agents = uniq(lv.map(function (r) { return r.agent; })).sort();
+    var agents = allAgents(DATA);
     sel.innerHTML = agents.map(function (a) { return '<option value="' + esc(a) + '">' + esc(a) + '</option>'; }).join('');
     sel.dataset.filled = '1';
+  }
+
+  // leave list as cute vertical cards (one per request, stacked)
+  var list = $('lvList');
+  if (list) {
+    if (!lv.length) {
+      list.innerHTML = '<div class="empty"><b>No leave requests</b>No leave requests available for the selected filters.</div>';
+    } else {
+      list.innerHTML = lv.map(function (r) {
+        var k = STATUS_CLASS[r.statusNorm] || 'n';
+        var when = r.dateManila ? fmtDate(r.dateManila) : (r.date ? fmtDate(r.date) : '—');
+        return '<div class="leave-card">' +
+          '<div class="lc-top"><span class="lc-agent">' + esc(r.agent) + '</span>' +
+            '<span class="pill ' + k + '">' + esc(r.statusNorm || r.status || '—') + '</span></div>' +
+          '<div class="lc-meta">' + esc(r.leaveType || '—') + ' &middot; ' + esc(r.reason || '—') + '</div>' +
+          '<div class="lc-date">📅 ' + when + '</div>' +
+          (r.details ? '<div class="lc-details">' + esc(r.details) + '</div>' : '') +
+        '</div>';
+      }).join('');
+    }
   }
 }
 
