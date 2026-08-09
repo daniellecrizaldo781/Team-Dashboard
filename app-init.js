@@ -8,6 +8,7 @@ var PAGE_META = {
   calls:        ['Weekly Call Stats', 'Call volume and pickup performance by week'],
   qa:           ['QA Scores', 'Quality evaluations and rankings for all agents'],
   scorecards:   ['Scorecards', 'Official overall scores and team ranking'],
+  monthly:      ['Monthly Scorecard', 'Monthly overall scores from the Monthly Scorecard tab'],
   schedule:     ['Team Schedule', 'Shifts and rest days by agent'],
   otbreak:      ['OT & Break Schedule', 'Overtime and break assignments'],
   leave:        ['Leave Requests', 'File and view leave requests'],
@@ -21,6 +22,7 @@ function render() {
   try { renderCalls(); }        catch (e) { console.error('calls', e); }
   try { renderQa(); }           catch (e) { console.error('qa', e); }
   try { renderScorecards(); }   catch (e) { console.error('scorecards', e); }
+  try { renderMonthly(); }      catch (e) { console.error('monthly', e); }
   try { renderSchedule(); }     catch (e) { console.error('schedule', e); }
   try { renderOtBreak(); }      catch (e) { console.error('otbreak', e); }
   try { renderLeaves(); }       catch (e) { console.error('leave', e); }

@@ -28,7 +28,7 @@ const T = {
   qaScores:          ['agent','date','week','day','score','link','notes'],
   qaBreakdown:       ['agent','week','jacky','tl','finalQA','productivityPct','finalProductivity'],
   scorecards:        ['week','weekLabel','section','agent','metric','value','raw'],
-  monthlyScores:     ['agent','period','metric','value','raw'],
+  monthlyScores:     ['agent','period','label','type','score'],
   teamSchedule:      ['agent','date','week','day','shift','off','source'],
   otSchedule:        ['agent','date','week','day','otTime','hours','hotline'],
   breakSchedule:     ['agent','day','firstBreak','lunchBreak','lastBreak','team','off','source'],

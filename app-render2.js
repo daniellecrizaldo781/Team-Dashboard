@@ -56,12 +56,80 @@ function renderScorecards() {
   // weekly scorecard metric detail (from the WEEKLY SCORECARD tab)
   var sd = slice(DATA.scorecards);
   makeTable('scDetail', [
-    { key: 'week', label: 'Week', fmt: function (r) { return r.week ? fmtWeek(r.week) : esc(r.weekLabel || '\u2014'); }, sortVal: function (r) { return r.week; } },
+    { key: 'week', label: 'Week', fmt: function (r) { return r.week ? fmtWeek(r.week) : esc(r.weekLabel || '—'); }, sortVal: function (r) { return r.week; } },
     { key: 'agent', label: 'Agent' },
-    { key: 'section', label: 'Section', fmt: function (r) { return r.section ? '<span class="pill n">' + esc(r.section) + '</span>' : '\u2014'; } },
+    { key: 'section', label: 'Section', fmt: function (r) { return r.section ? '<span class="pill n">' + esc(r.section) + '</span>' : '—'; } },
     { key: 'metric', label: 'Metric' },
-    { key: 'raw', label: 'Value', num: true, fmt: function (r) { return esc(r.raw || '\u2014'); }, sortVal: function (r) { return r.value; } }
+    { key: 'raw', label: 'Value', num: true, fmt: function (r) { return esc(r.raw || '—'); }, sortVal: function (r) { return r.value; } }
   ], sd, { sort: 'week', dir: 'desc', per: 30, pagerId: null, empty: 'No scorecard metrics available for the selected filters.' });
+}
+
+/* ---------------- MONTHLY SCORECARD ---------------- */
+function renderMonthly() {
+  var ms = slice(DATA.monthlyScores || []);
+  var months = ms.filter(function (r) { return r.type === 'month'; });
+  var weeks  = ms.filter(function (r) { return r.type === 'week'; });
+
+  // distinct months sorted by their date (period is "Month YYYY")
+  var monthList = uniq(months.map(function (r) { return r.period; })).sort(function (a, b) {
+    return monthSortKey(a) - monthSortKey(b);
+  });
+
+  // KPIs
+  var periods = {};
+  months.forEach(function (r) { (periods[r.agent] = periods[r.agent] || []).push(r); });
+  var latest = monthList[monthList.length - 1];
+  var latestRows = months.filter(function (r) { return r.period === latest; });
+  var latestSorted = latestRows.slice().sort(function (a, b) { return b.score - a.score; });
+  var avgLatest = latestSorted.length ? avg(latestSorted.map(function (r) { return r.score; })) : null;
+  kpi('moKpis', [
+    { label: 'Months Covered', value: n0(monthList.length), sub: monthList.length ? monthList[0] + ' – ' + latest : '' },
+    { label: 'Agents', value: n0(uniq(months.map(function (r) { return r.agent; })).length), sub: 'with monthly scores' },
+    { label: 'Latest Month Avg', html: avgLatest !== null ? pct(avgLatest, 2) : '—',
+      sub: latest || '', tone: avgLatest !== null && avgLatest >= 0.95 ? 'good' : 'warn' },
+    { label: 'Latest Month Top', html: latestSorted[0] ? scorePill(latestSorted[0].score, 2) : '—',
+      sub: latestSorted[0] ? latestSorted[0].agent : '', tone: 'good' },
+    { label: 'Months >= 95%', value: n0(monthList.filter(function (m) {
+        var rs = months.filter(function (r) { return r.period === m; });
+        return rs.length && avg(rs.map(function (r) { return r.score; })) >= 0.95;
+      }).length), sub: 'team avg excellent' },
+    { label: 'Months < 85%', value: n0(monthList.filter(function (m) {
+        var rs = months.filter(function (r) { return r.period === m; });
+        return rs.length && avg(rs.map(function (r) { return r.score; })) < 0.85;
+      }).length), sub: 'needs attention', tone: 'warn' }
+  ]);
+
+  // Latest month bar chart
+  barChart('chMoLatest', latestSorted.map(function (r) { return r.agent; }),
+    latestSorted.map(function (r) { return r.score; }),
+    { percent: true, horizontal: true, label: 'Overall Score',
+      colors: latestSorted.map(function (r) { return r.score >= 0.95 ? PINK.rose : (r.score >= 0.85 ? PINK.dusty : PINK.bad); }) });
+
+  // Monthly trend: average team score per month (line)
+  if (monthList.length) {
+    lineChart('chMoTrend', monthList,
+      [{ label: 'Team Avg Score', data: monthList.map(function (m) {
+          var rs = months.filter(function (r) { return r.period === m; });
+          return rs.length ? avg(rs.map(function (r) { return r.score; })) : null;
+        }) }], {});
+  } else { chartEmpty('chMoTrend'); }
+
+  // Month selector + records table
+  var sel = $('moMonth');
+  if (sel) {
+    var cur = F.moMonth && monthList.indexOf(F.moMonth) >= 0 ? F.moMonth : latest;
+    sel.innerHTML = monthList.map(function (m) { return '<option value="' + esc(m) + '">' + esc(m) + '</option>'; }).join('');
+    sel.value = cur;
+    sel.onchange = function () { F.moMonth = this.value; renderMonthly(); };
+    var rows = months.filter(function (r) { return r.period === cur; })
+      .sort(function (a, b) { return b.score - a.score; });
+    makeTable('moTable', [
+      { key: 'rank', label: 'Rank', num: true, fmt: function (r, i) { return '<span class="rank">' + (i + 1) + '</span>'; } },
+      { key: 'agent', label: 'Agent' },
+      { key: 'period', label: 'Month', fmt: function (r) { return esc(r.period); } },
+      { key: 'score', label: 'Overall Score', num: true, fmt: function (r) { return scorePill(r.score, 2); } }
+    ], rows, { sort: 'score', dir: 'desc', empty: 'No monthly scorecard records available.' });
+  }
 }
 
 /* ---------------- TEAM SCHEDULE ---------------- */

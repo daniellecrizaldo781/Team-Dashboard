@@ -3,7 +3,7 @@
  * ============================================================ */
 
 var DATA = null;                 // last good payload
-var F = { agent: 'ALL', week: 'ALL', from: '', to: '' };
+var F = { agent: 'ALL', week: 'ALL', moMonth: '', from: '', to: '' };
 var PAGE = 'overview';
 var CACHE_KEY = 'tpcc_cache_v1'; // data cache only - never a credential
 
@@ -20,6 +20,14 @@ function esc(s) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 }
+/* "January 2026" -> 202601 ; orders month labels chronologically */
+function monthSortKey(label) {
+  var MON = { jan:1, feb:2, mar:3, apr:4, may:5, jun:6, jul:7, aug:8, sep:9, oct:10, nov:11, dec:12 };
+  var m = String(label || '').toLowerCase().match(/([a-z]{3})\w*\s*(\d{4})/);
+  if (!m) return 0;
+  return (+m[2]) * 100 + (MON[m[1].slice(0,3)] || 0);
+}
+
 function uniq(arr) { var s = {}, o = []; arr.forEach(function (v) { if (v && !s[v]) { s[v] = 1; o.push(v); } }); return o; }
 function sum(a) { return a.reduce(function (x, y) { return x + (y || 0); }, 0); }
 function avg(a) { var v = a.filter(function (x) { return typeof x === 'number' && !isNaN(x); }); return v.length ? sum(v) / v.length : null; }

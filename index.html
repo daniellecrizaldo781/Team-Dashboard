@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Team Performance Command Center</title>
-<link rel="stylesheet" href="styles.css?v=19">
+<link rel="stylesheet" href="styles.css?v=20">
 </head>
 <body>
 
@@ -22,6 +22,7 @@
     <button class="nav-btn" data-page="calls"><span>&#9742;</span>Weekly Call Stats</button>
     <button class="nav-btn" data-page="qa"><span>&#9733;</span>QA Scores</button>
     <button class="nav-btn" data-page="scorecards"><span>&#9878;</span>Scorecards</button>
+    <button class="nav-btn" data-page="monthly"><span>&#128202;</span>Monthly Scorecard</button>
     <button class="nav-btn" data-page="schedule"><span>&#9200;</span>Team Schedule</button>
     <button class="nav-btn" data-page="otbreak"><span>&#9203;</span>OT &amp; Break</button>
     <button class="nav-btn" data-page="leave"><span>&#9786;</span>Leave Requests</button>
@@ -206,6 +207,21 @@
     </div>
   </section>
 
+  <!-- MONTHLY SCORECARD -->
+  <section class="page" id="pageMonthly" hidden>
+    <div class="kpis" id="moKpis"></div>
+    <div class="grid2">
+      <div class="card"><h3>Latest Month &mdash; Overall Score by Agent</h3><div class="chartbox"><canvas id="chMoLatest"></canvas></div></div>
+      <div class="card"><h3>Monthly Overall Score Trend</h3><div class="chartbox"><canvas id="chMoTrend"></canvas></div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Monthly Scorecard Records</h3>
+        <select class="search" id="moMonth"></select>
+      </div>
+      <div class="tscroll"><table id="moTable"></table></div>
+    </div>
+  </section>
+
   <footer class="foot">Created by Danielle Ann Mari Crizaldo &mdash; Call Team Lead</footer>
 </main>
 
@@ -213,12 +229,12 @@
 <div class="toast" id="toast" hidden></div>
 
 <script src="chart.umd.min.js"></script>
-<script src="config.js?v=19"></script>
-<script src="data.js?v=19"></script>
-<script src="app-core.js?v=19"></script>
-<script src="app-charts.js?v=19"></script>
-<script src="app-render.js?v=19"></script>
-<script src="app-render2.js?v=19"></script>
-<script src="app-init.js?v=19"></script>
+<script src="config.js?v=20"></script>
+<script src="data.js?v=20"></script>
+<script src="app-core.js?v=20"></script>
+<script src="app-charts.js?v=20"></script>
+<script src="app-render.js?v=20"></script>
+<script src="app-render2.js?v=20"></script>
+<script src="app-init.js?v=20"></script>
 </body>
 </html>
