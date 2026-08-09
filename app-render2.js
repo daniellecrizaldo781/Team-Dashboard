@@ -117,15 +117,6 @@ function renderSchedule() {
     h += '</tbody></table>';
     grid.innerHTML = h;
   }
-
-  makeTable('tsTable', [
-    { key: 'date', label: 'Date', fmt: function (r) { return fmtDate(r.date); }, sortVal: function (r) { return r.date; } },
-    { key: 'day', label: 'Day' },
-    { key: 'agent', label: 'Agent' },
-    { key: 'shift', label: 'Shift', fmt: function (r) { return shiftPill(r.shift, r.off); } },
-    { key: 'week', label: 'Week', fmt: function (r) { return fmtWeek(r.week); }, sortVal: function (r) { return r.week; } },
-    { key: 'source', label: 'Source' }
-  ], ts, { sort: 'date', dir: 'desc', per: 25, pagerId: 'tsPager', empty: 'No schedule records available for the selected filters.' });
 }
 
 /* ---------------- OT & BREAK ---------------- */
@@ -176,16 +167,6 @@ function renderOtBreak() {
     grid.innerHTML = h;
   }
 
-  makeTable('otTable', [
-    { key: 'date', label: 'Date', fmt: function (r) { return fmtDate(r.date); }, sortVal: function (r) { return r.date; } },
-    { key: 'day', label: 'Day' },
-    { key: 'agent', label: 'Agent' },
-    { key: 'otTime', label: 'OT Schedule', fmt: function (r) { return '<span class="pill n">' + esc(r.otTime) + '</span>'; } },
-    { key: 'hours', label: 'Hours', num: true, fmt: function (r) { return r.hours === null ? '—' : n1(r.hours); } },
-    { key: 'hotline', label: 'Hotline', fmt: function (r) { return esc(r.hotline || '—'); } },
-    { key: 'week', label: 'Week', fmt: function (r) { return fmtWeek(r.week); }, sortVal: function (r) { return r.week; } }
-  ], ot, { sort: 'date', dir: 'desc', empty: 'No OT records available for the selected filters.' });
-
   // breaks carry no date column in the source, so only the agent filter applies
   var bk = (DATA.breakSchedule || []).filter(function (r) { return F.agent === 'ALL' || r.agent === F.agent; });
   makeTable('bkTable', [
@@ -194,8 +175,7 @@ function renderOtBreak() {
     { key: 'firstBreak', label: 'First Break', fmt: function (r) { return r.off ? '<span class="pill off">OFF</span>' : esc(r.firstBreak || '—'); } },
     { key: 'lunchBreak', label: 'Lunch Break', fmt: function (r) { return esc(r.lunchBreak || '—'); } },
     { key: 'lastBreak', label: 'Last Break', fmt: function (r) { return esc(r.lastBreak || '—'); } },
-    { key: 'team', label: 'Team', fmt: function (r) { return r.team ? '<span class="pill n">' + esc(r.team) + '</span>' : '—'; } },
-    { key: 'source', label: 'Source' }
+    { key: 'team', label: 'Team', fmt: function (r) { return r.team ? '<span class="pill n">' + esc(r.team) + '</span>' : '—'; } }
   ], bk, { sort: 'agent', dir: 'asc', empty: 'No break schedule available for this agent.' });
 }
 
