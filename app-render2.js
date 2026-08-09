@@ -184,6 +184,12 @@ var STATUS_CLASS = { Approved: 'ok', Pending: 'warn', Declined: 'bad' };
 
 function renderLeaves() {
   var lv = slice(DATA.leaveRequests);
+  // hide leaves whose date has already passed (Manila time) to avoid clutter
+  var todayMNL = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+  lv = lv.filter(function (r) {
+    var d = r.dateManila || r.date || '';
+    return !d || d >= todayMNL;
+  });
   // chronological order: by leave date (Manila), oldest first; undated sink to end
   lv.sort(function (a, b) {
     var da = a.dateManila || a.date || '', db = b.dateManila || b.date || '';
