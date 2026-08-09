@@ -36,6 +36,9 @@ select,input{font:inherit;color:var(--ink)}
 }
 .brand h1{font-size:15px;line-height:1.2}
 .brand p{margin:2px 0 0;font-size:11.5px;color:var(--mauve);letter-spacing:.04em;text-transform:uppercase}
+.brand-heart{color:var(--rose);font-size:13px;vertical-align:middle}
+.brand-mark{transition:transform .2s}
+.brand-mark:hover{transform:rotate(-6deg) scale(1.05)}
 #nav{padding:14px 10px;display:flex;flex-direction:column;gap:3px;overflow-y:auto;flex:1}
 .nav-btn{
   display:flex;align-items:center;gap:10px;width:100%;
