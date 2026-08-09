@@ -1,0 +1,69 @@
+name: Refresh dashboard data
+
+# Rebuilds data.js from the two Google Sheets and commits it when it changes.
+# Sheet IDs live in repo secrets (NOT credentials, just the doc IDs) and never
+# touch the committed files. No Google account/service account/key is used -
+# the sheets are link-shared ("Anyone with the link") and exported publicly.
+
+on:
+  schedule:
+    - cron: '0 * * * *'      # hourly, on the hour (UTC)
+  workflow_dispatch:          # lets you run it by hand from the Actions tab
+
+# needed so the job can push the refreshed data.js back to the repo
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-data
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: pip install --quiet openpyxl
+
+      - name: Download both sheets
+        working-directory: tools
+        env:
+          PERF_SHEET_ID: ${{ secrets.PERF_SHEET_ID }}
+          SCHED_SHEET_ID: ${{ secrets.SCHED_SHEET_ID }}
+        run: python fetch.py
+
+      - name: Convert sheets to grids
+        working-directory: tools
+        run: python togrid.py
+
+      - name: Run the parsers
+        working-directory: tools
+        run: node mkmock.js
+
+      - name: Bake data.js
+        run: node tools/bake.js
+
+      - name: Sanity-check the result
+        run: node tools/checkdata.js
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- data.js; then
+            echo "data.js unchanged - nothing to commit"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data.js
+          git commit -m "Refresh dashboard data ($(date -u '+%Y-%m-%d %H:%M UTC'))"
+          git push

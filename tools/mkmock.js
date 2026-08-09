@@ -35,7 +35,11 @@ const out = {
 out.leaveFormOptions = leaveFormOptions();
 const before = {}; Object.keys(out).forEach(k=>{ if(Array.isArray(out[k])) before[k]=out[k].length; });
 restrictToYear(out, DATA_YEAR);
+// Scorecards stay full-history (WEEKLY SCORECARD reaches back to January);
+// every other dataset is trimmed to on/after DATA_FROM (August).
+const scorecardsFull = out.scorecards;
 restrictFrom(out, DATA_FROM);
+out.scorecards = scorecardsFull;
 out.dataYear = DATA_YEAR;
 out.dataFrom = DATA_FROM;
 console.log('year filter (before -> after):');

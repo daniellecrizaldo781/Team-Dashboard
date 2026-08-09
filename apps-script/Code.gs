@@ -61,10 +61,14 @@ function doGet(e) {
 
 function S(v) { return (v === null || v === undefined) ? '' : String(v).replace(/\s+/g, ' ').trim(); }
 
-function isDate(v) { return Object.prototype.toString.call(v) === '[object Date]' && !isNaN(v); }
+function isDate(v) {
+  if (v && typeof v === 'object' && typeof v.__d === 'string') return true;  // togrid.py date shape
+  return Object.prototype.toString.call(v) === '[object Date]' && !isNaN(v);
+}
 
 /** Date -> 'YYYY-MM-DD' local, never round-tripped through UTC parsing. */
 function iso(d) {
+  if (d && typeof d === 'object' && typeof d.__d === 'string') return d.__d;  // togrid.py date shape
   if (!isDate(d)) return '';
   var m = d.getMonth() + 1, day = d.getDate();
   return d.getFullYear() + '-' + (m < 10 ? '0' + m : m) + '-' + (day < 10 ? '0' + day : day);
@@ -189,7 +193,11 @@ function buildData() {
   d.leaveFormOptions = safe(function () { return leaveFormOptions(); },
                             { leaveTypes: [], reasons: [] }, 'leaveFormOptions');
   d = restrictToYear(d, DATA_YEAR);
+  // Scorecards stay full-history (the WEEKLY SCORECARD tab reaches back to
+  // January); every other dataset is trimmed to on/after DATA_FROM (August).
+  var scorecardsFull = d.scorecards;
   d = restrictFrom(d, DATA_FROM);
+  d.scorecards = scorecardsFull;
   d.dataYear = DATA_YEAR;
   d.dataFrom = DATA_FROM;
   d.warnings = WARN;
