@@ -208,6 +208,9 @@ function renderLeaves() {
 
   // leave list is rendered as vertical cards below (see lvList)
 
+  // month calendar grid (at-a-glance leaves per date)
+  renderLeaveCalendar(lv);
+
   // PIN gate: lvAgent is a locked text field, filled by verifyPin() in app-init.
   // (no dropdown population needed)
 
@@ -230,6 +233,59 @@ function renderLeaves() {
       }).join('');
     }
   }
+}
+
+/* Leave calendar: a month grid showing which agents are on leave per day.
+ * Only shows the months that actually have leaves (no empty months). */
+function renderLeaveCalendar(lv) {
+  var wrap = $('lvCalWrap');
+  if (!wrap) return;
+  if (!lv.length) { wrap.innerHTML = ''; return; }
+
+  var months = {};
+  lv.forEach(function (r) {
+    var d = r.dateManila || r.date || '';
+    if (!d) return;
+    var m = d.slice(0, 7);
+    (months[m] = months[m] || []).push(r);
+  });
+  var monthKeys = Object.keys(months).sort();
+  if (!monthKeys.length) { wrap.innerHTML = ''; return; }
+
+  var todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+  var html = '';
+  monthKeys.forEach(function (m) {
+    var y = +m.slice(0, 4), mo = +m.slice(5, 7) - 1;
+    var first = new Date(y, mo, 1);
+    var startDow = (first.getDay() + 6) % 7; // Mon=0
+    var daysInMonth = new Date(y, mo + 1, 0).getDate();
+    var byDay = {};
+    months[m].forEach(function (r) {
+      var day = (+ (r.dateManila || r.date).slice(8, 10));
+      (byDay[day] = byDay[day] || []).push(r);
+    });
+    var monthName = first.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    html += '<div class="cal-month"><div class="cal-title">' + esc(monthName) + '</div>';
+    html += '<div class="cal-grid"><div class="cal-dow">Mon</div><div class="cal-dow">Tue</div><div class="cal-dow">Wed</div><div class="cal-dow">Thu</div><div class="cal-dow">Fri</div><div class="cal-dow">Sat</div><div class="cal-dow">Sun</div>';
+    for (var i = 0; i < startDow; i++) html += '<div class="cal-cell cal-empty"></div>';
+    for (var day = 1; day <= daysInMonth; day++) {
+      var rows = byDay[day] || [];
+      var isToday = todayStr === (y + '-' + String(mo + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0'));
+      html += '<div class="cal-cell' + (rows.length ? ' cal-has' : '') + (isToday ? ' cal-today' : '') + '">';
+      html += '<div class="cal-daynum">' + day + '</div>';
+      if (rows.length) {
+        html += '<div class="cal-leaves">';
+        rows.forEach(function (r) {
+          var k = STATUS_CLASS[r.statusNorm] || 'n';
+          html += '<span class="cal-pill ' + k + '" title="' + esc(r.agent) + ' - ' + esc(r.leaveType || '') + '">' + esc(r.agent.split(' ')[0]) + '</span>';
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+    html += '</div></div>';
+  });
+  wrap.innerHTML = html;
 }
 
 /** Submit a leave request: POST to the configured web-app endpoint, else keep

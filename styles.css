@@ -289,7 +289,23 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .lc-date{margin-top:4px;font-size:13px;color:var(--ink3);font-weight:600}
 .lc-details{margin-top:6px;font-size:12.5px;color:var(--ink3);background:#FFF0F6;border-radius:9px;padding:7px 10px}
 
-
+/* ---------- leave calendar (at-a-glance per date) ---------- */
+.cal-wrap{display:flex;flex-direction:column;gap:16px;margin-bottom:14px}
+.cal-month{background:#FBF7FA;border:1.5px solid var(--line);border-radius:14px;padding:11px 12px}
+.cal-title{font-weight:800;font-size:14px;color:var(--ink);margin-bottom:8px;text-align:center}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cal-dow{font-size:11px;font-weight:700;color:var(--ink3);text-align:center;padding-bottom:2px}
+.cal-cell{background:#fff;border:1px solid var(--line);border-radius:9px;min-height:54px;padding:4px 5px;display:flex;flex-direction:column;gap:3px}
+.cal-empty{background:transparent;border:none}
+.cal-has{background:linear-gradient(180deg,#FFF6FA,#FFF0F6);border-color:var(--rose)}
+.cal-today{outline:2px solid var(--rose-d);outline-offset:-1px}
+.cal-daynum{font-size:12px;font-weight:700;color:var(--ink2)}
+.cal-leaves{display:flex;flex-direction:column;gap:3px}
+.cal-pill{font-size:11px;font-weight:700;color:#fff;background:var(--dusty);border-radius:7px;padding:2px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-pill.ok{background:var(--ok)}
+.cal-pill.warn{background:#E0A200}
+.cal-pill.bad{background:var(--bad)}
+.cal-pill.n{background:#9aa0ab}
 /* display:grid/flex would override the [hidden] attribute and leave an
    invisible overlay swallowing every click - keep these rules. */
 [hidden]{display:none !important}
