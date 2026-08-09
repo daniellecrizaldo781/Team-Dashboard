@@ -65,7 +65,7 @@ function renderOverview() {
     items.push({ label: 'Total Call Attempts', value: n0(sum(cl.map(function (r) { return r.attempts; }))), sub: 'ringing attempts' });
   }
   if (dp.length) {
-    items.push({ label: 'Tickets Handled', value: n0(sum(dp.map(function (r) { return r.tickets; }))), sub: 'in current view' });
+    items.push({ label: 'Calls Handled', value: n0(sum(cl.length ? cl.map(function (r) { return r.pickedUp; }) : [0])), sub: 'all agents, current week' });
   }
   items.push({ label: 'Top Performing CSR', html: rank[0] ? '<span style="font-size:18px">' + esc(rank[0].agent) + '</span>' : '\u2014',
                sub: rank[0] && rank[0].overall !== null ? pct(rank[0].overall, 2) + ' overall' : '' , tone: 'good' });
@@ -106,7 +106,6 @@ function renderProductivity() {
   });
 
   kpi('prKpis', [
-    { label: 'Tickets Handled', value: n0(sum(worked.map(function (r) { return r.tickets; }))), sub: n0(worked.length) + ' working days' },
     { label: 'Avg Tickets / Day', value: n1(avg(worked.map(function (r) { return r.tickets; }))), sub: 'per agent per day' },
     { label: 'Avg Productivity', html: wkRows.length ? pct(avg(wkRows.map(function (r) { return r.prod; }))) : '\u2014',
       sub: 'actual vs target',
