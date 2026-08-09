@@ -14,4 +14,4 @@ window.DATA_SOURCE_NOTE = 'Auto-updates hourly';
  * To write straight to the Google Sheet, deploy a tiny Apps Script web app
  * from the leave-request sheet and paste its URL here. */
 window.DASHBOARD_CONFIG = window.DASHBOARD_CONFIG || {};
-window.DASHBOARD_CONFIG.leaveWebAppUrl = '';
+window.DASHBOARD_CONFIG.leaveWebAppUrl = 'https://script.google.com/macros/s/AKfycbxBF0FZwUavwneXqr9w4iDZXHGm2y0cZowJt8T7YVEfq8BlL1-h-F_EZ00YMHkJ17Emgw/exec';

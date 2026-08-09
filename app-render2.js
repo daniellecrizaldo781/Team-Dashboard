@@ -238,7 +238,10 @@ function submitLeave(payload) {
     } catch (e) {}
     return Promise.resolve({ ok: true, local: true });
   }
-  var body = 'action=submitLeave&payload=' + encodeURIComponent(JSON.stringify(payload));
+  // Embed action inside the payload: the Apps Script's parseBody returns only
+  // the inner payload JSON, so the action must live there (not just top-level).
+  var envelope = Object.assign({ action: 'submitLeave' }, payload);
+  var body = 'payload=' + encodeURIComponent(JSON.stringify(envelope));
   return fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
