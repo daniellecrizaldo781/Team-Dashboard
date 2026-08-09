@@ -136,21 +136,48 @@ function renderProductivity() {
   barChart('chPrAgent', ag, ag.map(function (a) { return sum(byAg.map[a].map(function (r) { return r.tickets; })); }),
     { horizontal: true, label: 'Tickets' });
 
-  makeTable('prTable', [
-    { key: 'date', label: 'Date', fmt: function (r) { return fmtDate(r.date); }, sortVal: function (r) { return r.date; } },
-    { key: 'day', label: 'Day' },
-    { key: 'agent', label: 'Agent' },
-    { key: 'tickets', label: 'Tickets', num: true,
-      fmt: function (r) { return r.off ? '<span class="pill off">OFF</span>' : n0(r.tickets); },
-      sortVal: function (r) { return r.tickets === null ? -1 : r.tickets; } },
-    { key: 'week', label: 'Week', fmt: function (r) { return fmtWeek(r.week); }, sortVal: function (r) { return r.week; } },
-    { key: 'weeklyTarget', label: 'Wk Target', num: true, fmt: function (r) { return n0(r.weeklyTarget); } },
-    { key: 'weeklyActual', label: 'Wk Actual', num: true, fmt: function (r) { return n0(r.weeklyActual); } },
-    { key: 'productivityPct', label: 'Productivity', num: true,
-      fmt: function (r) { return r.productivityPct === null ? '\u2014' : scorePill(r.productivityPct); },
-      sortVal: function (r) { return r.productivityPct; } },
-    { key: 'finalScore', label: 'Score', num: true, fmt: function (r) { return n1(r.finalScore); } }
-  ], dp, { sort: 'date', dir: 'desc', per: 25, pagerId: 'prPager' });
+  // weekly grid: one row per agent, columns = Name | Wk Target | Actual |
+  // Mon..Sun (ticket or OFF) | Productivity % | Final Score  - matching the sheet
+  var byAg = groupBy(dp, function (r) { return r.agent; });
+  var agents = byAg.keys.slice().sort();
+  var dayKeys = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  var grid = agents.map(function (a) {
+    var rows = byAg.map[a];
+    var first = rows[0] || {};
+    var byDay = {};
+    rows.forEach(function (r) { if (r.day) byDay[r.day] = r; });
+    var cells = dayKeys.map(function (d) {
+      var r = byDay[d];
+      if (!r) return { v: '—', off: false };
+      return r.off ? { v: 'OFF', off: true } : { v: (r.tickets === null ? '—' : n0(r.tickets)), off: false };
+    });
+    return {
+      agent: a,
+      weeklyTarget: first.weeklyTarget,
+      weeklyActual: first.weeklyActual,
+      cells: cells,
+      productivityPct: first.productivityPct,
+      finalScore: first.finalScore
+    };
+  });
+  // sort by actual productivity desc
+  grid.sort(function (x, y) { return (y.weeklyActual || 0) - (x.weeklyActual || 0); });
+
+  var cols = [
+    { key: 'agent', label: 'Name of Agent' },
+    { key: 'weeklyTarget', label: 'Weekly Target', num: true, fmt: function (r) { return n0(r.weeklyTarget); } },
+    { key: 'weeklyActual', label: 'Actual Productivity', num: true, fmt: function (r) { return n0(r.weeklyActual); } }
+  ];
+  dayKeys.forEach(function (d) {
+    cols.push({ key: d, label: d, num: true,
+      fmt: function (r) { var c = r.cells[dayKeys.indexOf(d)]; return c.off ? '<span class="pill off">OFF</span>' : c.v; } });
+  });
+  cols.push({ key: 'productivityPct', label: 'Productivity %', num: true,
+    fmt: function (r) { return r.productivityPct === null ? '—' : scorePill(r.productivityPct); }, sortVal: function (r) { return r.productivityPct; } });
+  cols.push({ key: 'finalScore', label: 'Final Score', num: true, fmt: function (r) { return n1(r.finalScore); } });
+
+  makeTable('prTable', cols, grid, { sort: 'weeklyActual', dir: 'desc', per: 25, pagerId: 'prPager',
+    empty: 'No productivity records available for the selected filters.' });
 }
 
 /* ---------------- WEEKLY CALL STATS ---------------- */
