@@ -117,11 +117,6 @@ function renderProductivity() {
     { label: 'Days Off', value: n0(dp.filter(function (r) { return r.off; }).length), sub: 'in current view' }
   ]);
 
-  var byDate = groupBy(worked, function (r) { return r.date; });
-  var ds = byDate.keys.slice().sort();
-  lineChart('chPrTrend', ds.map(fmtDate),
-    [{ label: 'Tickets Handled', data: ds.map(function (k) { return sum(byDate.map[k].map(function (r) { return r.tickets; })); }) }], {});
-
   var byAg = groupBy(worked, function (r) { return r.agent; });
   var ag = byAg.keys.slice().sort(function (a, b) {
     return sum(byAg.map[b].map(function (r) { return r.tickets; })) - sum(byAg.map[a].map(function (r) { return r.tickets; }));
