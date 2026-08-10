@@ -3,7 +3,7 @@
  * ============================================================ */
 
 var DATA = null;                 // last good payload
-var F = { agent: 'ALL', week: 'ALL', moMonth: '', lvMonth: '', qaAgent: 'ALL', scAgent: '', scWeek: '', tsWeek: '', otWeek: '', from: '', to: '' };
+var F = { agent: 'ALL', week: 'ALL', moMonth: '', lvMonth: '', qaAgent: 'ALL', scAgent: '', scWeek: '', tsWeek: '', otWeek: '', scRankWeek: '', from: '', to: '' };
 var PAGE = 'overview';
 var CACHE_KEY = 'tpcc_cache_v1'; // data cache only - never a credential
 
@@ -214,8 +214,11 @@ function buildRanking() {
   off = off.filter(function (r) { return liveWeeks[r.week]; });
 
   var scoped;
-  if (F.week !== 'ALL') {
-    scoped = slice(off, {});
+  if (F.scRankWeek) {
+    // a specific week is selected on the Scorecards page
+    scoped = off.filter(function (r) {
+      return (F.agent === 'ALL' || r.agent === F.agent) && r.week === F.scRankWeek;
+    });
   } else {
     // each agent's MOST RECENT completed scorecard - never a cross-month average
     var byA0 = groupBy(off.filter(function (r) { return F.agent === 'ALL' || r.agent === F.agent; }),
@@ -225,7 +228,7 @@ function buildRanking() {
       return rows[rows.length - 1];
     });
   }
-  if (!scoped.length) {
+  if (!scoped.length && !F.scRankWeek) {
     var byA = groupBy(off.filter(function (r) { return F.agent === 'ALL' || r.agent === F.agent; }), function (r) { return r.agent; });
     scoped = byA.keys.map(function (a) {
       var rows = byA.map[a].slice().sort(function (x, y) { return (x.week || '').localeCompare(y.week || ''); });

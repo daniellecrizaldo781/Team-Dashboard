@@ -39,9 +39,9 @@ function setPage(p) {
   var m = PAGE_META[p] || ['', ''];
   $('pageTitle').textContent = m[0];
   $('pageSub').textContent = m[1];
-  // Schedule, OT&Break & Leave use their own controls, not the global filter bar
+  // Schedule, OT&Break, Leave & Scorecards use their own controls, not the global filter bar
   var filters = $('filters');
-  if (filters) filters.style.display = (p === 'schedule' || p === 'otbreak' || p === 'leave') ? 'none' : '';
+  if (filters) filters.style.display = (p === 'schedule' || p === 'otbreak' || p === 'leave' || p === 'scorecards') ? 'none' : '';
   closeNav();
   window.scrollTo(0, 0);
   setTimeout(resizeCharts, 40);   // charts sized inside a hidden box measure 0
@@ -109,10 +109,10 @@ function wire() {
   };
   $('btnReset').onclick = function () {
     F = { agent: 'ALL', week: 'ALL', moMonth: '', lvMonth: '', qaAgent: 'ALL', scAgent: '', scWeek: '',
-          tsWeek: '', otWeek: '', from: '', to: '' };
+          tsWeek: '', otWeek: '', scRankWeek: '', from: '', to: '' };
     $('fAgent').value = 'ALL'; $('fWeek').value = 'ALL';
     $('fFrom').value = ''; $('fTo').value = '';
-    ['otWeek'].forEach(function (id) { if ($(id)) $(id).value = ''; });
+    ['otWeek', 'scRankWeek'].forEach(function (id) { if ($(id)) $(id).value = ''; });
     ['prSearch', 'clSearch', 'scSearch', 'bkSearch']
       .forEach(function (id) { if ($(id)) $(id).value = ''; });
     ['prTable', 'clTable', 'scTable', 'bkTable']

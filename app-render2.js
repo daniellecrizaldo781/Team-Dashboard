@@ -7,6 +7,21 @@ function renderScorecards() {
   var rank = buildRanking();
   topPerformerCard('scTop', rank);
 
+  // week selector (matches the Schedule / OT pattern)
+  var scoreWeeks = uniq(rank.filter(function (r) { return r.scoreWeek; }).map(function (r) { return r.scoreWeek; })).sort().reverse();
+  // include every week present in the source too, so empty weeks are still pickable
+  var allWeeks = uniq((DATA.officialScorecard && DATA.officialScorecard.weekly || []).map(function (r) { return r.week; })).sort().reverse();
+  var weeks = uniq(scoreWeeks.concat(allWeeks));
+  var wkSel = $('scRankWeek');
+  if (wkSel) {
+    if (!F.scRankWeek || weeks.indexOf(F.scRankWeek) < 0) F.scRankWeek = weeks[0] || '';
+    wkSel.innerHTML = weeks.map(function (w) { return '<option value="' + esc(w) + '">' + esc(fmtWeek(w)) + '</option>'; }).join('');
+    wkSel.value = F.scRankWeek;
+    wkSel.onchange = function () { F.scRankWeek = this.value; renderScorecards(); };
+    // rebuild ranking for the chosen week
+    rank = buildRanking();
+  }
+
   var withScore = rank.filter(function (r) { return r.overall !== null; });
   kpi('scKpis', [
     { label: 'Agents Ranked', value: n0(rank.length), sub: 'in current view' },
