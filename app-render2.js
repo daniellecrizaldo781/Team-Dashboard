@@ -282,11 +282,18 @@ function renderOtBreak() {
   var now = thisWeekStart();
   var upcoming = otAll.filter(function (r) { return (r.week || '') >= now; });
   var otBase = upcoming.length ? upcoming : otAll;
-  var ot = otBase.filter(function (r) {
-    if (F.otFrom && (r.date || '') < F.otFrom) return false;
-    if (F.otTo && (r.date || '') > F.otTo) return false;
-    return true;
-  });
+
+  // one week at a time: week selector (default = earliest upcoming week)
+  var weeks = uniq(otBase.map(function (r) { return r.week; })).sort();
+  if (!weeks.length) weeks = uniq(otAll.map(function (r) { return r.week; })).sort();
+  var sel = $('otWeek');
+  if (sel) {
+    sel.innerHTML = weeks.map(function (w) { return '<option value="' + esc(w) + '">' + esc(fmtWeek(w)) + '</option>'; }).join('');
+    if (F.otWeek && weeks.indexOf(F.otWeek) >= 0) sel.value = F.otWeek;
+    else { F.otWeek = weeks[0] || ''; sel.value = F.otWeek; }
+    sel.onchange = function () { F.otWeek = this.value; renderOtBreak(); };
+  }
+  var ot = otBase.filter(function (r) { return r.week === (F.otWeek || weeks[0] || ''); });
 
   kpi('otKpis', [
     { label: 'OT Entries', value: n0(ot.length), sub: 'in current view' },
@@ -307,7 +314,7 @@ function renderOtBreak() {
   var target = weeks[0];
   var grid = $('otGrid');
   if (!target) {
-    grid.innerHTML = '<div class="empty"><b>No OT schedule</b>No upcoming OT records for the selected date range.</div>';
+    grid.innerHTML = '<div class="empty"><b>No OT schedule</b>No upcoming OT records for the selected week.</div>';
   } else {
     var wkRows = ot.filter(function (r) { return r.week === target; });
     var dayKeys = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -369,6 +376,18 @@ function renderLeaves() {
   lv.forEach(function (r) { var m = (r.dateManila || r.date || '').slice(0, 7); if (m) (monthMap[m] = monthMap[m] || []).push(r); });
   var mKeys = Object.keys(monthMap).sort();
   if (!F.lvMonth || mKeys.indexOf(F.lvMonth) < 0) F.lvMonth = mKeys[mKeys.length - 1] || '';
+
+  // month selector (brings back the ability to pick a month)
+  var mSel = $('lvMonth');
+  if (mSel) {
+    mSel.innerHTML = mKeys.map(function (m) {
+      var y = +m.slice(0, 4), mo = +m.slice(5, 7) - 1;
+      var name = new Date(y, mo, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      return '<option value="' + esc(m) + '">' + esc(name) + '</option>';
+    }).join('');
+    mSel.value = F.lvMonth;
+    mSel.onchange = function () { F.lvMonth = this.value; renderLeaves(); };
+  }
 
   // filter to selected month (this is what the chips + calendar + list reflect)
   var lvMonth = lv.filter(function (r) { return (r.dateManila || r.date || '').slice(0, 7) === F.lvMonth; });

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Team Danielle Dashboard</title>
-<link rel="stylesheet" href="styles.css?v=28">
+<link rel="stylesheet" href="styles.css?v=29">
 </head>
 <body>
 
@@ -161,10 +161,7 @@
       <div class="card"><h3>OT Hours by Agent</h3><div class="chartbox"><canvas id="chOt"></canvas></div></div>
       <div class="card">
         <div class="card-head"><h3>OT Schedule</h3>
-          <div class="range-toggle">
-            <label>From <input type="date" id="otFrom"></label>
-            <label>To <input type="date" id="otTo"></label>
-          </div>
+          <select class="search" id="otWeek"></select>
         </div>
         <div class="tscroll" id="otGrid"></div>
       </div>
@@ -216,7 +213,9 @@
       </form>
     </div>
     <div class="card">
-      <h3>Leave Requests</h3>
+      <div class="card-head"><h3>Leave Requests</h3>
+        <select class="search" id="lvMonth"></select>
+      </div>
       <div class="cal-wrap" id="lvCalWrap"></div>
       <div class="leave-cards" id="lvList"></div>
     </div>
@@ -244,12 +243,12 @@
 <div class="toast" id="toast" hidden></div>
 
 <script src="chart.umd.min.js"></script>
-<script src="config.js?v=28"></script>
-<script src="data.js?v=28"></script>
-<script src="app-core.js?v=28"></script>
-<script src="app-charts.js?v=28"></script>
-<script src="app-render.js?v=28"></script>
-<script src="app-render2.js?v=28"></script>
-<script src="app-init.js?v=28"></script>
+<script src="config.js?v=29"></script>
+<script src="data.js?v=29"></script>
+<script src="app-core.js?v=29"></script>
+<script src="app-charts.js?v=29"></script>
+<script src="app-render.js?v=29"></script>
+<script src="app-render2.js?v=29"></script>
+<script src="app-init.js?v=29"></script>
 </body>
 </html>
