@@ -337,13 +337,6 @@ function renderOtBreak() {
     { label: 'Avg Hours / Entry', value: n1(avg(ot.map(function (r) { return r.hours; }))), sub: 'per OT shift' }
   ]);
 
-  var byAg = groupBy(ot, function (r) { return r.agent; });
-  var ag = byAg.keys.slice().sort(function (a, b) {
-    return sum(byAg.map[b].map(function (r) { return r.hours; })) - sum(byAg.map[a].map(function (r) { return r.hours; }));
-  });
-  barChart('chOt', ag, ag.map(function (a) { return sum(byAg.map[a].map(function (r) { return r.hours; })); }),
-    { horizontal: true, label: 'OT Hours', unit: 'hrs' });
-
   // OT schedule grid: one row per agent, columns = Hotline | Mon..Sun (otTime) | Hours
   var weeks = uniq(ot.map(function (r) { return r.week; })).sort().reverse();
   var target = weeks[0];
