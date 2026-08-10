@@ -203,9 +203,6 @@ function renderCalls() {
   var ag = byAg.keys.slice().sort(function (a, b) {
     return sum(byAg.map[b].map(function (r) { return r.pickedUp; })) - sum(byAg.map[a].map(function (r) { return r.pickedUp; }));
   });
-  barChart('chClAgent', ag, ag.map(function (a) { return sum(byAg.map[a].map(function (r) { return r.pickedUp; })); }),
-    { horizontal: true, label: 'Calls Handled' });
-
   makeTable('clTable', [
     { key: 'week', label: 'Week', fmt: function (r) { return fmtWeek(r.week); }, sortVal: function (r) { return r.week; } },
     { key: 'agent', label: 'Agent' },
@@ -247,10 +244,6 @@ function renderQa() {
         '<div class="mt">' + n0(r.evals) + ' evaluations</div></div>';
     }).join('');
   }
-
-  barChart('chQaAgent', ranked.map(function (r) { return r.agent; }), ranked.map(function (r) { return r.score; }),
-    { percent: true, horizontal: true, label: 'QA Score',
-      colors: ranked.map(function (r) { return r.score >= 0.95 ? PINK.rose : (r.score >= 0.85 ? PINK.dusty : PINK.bad); }) });
 
   makeTable('qaRank', [
     { key: 'rank', label: 'Rank', num: true,

@@ -35,10 +35,6 @@ function renderScorecards() {
     { label: 'Below 85%', value: n0(withScore.filter(function (r) { return r.overall < 0.85; }).length), sub: 'needs attention', tone: 'warn' }
   ]);
 
-  barChart('chScAgent', withScore.map(function (r) { return r.agent; }), withScore.map(function (r) { return r.overall; }),
-    { percent: true, horizontal: true, label: 'Overall Score',
-      colors: withScore.map(function (r) { return r.overall >= 0.95 ? PINK.rose : (r.overall >= 0.85 ? PINK.dusty : PINK.bad); }) });
-
   // component columns: only the four weighted metrics (capped to their max)
   var compNames = [];
   rank.forEach(function (r) { if (r.components) Object.keys(r.components).forEach(function (k) {
@@ -211,11 +207,7 @@ function renderMonthly() {
     agent: agent, overall: aMonth.score, scoreWeek: null, rating: '', qa: null, prod: null, calls: null, evals: 0
   }] : []);
 
-  barChart('chMoWeek', aWeeks.map(function (r) { return r.period; }),
-    aWeeks.map(function (r) { return r.score; }),
-    { percent: true, horizontal: true, label: 'Overall Score',
-      colors: aWeeks.map(function (r) { return r.score >= 0.95 ? PINK.rose : (r.score >= 0.85 ? PINK.dusty : PINK.bad); }) });
-
+  // weekly overall-score breakdown (table only, no bar chart)
   makeTable('moWeekTable', [
     { key: 'period', label: 'Week', sortVal: function (r) { return r.period; } },
     { key: 'score', label: 'Overall Score', num: true, fmt: function (r) { return scorePill(r.score, 2); } }
