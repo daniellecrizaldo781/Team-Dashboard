@@ -364,33 +364,24 @@ function renderLeaves() {
     return 0;
   });
 
-  kpi('lvKpis', [
-    { label: 'Total Requests', value: n0(lv.length), sub: 'in current view' },
-    { label: 'Approved', value: n0(lv.filter(function (r) { return r.statusNorm === 'Approved'; }).length), sub: 'approved', tone: 'good' },
-    { label: 'Pending', value: n0(lv.filter(function (r) { return r.statusNorm === 'Pending'; }).length), sub: 'awaiting', tone: 'warn' },
-    { label: 'Declined', value: n0(lv.filter(function (r) { return r.statusNorm === 'Declined'; }).length), sub: 'declined', tone: 'bad' }
-  ]);
-
-  // leave list is rendered as vertical cards below (see lvList)
-
-  // build month toggle bar (one button per month that has leaves)
+  // default selected month = latest month that has (upcoming) leaves
   var monthMap = {};
   lv.forEach(function (r) { var m = (r.dateManila || r.date || '').slice(0, 7); if (m) (monthMap[m] = monthMap[m] || []).push(r); });
   var mKeys = Object.keys(monthMap).sort();
   if (!F.lvMonth || mKeys.indexOf(F.lvMonth) < 0) F.lvMonth = mKeys[mKeys.length - 1] || '';
-  var bar = $('lvMonthBar');
-  if (bar) {
-    bar.innerHTML = mKeys.map(function (m) {
-      var y = +m.slice(0, 4), mo = +m.slice(5, 7) - 1;
-      var name = new Date(y, mo, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      return '<button type="button" class="lv-mbtn' + (m === F.lvMonth ? ' active' : '') + '" data-m="' + esc(m) + '">' + esc(name) + '</button>';
-    }).join('');
-    bar.querySelectorAll('.lv-mbtn').forEach(function (btn) {
-      btn.onclick = function () { F.lvMonth = btn.getAttribute('data-m'); renderLeaves(); };
-    });
-  }
-  // filter to selected month for calendar + list
+
+  // filter to selected month (this is what the chips + calendar + list reflect)
   var lvMonth = lv.filter(function (r) { return (r.dateManila || r.date || '').slice(0, 7) === F.lvMonth; });
+
+  // chips count only the leaves shown for the selected month
+  kpi('lvKpis', [
+    { label: 'Total Requests', value: n0(lvMonth.length), sub: 'this month', tone: '' },
+    { label: 'Approved', value: n0(lvMonth.filter(function (r) { return r.statusNorm === 'Approved'; }).length), sub: 'approved', tone: 'good' },
+    { label: 'Pending', value: n0(lvMonth.filter(function (r) { return r.statusNorm === 'Pending'; }).length), sub: 'awaiting', tone: 'warn' },
+    { label: 'Declined', value: n0(lvMonth.filter(function (r) { return r.statusNorm === 'Declined'; }).length), sub: 'declined', tone: 'bad' }
+  ]);
+
+  // leave list is rendered as vertical cards below (see lvList)
 
   // month calendar grid (at-a-glance leaves per date)
   renderLeaveCalendar(lvMonth);
