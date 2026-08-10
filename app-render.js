@@ -175,8 +175,8 @@ function renderCalls() {
       : 'The source sheet has no call-statistics blocks for ' + (DATA.dataYear || 2026) +
         ' yet. Fill in a \u201cWeekly Call Stats\u201d block (Ringing Attempts \u00b7 Picked Up \u00b7 AHT) ' +
         'under any week and it will appear here automatically after the next sync.';
-    kpi('clKpis', [{ label: 'Weekly Call Stats', html: '\u2014', sub: 'nothing to show yet' }]);
-    chartEmpty('chClTrend'); chartEmpty('chClAgent');
+    kpi('clKpis', [{ label: 'Weekly Call Stats', html: '—', sub: 'nothing to show yet' }]);
+    chartEmpty('chClAgent');
     makeTable('clTable', [{ key: 'agent', label: 'Agent' }], [], { empty: why });
     return;
   }
@@ -198,10 +198,6 @@ function renderCalls() {
 
   var byWk = groupBy(cl, function (r) { return r.week; });
   var wk = byWk.keys.slice().sort();
-  lineChart('chClTrend', wk.map(fmtWeek), [
-    { label: 'Calls Handled', data: wk.map(function (k) { return sum(byWk.map[k].map(function (r) { return r.pickedUp; })); }) },
-    { label: 'Call Volume', data: wk.map(function (k) { return sum(byWk.map[k].map(function (r) { return r.attempts; })); }) }
-  ], {});
 
   var byAg = groupBy(cl, function (r) { return r.agent; });
   var ag = byAg.keys.slice().sort(function (a, b) {

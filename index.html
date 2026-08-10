@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Team Danielle Dashboard</title>
-<link rel="stylesheet" href="styles.css?v=31">
+<link rel="stylesheet" href="styles.css?v=32">
 </head>
 <body>
 
@@ -92,10 +92,7 @@
   <!-- WEEKLY CALL STATS -->
   <section class="page" id="pageCalls" hidden>
     <div class="kpis" id="clKpis"></div>
-    <div class="grid2">
-      <div class="card"><h3>Weekly Call Volume Trend</h3><div class="chartbox"><canvas id="chClTrend"></canvas></div></div>
-      <div class="card"><h3>Calls Handled by CSR</h3><div class="chartbox"><canvas id="chClAgent"></canvas></div></div>
-    </div>
+    <div class="card"><h3>Calls Handled by CSR</h3><div class="chartbox"><canvas id="chClAgent"></canvas></div></div>
     <div class="card">
       <div class="card-head"><h3>Weekly Call Statistics</h3><input class="search" id="clSearch" placeholder="Search&hellip;"></div>
       <div class="tscroll" id="clTable"></div>
@@ -232,6 +229,14 @@
     </div>
     <div class="top-performer" id="moTop"></div>
     <div class="card">
+      <div class="card-head"><h3>Official Scorecard Ranking &mdash; Monthly</h3></div>
+      <div class="tscroll"><table id="moRankTable"></table></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Agent Monthly Score</h3>
+        <select class="search" id="moAgentSel"></select>
+      </div>
+      <div class="top-performer" id="moAgentTop"></div>
       <div class="card-head"><h3>Weekly Overall Score Breakdown</h3></div>
       <div class="chartbox"><canvas id="chMoWeek"></canvas></div>
       <div class="tscroll"><table id="moWeekTable"></table></div>
@@ -245,12 +250,12 @@
 <div class="toast" id="toast" hidden></div>
 
 <script src="chart.umd.min.js"></script>
-<script src="config.js?v=31"></script>
-<script src="data.js?v=31"></script>
-<script src="app-core.js?v=31"></script>
-<script src="app-charts.js?v=31"></script>
-<script src="app-render.js?v=31"></script>
-<script src="app-render2.js?v=31"></script>
-<script src="app-init.js?v=31"></script>
+<script src="config.js?v=32"></script>
+<script src="data.js?v=32"></script>
+<script src="app-core.js?v=32"></script>
+<script src="app-charts.js?v=32"></script>
+<script src="app-render.js?v=32"></script>
+<script src="app-render2.js?v=32"></script>
+<script src="app-init.js?v=32"></script>
 </body>
 </html>

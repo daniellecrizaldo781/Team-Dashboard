@@ -3,7 +3,7 @@
  * ============================================================ */
 
 var DATA = null;                 // last good payload
-var F = { agent: 'ALL', week: 'ALL', moMonth: '', lvMonth: '', qaAgent: 'ALL', scAgent: '', scWeek: '', tsWeek: '', otWeek: '', scRankWeek: '', from: '', to: '' };
+var F = { agent: 'ALL', week: 'ALL', moMonth: '', moAgent: '', lvMonth: '', qaAgent: 'ALL', scAgent: '', scWeek: '', tsWeek: '', otWeek: '', scRankWeek: '', from: '', to: '' };
 var PAGE = 'overview';
 var CACHE_KEY = 'tpcc_cache_v1'; // data cache only - never a credential
 
@@ -276,7 +276,45 @@ function buildRanking() {
   return rows;
 }
 
-/* ---------------- snapshot expansion ---------------- */
+/* Build a MONTHLY Official Scorecard Ranking for one month.
+ * Each agent is scored by the AVERAGE of their weekly overall scores in that
+ * month (taken from the granular officialScorecard.weekly source), so the
+ * ranking reflects the whole month - not a single week. */
+function buildMonthlyRanking(monthName) {
+  if (!DATA) return [];
+  var wk = (DATA.officialScorecard && DATA.officialScorecard.weekly) || [];
+  // weekly rows whose label's week belongs to the selected month
+  var rows = wk.filter(function (r) {
+    return (r.weekLabel || r.week || '').indexOf(monthName) === 0 && r.overall > 0;
+  });
+
+  var byA = groupBy(rows, function (r) { return r.agent; });
+  var agents = byA.keys.slice().sort();
+  var out = agents.map(function (a) {
+    var rs = byA.map[a];
+    var weeks = rs.map(function (r) { return r.week; });
+    var overall = avg(rs.map(function (r) { return r.overall; }));
+    var components = scorecardCapped(a, rs[rs.length - 1].week) || rs[rs.length - 1].components;
+    return {
+      agent: a,
+      overall: overall,
+      components: components,
+      scoreWeeks: weeks,
+      rating: sheetRating(a, rs[rs.length - 1].week),
+      weekCount: weeks.length,
+      qa: null, prod: null, calls: null, evals: 0
+    };
+  });
+  out.sort(function (x, y) {
+    var a = x.overall, b = y.overall;
+    if (a === null && b === null) return 0;
+    if (a === null) return 1;
+    if (b === null) return -1;
+    return b - a;
+  });
+  out.forEach(function (r, i) { r.rank = i + 1; });
+  return out;
+}
 /**
  * data.js ships compressed: tables are columnar and repeated strings live in
  * one shared table, referenced by index. Undo both to get normal objects.

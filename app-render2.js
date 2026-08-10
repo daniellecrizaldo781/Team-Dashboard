@@ -158,29 +158,68 @@ function renderMonthly() {
     sel.value = cur;
     sel.onchange = function () { F.moMonth = this.value; renderMonthly(); };
   }
-
-  // selected month's records + this month's top CSR
-  var monthRows = months.filter(function (r) { return r.period === cur; })
-    .sort(function (a, b) { return b.score - a.score; });
-  var topRank = monthRows.map(function (r) {
-    return { agent: r.agent, overall: r.score, scoreWeek: null, rating: '', qa: null, prod: null, calls: null, evals: 0 };
-  });
-  topPerformerCard('moTop', topRank);
-
-  // weekly overall-score breakdown for the selected month
   var monthName = cur.split(' ')[0];
-  var wkRows = weeks.filter(function (r) { return (r.period || '').indexOf(monthName) === 0; })
-    .sort(function (a, b) { return (a.period || '').localeCompare(b.period || ''); });
 
-  barChart('chMoWeek', wkRows.map(function (r) { return r.period; }),
-    wkRows.map(function (r) { return r.score; }),
+  // ---- Official Scorecard Ranking (Monthly) ----
+  // each agent scored by the AVERAGE of their weekly overall scores this month
+  var wkRows = weeks.filter(function (r) { return (r.period || '').indexOf(monthName) === 0; });
+  var byA = groupBy(wkRows, function (r) { return r.agent; });
+  var newRank = byA.keys.map(function (a) {
+    var rs = byA.map[a].slice().sort(function (x, y) { return (x.period || '').localeCompare(y.period || ''); });
+    return {
+      agent: a,
+      overall: avg(rs.map(function (r) { return r.score; })),
+      scoreWeeks: rs.map(function (r) { return r.period; }),
+      rating: '', qa: null, prod: null, calls: null, evals: 0
+    };
+  }).sort(function (x, y) {
+    var a = x.overall, b = y.overall;
+    if (a === null && b === null) return 0;
+    if (a === null) return 1;
+    if (b === null) return -1;
+    return b - a;
+  });
+  newRank.forEach(function (r, i) { r.rank = i + 1; });
+  topPerformerCard('moTop', newRank);
+
+  // ranking table (all agents, monthly)
+  var compNames = [];
+  makeTable('moRankTable', [
+    { key: 'rank', label: 'Rank', num: true,
+      fmt: function (r) { return r.rank <= 3 ? ['🥇', '🥈', '🥉'][r.rank - 1] + ' ' + r.rank : '<span class="rank">' + r.rank + '</span>'; } },
+    { key: 'agent', label: 'Agent' },
+    { key: 'overall', label: 'Monthly Overall', num: true, fmt: function (r) { return r.overall === null ? '—' : scorePill(r.overall, 2); } },
+    { key: 'weeks', label: 'Weeks', num: true, fmt: function (r) { return n0((r.scoreWeeks || []).length); } }
+  ], newRank, { sort: 'rank', dir: 'asc', empty: 'No monthly scorecard data for ' + cur + '.' });
+
+  // ---- Per-Agent view: pick an agent -> their weekly scores for the month ----
+  var moAgents = uniq(months.concat(wkRows).map(function (r) { return r.agent; })).sort();
+  var aSel = $('moAgentSel');
+  if (aSel) {
+    aSel.innerHTML = moAgents.map(function (a) { return '<option value="' + esc(a) + '">' + esc(a) + '</option>'; }).join('');
+    if (F.moAgent && moAgents.indexOf(F.moAgent) >= 0) aSel.value = F.moAgent;
+    else { F.moAgent = moAgents[0]; aSel.value = F.moAgent; }
+    aSel.onchange = function () { F.moAgent = this.value; renderMonthly(); };
+  }
+  var agent = F.moAgent || moAgents[0];
+  var aMonth = months.filter(function (r) { return r.agent === agent && r.period === cur; })[0];
+  var aWeeks = wkRows.filter(function (r) { return r.agent === agent; })
+    .sort(function (x, y) { return (x.period || '').localeCompare(y.period || ''); });
+
+  // top-performer card for this agent (their monthly overall)
+  topPerformerCard('moAgentTop', aMonth ? [{
+    agent: agent, overall: aMonth.score, scoreWeek: null, rating: '', qa: null, prod: null, calls: null, evals: 0
+  }] : []);
+
+  barChart('chMoWeek', aWeeks.map(function (r) { return r.period; }),
+    aWeeks.map(function (r) { return r.score; }),
     { percent: true, horizontal: true, label: 'Overall Score',
-      colors: wkRows.map(function (r) { return r.score >= 0.95 ? PINK.rose : (r.score >= 0.85 ? PINK.dusty : PINK.bad); }) });
+      colors: aWeeks.map(function (r) { return r.score >= 0.95 ? PINK.rose : (r.score >= 0.85 ? PINK.dusty : PINK.bad); }) });
 
   makeTable('moWeekTable', [
     { key: 'period', label: 'Week', sortVal: function (r) { return r.period; } },
     { key: 'score', label: 'Overall Score', num: true, fmt: function (r) { return scorePill(r.score, 2); } }
-  ], wkRows, { sort: 'period', dir: 'asc', empty: 'No weekly scorecard records for ' + cur + '.' });
+  ], aWeeks, { sort: 'period', dir: 'asc', empty: 'No weekly scorecard records for ' + agent + ' in ' + cur + '.' });
 }
 
 /* ---------------- TEAM SCHEDULE ---------------- */
