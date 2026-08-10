@@ -24,17 +24,18 @@ function renderScorecards() {
     { percent: true, horizontal: true, label: 'Overall Score',
       colors: withScore.map(function (r) { return r.overall >= 0.95 ? PINK.rose : (r.overall >= 0.85 ? PINK.dusty : PINK.bad); }) });
 
-  // component columns come from the sheet itself, so new weightings appear automatically
+  // component columns: only the four weighted metrics (capped to their max)
   var compNames = [];
-  rank.forEach(function (r) { if (r.components) Object.keys(r.components).forEach(function (k) { if (compNames.indexOf(k) < 0) compNames.push(k); }); });
+  rank.forEach(function (r) { if (r.components) Object.keys(r.components).forEach(function (k) {
+    if (Object.prototype.hasOwnProperty.call(WEIGHT_MAX, k) && compNames.indexOf(k) < 0) compNames.push(k);
+  }); });
 
   var cols = [
     { key: 'rank', label: 'Rank', num: true,
       fmt: function (r) { return r.rank <= 3 ? ['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'][r.rank - 1] + ' ' + r.rank : '<span class="rank">' + r.rank + '</span>'; } },
     { key: 'agent', label: 'Agent' },
     { key: 'overall', label: 'Overall Score', num: true, fmt: function (r) { return scorePill(r.overall, 2); } },
-    { key: 'qa', label: 'QA', num: true, fmt: function (r) { return r.qa === null ? '\u2014' : pct(r.qa); } },
-    { key: 'prod', label: 'Productivity', num: true, fmt: function (r) { return r.prod === null ? '\u2014' : pct(r.prod); } },
+    { key: 'prod', label: 'Productivity', num: true, fmt: function (r) { return r.prod === null ? '—' : pct(r.prod); } },
     { key: 'calls', label: 'Calls', num: true, fmt: function (r) { return n0(r.calls); } },
     { key: 'rating', label: 'Team Ranking', fmt: function (r) {
         if (!r.rating) return '\u2014';
@@ -53,15 +54,73 @@ function renderScorecards() {
   });
   makeTable('scTable', cols, rank, { sort: 'rank', dir: 'asc', empty: 'No scorecard data available for the selected filters.' });
 
-  // weekly scorecard metric detail (from the WEEKLY SCORECARD tab)
-  var sd = slice(DATA.scorecards);
-  makeTable('scDetail', [
-    { key: 'week', label: 'Week', fmt: function (r) { return r.week ? fmtWeek(r.week) : esc(r.weekLabel || '—'); }, sortVal: function (r) { return r.week; } },
-    { key: 'agent', label: 'Agent' },
-    { key: 'section', label: 'Section', fmt: function (r) { return r.section ? '<span class="pill n">' + esc(r.section) + '</span>' : '—'; } },
-    { key: 'metric', label: 'Metric' },
-    { key: 'raw', label: 'Value', num: true, fmt: function (r) { return esc(r.raw || '—'); }, sortVal: function (r) { return r.value; } }
-  ], sd, { sort: 'week', dir: 'desc', per: 30, pagerId: null, empty: 'No scorecard metrics available for the selected filters.' });
+  // Weekly Scorecard Detail: pick an agent (and week) -> sheet-style table
+  renderScDetail(rank);
+}
+
+// Build the per-agent Weekly Scorecard Detail (sheet-style, like the source tab)
+function renderScDetail(rank) {
+  var wrap = $('scDetailWrap');
+  var sel = $('scAgentSel');
+  if (!wrap || !sel) return;
+
+  // agents that actually have scorecard rows
+  var agents = uniq((DATA.scorecards || []).map(function (r) { return r.agent; })).sort();
+  if (!agents.length) { wrap.innerHTML = '<div class="empty">No scorecard detail available.</div>'; return; }
+
+  // weeks available (desc), so the selector can choose which week
+  var weeks = uniq((DATA.scorecards || []).map(function (r) { return r.week; })).sort().reverse();
+
+  sel.innerHTML = agents.map(function (a) { return '<option value="' + esc(a) + '">' + esc(a) + '</option>'; }).join('');
+  if (F.scAgent && agents.indexOf(F.scAgent) >= 0) sel.value = F.scAgent;
+  else { F.scAgent = agents[0]; sel.value = F.scAgent; }
+  sel.onchange = function () { F.scAgent = this.value; renderScDetail(rank); };
+
+  // week selector (rebuilt each time so it can reflect the chosen agent's weeks)
+  var agentWeeks = weeks.filter(function (w) {
+    return (DATA.scorecards || []).some(function (r) { return r.agent === F.scAgent && r.week === w; });
+  });
+  var wkSel = $('scWeekSel');
+  if (!wkSel) {
+    wkSel = document.createElement('select');
+    wkSel.id = 'scWeekSel';
+    wkSel.className = 'search';
+    sel.insertAdjacentElement('afterend', wkSel);
+  }
+  wkSel.innerHTML = agentWeeks.map(function (w) { return '<option value="' + esc(w) + '">' + esc(fmtWeek(w)) + '</option>'; }).join('');
+  if (F.scWeek && agentWeeks.indexOf(F.scWeek) >= 0) wkSel.value = F.scWeek;
+  else { F.scWeek = agentWeeks[0]; wkSel.value = F.scWeek; }
+  wkSel.onchange = function () { F.scWeek = this.value; renderScDetail(rank); };
+
+  // gather rows for this agent+week, grouped by section, sheet order
+  var rows = (DATA.scorecards || []).filter(function (r) { return r.agent === F.scAgent && r.week === F.scWeek; });
+  if (!rows.length) { wrap.innerHTML = '<div class="empty">No scorecard detail for ' + esc(F.scAgent) + ' in ' + esc(fmtWeek(F.scWeek)) + '.</div>'; return; }
+
+  var bySection = {};
+  rows.forEach(function (r) {
+    (bySection[r.section] = bySection[r.section] || []).push(r);
+  });
+  var sectionOrder = ['ATTENDANCE', 'QUALITY', 'PRODUCTIVITY', 'FINAL SCORE'];
+
+  // pretty label for each metric; map raw values cleanly
+  function fmtRow(r) {
+    var v = r.raw;
+    if (v === null || v === undefined || v === '') v = '—';
+    // percentages show as % ; numbers show as-is
+    var show = v;
+    return '<tr><td class="sc-metric">' + esc(r.metric || '—') + '</td>' +
+           '<td class="sc-value">' + esc(show) + '</td></tr>';
+  }
+
+  var html = '';
+  sectionOrder.forEach(function (sec) {
+    var srows = bySection[sec];
+    if (!srows || !srows.length) return;
+    html += '<div class="sc-section"><div class="sc-section-head">' + esc(sec) + '</div><table class="sc-detail-table"><tbody>';
+    srows.forEach(function (r) { html += fmtRow(r); });
+    html += '</tbody></table></div>';
+  });
+  wrap.innerHTML = html;
 }
 
 /* ---------------- MONTHLY SCORECARD ---------------- */
@@ -141,54 +200,90 @@ function shiftPill(s, off) {
 }
 
 function renderSchedule() {
-  var ts = slice(DATA.teamSchedule);
-  var working = ts.filter(function (r) { return !r.off; });
+  var tsAll = (DATA.teamSchedule || []).slice();
+  var hlMap = agentHotlineMap();
+  var now = thisWeekStart();
+
+  // archive past weeks: only keep upcoming schedule weeks by default
+  var upcoming = tsAll.filter(function (r) { return (r.week || '') >= now; });
+  var base = upcoming.length ? upcoming : tsAll;
+
+  // per-hotline date ranges (toggle). empty = whole upcoming span.
+  function inRange(r, from, to) {
+    if (from && r.date < from) return false;
+    if (to && r.date > to) return false;
+    return true;
+  }
+  var ohaRows = base.filter(function (r) { return (hlMap[r.agent] || 'ALL BRANDS') === 'OHA'; })
+                   .filter(function (r) { return inRange(r, F.ohaFrom, F.ohaTo); });
+  var abRows  = base.filter(function (r) { return (hlMap[r.agent] || 'ALL BRANDS') === 'ALL BRANDS'; })
+                   .filter(function (r) { return inRange(r, F.abFrom, F.abTo); });
+  var shown = ohaRows.concat(abRows);
+
+  // KPIs: agents on leave (this filtered span) + half-day schedules (this span)
+  var spanFrom = [F.ohaFrom, F.abFrom].filter(Boolean).sort()[0] || now;
+  var spanTo   = [F.ohaTo, F.abTo].filter(Boolean).sort().reverse()[0] || '2999-12-31';
+  var lv = (DATA.leaveRequests || []).filter(function (r) {
+    var d = r.dateManila || r.date || '';
+    return d >= spanFrom && d <= spanTo;
+  });
+  var onLeave = uniq(lv.map(function (r) { return r.agent; })).length;
+  var halfDay = shown.filter(function (r) { return isHalfDayShift(r.shift); }).length;
 
   kpi('tsKpis', [
-    { label: 'Scheduled Entries', value: n0(ts.length), sub: 'in current view' },
-    { label: 'Agents Scheduled', value: n0(uniq(ts.map(function (r) { return r.agent; })).length), sub: 'unique agents' },
-    { label: 'Working Days', value: n0(working.length), sub: 'excluding OFF' },
-    { label: 'Days Off', value: n0(ts.filter(function (r) { return r.off; }).length), sub: 'rest days' },
-    { label: 'Distinct Shifts', value: n0(uniq(working.map(function (r) { return r.shift; })).length), sub: 'shift patterns' },
-    { label: 'Weeks Covered', value: n0(uniq(ts.map(function (r) { return r.week; })).length), sub: 'in current view' }
+    { label: 'Agents on Leave', value: n0(onLeave), sub: 'in selected span', tone: onLeave ? 'warn' : '' },
+    { label: 'Half-Day Schedules', value: n0(halfDay), sub: 'part-day shifts', tone: '' },
+    { label: 'Scheduled (shown)', value: n0(shown.length), sub: 'rows in view' },
+    { label: 'Weeks Shown', value: n0(uniq(shown.map(function (r) { return r.week; })).length), sub: 'upcoming only' }
   ]);
 
-  // calendar grid for a single week (the selected one, else the latest)
-  var weeks = uniq(ts.map(function (r) { return r.week; })).sort().reverse();
-  var target = F.week !== 'ALL' && weeks.indexOf(F.week) >= 0 ? F.week : weeks[0];
-  var grid = $('tsGrid');
-  if (!target) {
-    grid.innerHTML = '<div class="empty"><b>No schedule</b>No schedule records available for the selected filters.</div>';
-  } else {
-    var wkRows = ts.filter(function (r) { return r.week === target; });
-    var dates = uniq(wkRows.map(function (r) { return r.date; })).sort();
-    var agents = uniq(wkRows.map(function (r) { return r.agent; })).sort();
-    var idx = {};
-    wkRows.forEach(function (r) { idx[r.agent + '|' + r.date] = r; });
+  renderScheduleTable('tsGridOHA', 'OHA', ohaRows, hlMap);
+  renderScheduleTable('tsGridAB', 'ALL BRANDS', abRows, hlMap);
+}
 
-    var h = '<table><thead><tr><th>Agent</th>';
-    dates.forEach(function (d) {
-      var dd = ymd(d);
-      h += '<th>' + (dd ? dd.toLocaleDateString('en-US', { weekday: 'short' }) + '<br>' +
-           dd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : esc(d)) + '</th>';
-    });
-    h += '</tr></thead><tbody>';
-    agents.forEach(function (a) {
-      h += '<tr><td><b>' + esc(a) + '</b></td>';
-      dates.forEach(function (d) {
-        var r = idx[a + '|' + d];
-        h += '<td>' + (r ? shiftPill(r.shift, r.off) : '\u2014') + '</td>';
-      });
-      h += '</tr>';
-    });
-    h += '</tbody></table>';
-    grid.innerHTML = h;
+// one hotline's schedule, chronological (by date), agent + hotline in the row header
+function renderScheduleTable(mountId, hotline, rows, hlMap) {
+  var grid = $(mountId);
+  if (!grid) return;
+  if (!rows.length) {
+    grid.innerHTML = '<div class="empty"><b>No ' + esc(hotline) + ' schedule</b>No upcoming schedule rows for the selected date range.</div>';
+    return;
   }
+  var dates = uniq(rows.map(function (r) { return r.date; })).sort();
+  var agents = uniq(rows.map(function (r) { return r.agent; })).sort();
+  var idx = {};
+  rows.forEach(function (r) { idx[r.agent + '|' + r.date] = r; });
+
+  var h = '<table><thead><tr><th>Agent <span class="hl-tag">' + esc(hotline) + '</span></th>';
+  dates.forEach(function (d) {
+    var dd = ymd(d);
+    h += '<th>' + (dd ? dd.toLocaleDateString('en-US', { weekday: 'short' }) + '<br>' +
+         dd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : esc(d)) + '</th>';
+  });
+  h += '</tr></thead><tbody>';
+  agents.forEach(function (a) {
+    h += '<tr><td><b>' + esc(a) + '</b> <span class="hl-inline">' + esc(hlMap[a] || hotline) + '</span></td>';
+    dates.forEach(function (d) {
+      var r = idx[a + '|' + d];
+      h += '<td>' + (r ? shiftPill(r.shift, r.off) : '—') + '</td>';
+    });
+    h += '</tr>';
+  });
+  h += '</tbody></table>';
+  grid.innerHTML = h;
 }
 
 /* ---------------- OT & BREAK ---------------- */
 function renderOtBreak() {
-  var ot = slice(DATA.otSchedule);
+  var otAll = (DATA.otSchedule || []).slice();
+  var now = thisWeekStart();
+  var upcoming = otAll.filter(function (r) { return (r.week || '') >= now; });
+  var otBase = upcoming.length ? upcoming : otAll;
+  var ot = otBase.filter(function (r) {
+    if (F.otFrom && (r.date || '') < F.otFrom) return false;
+    if (F.otTo && (r.date || '') > F.otTo) return false;
+    return true;
+  });
 
   kpi('otKpis', [
     { label: 'OT Entries', value: n0(ot.length), sub: 'in current view' },
@@ -206,10 +301,10 @@ function renderOtBreak() {
 
   // OT schedule grid: one row per agent, columns = Hotline | Mon..Sun (otTime) | Hours
   var weeks = uniq(ot.map(function (r) { return r.week; })).sort().reverse();
-  var target = F.week !== 'ALL' && weeks.indexOf(F.week) >= 0 ? F.week : weeks[0];
+  var target = weeks[0];
   var grid = $('otGrid');
   if (!target) {
-    grid.innerHTML = '<div class="empty"><b>No OT schedule</b>No OT records available for the selected filters.</div>';
+    grid.innerHTML = '<div class="empty"><b>No OT schedule</b>No upcoming OT records for the selected date range.</div>';
   } else {
     var wkRows = ot.filter(function (r) { return r.week === target; });
     var dayKeys = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];

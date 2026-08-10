@@ -3,7 +3,7 @@
  * ============================================================ */
 
 var DATA = null;                 // last good payload
-var F = { agent: 'ALL', week: 'ALL', moMonth: '', lvMonth: '', qaAgent: 'ALL', from: '', to: '' };
+var F = { agent: 'ALL', week: 'ALL', moMonth: '', lvMonth: '', qaAgent: 'ALL', scAgent: '', scWeek: '', ohaFrom: '', ohaTo: '', abFrom: '', abTo: '', otFrom: '', otTo: '', from: '', to: '' };
 var PAGE = 'overview';
 var CACHE_KEY = 'tpcc_cache_v1'; // data cache only - never a credential
 
@@ -86,7 +86,19 @@ function groupBy(arr, keyFn) {
   return { keys: order, map: m };
 }
 
-/** Every agent seen anywhere in the payload. */
+/** Agent -> hotline (OHA / ALL BRANDS) derived from the OT schedule, which is the
+ *  only weekly dataset that carries a hotline column. Covers every scheduled agent. */
+function agentHotlineMap() {
+  var m = {};
+  (DATA.otSchedule || []).forEach(function (r) { if (r.agent && r.hotline) m[r.agent] = r.hotline; });
+  return m;
+}
+
+// A shift is a half-day when it covers only part of the day (not a full 8-9h block)
+function isHalfDayShift(s) {
+  if (!s) return false;
+  return /^8\s*AM\s*-\s*12\s*PM$/i.test(s) || /^3\s*PM\s*-\s*7\s*PM$/i.test(s);
+}
 function allAgents(d) {
   var a = [];
   ['dailyProductivity', 'weeklyCallStats', 'qaScores', 'qaBreakdown', 'scorecards',
@@ -145,7 +157,7 @@ function sheetRating(agent, week) {
 
 /** Per-agent components from the WEEKLY SCORECARD tab for a given week. */
 function scorecardComponents(agent, week) {
-  var want = /weighted|qa score|productivity %|attendance %|quality %|work ethic %|pick up %|total score/i;
+  var want = /weighted|qa score|productivity %|attendance %|quality %|work ethic %|pick up %|total score|infractions/i;
   var o = {};
   (DATA.scorecards || []).forEach(function (r) {
     if (r.agent !== agent || r.week !== week) return;
@@ -154,6 +166,39 @@ function scorecardComponents(agent, week) {
     o[r.metric] = r.value;
   });
   return Object.keys(o).length ? o : null;
+}
+
+// Each weighted component is capped at its real maximum so a metric can never
+// read above its allotted score (e.g. Attendance Weighted cannot exceed 25%).
+var WEIGHT_MAX = {
+  'Attendance Weighted (25%)': 0.25,
+  'Quality Weighted (35%)': 0.35,
+  'Productivity Weighted (25%)': 0.25,
+  'Work Ethic Weighted (15%)': 0.15
+};
+
+/** Same as scorecardComponents but with weighted metrics capped to their max and
+ *  the infractions penalty (-10% of the total per infraction) applied. Returns
+ *  a corrected TOTAL SCORE (out of 100) and Overall %. */
+function scorecardCapped(agent, week) {
+  var c = scorecardComponents(agent, week);
+  if (!c) return null;
+  var out = {};
+  Object.keys(c).forEach(function (k) { out[k] = c[k]; });
+  Object.keys(WEIGHT_MAX).forEach(function (k) {
+    if (out[k] != null) out[k] = Math.min(out[k], WEIGHT_MAX[k]);
+  });
+  var total = (out['Attendance Weighted (25%)'] || 0) + (out['Quality Weighted (35%)'] || 0) +
+              (out['Productivity Weighted (25%)'] || 0) + (out['Work Ethic Weighted (15%)'] || 0);
+  var inf = out['Number of Infractions'];
+  if (inf && inf > 0) {
+    var deduct = inf * 0.10 * total;          // -10% of total per infraction
+    out['Infractions Penalty'] = -deduct;
+    total = Math.max(0, total - deduct);
+  }
+  out['TOTAL SCORE (out of 100)'] = total;
+  out['Overall %'] = total / 100;
+  return out;
 }
 
 function buildRanking() {
@@ -202,7 +247,7 @@ function buildRanking() {
       agent: a,
       overall: offRows.length ? avg(offRows.map(function (r) { return r.overall; })) : null,
       components: offRows.length
-        ? (scorecardComponents(a, offRows[offRows.length - 1].week) || offRows[offRows.length - 1].components)
+        ? (scorecardCapped(a, offRows[offRows.length - 1].week) || offRows[offRows.length - 1].components)
         : null,
       scoreWeek: offRows.length ? offRows[offRows.length - 1].week : null,
       rating: offRows.length ? sheetRating(a, offRows[offRows.length - 1].week) : null,

@@ -39,6 +39,9 @@ function setPage(p) {
   var m = PAGE_META[p] || ['', ''];
   $('pageTitle').textContent = m[0];
   $('pageSub').textContent = m[1];
+  // Schedule & OT&Break use their own per-hotline toggles, not the global filter bar
+  var filters = $('filters');
+  if (filters) filters.style.display = (p === 'schedule' || p === 'otbreak') ? 'none' : '';
   closeNav();
   window.scrollTo(0, 0);
   setTimeout(resizeCharts, 40);   // charts sized inside a hidden box measure 0
@@ -105,12 +108,14 @@ function wire() {
     render();
   };
   $('btnReset').onclick = function () {
-    F = { agent: 'ALL', week: 'ALL', moMonth: '', lvMonth: '', qaAgent: 'ALL', from: '', to: '' };
+    F = { agent: 'ALL', week: 'ALL', moMonth: '', lvMonth: '', qaAgent: 'ALL', scAgent: '', scWeek: '',
+          ohaFrom: '', ohaTo: '', abFrom: '', abTo: '', otFrom: '', otTo: '', from: '', to: '' };
     $('fAgent').value = 'ALL'; $('fWeek').value = 'ALL';
     $('fFrom').value = ''; $('fTo').value = '';
+    ['ohaFrom', 'ohaTo', 'abFrom', 'abTo', 'otFrom', 'otTo'].forEach(function (id) { if ($(id)) $(id).value = ''; });
     ['prSearch', 'clSearch', 'scSearch', 'bkSearch']
       .forEach(function (id) { if ($(id)) $(id).value = ''; });
-    ['prTable', 'clTable', 'scTable', 'scDetail', 'bkTable']
+    ['prTable', 'clTable', 'scTable', 'bkTable']
       .forEach(function (id) { if ($(id) && $(id)._st) { $(id)._st.q = ''; $(id)._st.page = 1; } });
     render();
     toast('Filters reset.');
@@ -133,6 +138,14 @@ function wire() {
   wireSearch('clSearch', 'clTable');
   wireSearch('scSearch', 'scTable');
   wireSearch('bkSearch', 'bkTable');
+
+  // Team Schedule: per-hotline date-range toggles (replace the removed top filters)
+  function bindRange(id, key) {
+    var el = $(id);
+    if (!el) return;
+    el.onchange = function () { F[key] = this.value; renderSchedule(); };
+  }
+  ['ohaFrom', 'ohaTo', 'abFrom', 'abTo', 'otFrom', 'otTo'].forEach(function (id) { bindRange(id, id); });
 
   // ---- Leave Request PIN gate (Option B) ----
   var lf = $('leaveForm');
