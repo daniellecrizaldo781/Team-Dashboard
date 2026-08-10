@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Team Danielle Dashboard</title>
-<link rel="stylesheet" href="styles.css?v=30">
+<link rel="stylesheet" href="styles.css?v=31">
 </head>
 <body>
 
@@ -225,16 +225,16 @@
 
   <!-- MONTHLY SCORECARD -->
   <section class="page" id="pageMonthly" hidden>
-    <div class="kpis" id="moKpis"></div>
-    <div class="grid2">
-      <div class="card"><h3>Latest Month &mdash; Overall Score by Agent</h3><div class="chartbox"><canvas id="chMoLatest"></canvas></div></div>
-      <div class="card"><h3>Monthly Overall Score Trend</h3><div class="chartbox"><canvas id="chMoTrend"></canvas></div></div>
-    </div>
     <div class="card">
-      <div class="card-head"><h3>Monthly Scorecard Records</h3>
+      <div class="card-head"><h3>Monthly Scorecard</h3>
         <select class="search" id="moMonth"></select>
       </div>
-      <div class="tscroll"><table id="moTable"></table></div>
+    </div>
+    <div class="top-performer" id="moTop"></div>
+    <div class="card">
+      <div class="card-head"><h3>Weekly Overall Score Breakdown</h3></div>
+      <div class="chartbox"><canvas id="chMoWeek"></canvas></div>
+      <div class="tscroll"><table id="moWeekTable"></table></div>
     </div>
   </section>
 
@@ -245,12 +245,12 @@
 <div class="toast" id="toast" hidden></div>
 
 <script src="chart.umd.min.js"></script>
-<script src="config.js?v=30"></script>
-<script src="data.js?v=30"></script>
-<script src="app-core.js?v=30"></script>
-<script src="app-charts.js?v=30"></script>
-<script src="app-render.js?v=30"></script>
-<script src="app-render2.js?v=30"></script>
-<script src="app-init.js?v=30"></script>
+<script src="config.js?v=31"></script>
+<script src="data.js?v=31"></script>
+<script src="app-core.js?v=31"></script>
+<script src="app-charts.js?v=31"></script>
+<script src="app-render.js?v=31"></script>
+<script src="app-render2.js?v=31"></script>
+<script src="app-init.js?v=31"></script>
 </body>
 </html>

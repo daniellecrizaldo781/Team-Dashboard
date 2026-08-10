@@ -39,9 +39,9 @@ function setPage(p) {
   var m = PAGE_META[p] || ['', ''];
   $('pageTitle').textContent = m[0];
   $('pageSub').textContent = m[1];
-  // Schedule, OT&Break, Leave & Scorecards use their own controls, not the global filter bar
+  // Schedule, OT&Break, Leave, Scorecards & Monthly use their own controls, not the global filter bar
   var filters = $('filters');
-  if (filters) filters.style.display = (p === 'schedule' || p === 'otbreak' || p === 'leave' || p === 'scorecards') ? 'none' : '';
+  if (filters) filters.style.display = (p === 'schedule' || p === 'otbreak' || p === 'leave' || p === 'scorecards' || p === 'monthly') ? 'none' : '';
   closeNav();
   window.scrollTo(0, 0);
   setTimeout(resizeCharts, 40);   // charts sized inside a hidden box measure 0
