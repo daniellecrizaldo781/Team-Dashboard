@@ -136,9 +136,20 @@ function renderScDetail(rank) {
 
 /* ---------------- MONTHLY SCORECARD ---------------- */
 function renderMonthly() {
-  var ms = slice(DATA.monthlyScores || []);
+  // monthlyScores is month-scoped - ignore the global week/agent filters so the
+  // page always shows the full monthly history regardless of the selected week
+  var ms = slice(DATA.monthlyScores || [], { ignoreWeek: true, ignoreAgent: true });
   var months = ms.filter(function (r) { return r.type === 'month'; });
   var weeks  = ms.filter(function (r) { return r.type === 'week'; });
+
+  if (!months.length) {
+    ['moTop', 'moRankTable', 'moAgentTop', 'moWeekTable'].forEach(function (id) {
+      var m = $(id); if (m) m.innerHTML = '';
+    });
+    var sel = $('moMonth'); if (sel) sel.innerHTML = '<option value="">No monthly data</option>';
+    var asel = $('moAgentSel'); if (asel) asel.innerHTML = '';
+    return;
+  }
 
   // distinct months sorted by their date (period is "Month YYYY")
   var monthList = uniq(months.map(function (r) { return r.period; })).sort(function (a, b) {

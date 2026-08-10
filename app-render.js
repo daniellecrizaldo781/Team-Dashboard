@@ -41,7 +41,7 @@ function topPerformerCard(mountId, rank) {
 
 /* ---------------- OVERVIEW ---------------- */
 function renderOverview() {
-  var rank = buildRanking();
+  var rank = buildRanking(F.week !== 'ALL' ? F.week : null);
   var dp = slice(DATA.dailyProductivity);
   var qa = slice(DATA.qaScores);
   var cl = slice(DATA.weeklyCallStats);

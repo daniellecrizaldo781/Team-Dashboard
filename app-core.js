@@ -201,7 +201,7 @@ function scorecardCapped(agent, week) {
   return out;
 }
 
-function buildRanking() {
+function buildRanking(weekOverride) {
   if (!DATA) return [];
   var off = officialRows();
 
@@ -213,11 +213,14 @@ function buildRanking() {
   });
   off = off.filter(function (r) { return liveWeeks[r.week]; });
 
+  // a specific week can be forced (Overview's global Week selector) or taken
+  // from the Scorecards page's own selector
+  var scopeWeek = weekOverride || F.scRankWeek;
   var scoped;
-  if (F.scRankWeek) {
-    // a specific week is selected on the Scorecards page
+  if (scopeWeek) {
+    // show only that week's scorecards for every agent
     scoped = off.filter(function (r) {
-      return (F.agent === 'ALL' || r.agent === F.agent) && r.week === F.scRankWeek;
+      return (F.agent === 'ALL' || r.agent === F.agent) && r.week === scopeWeek;
     });
   } else {
     // each agent's MOST RECENT completed scorecard - never a cross-month average
@@ -228,7 +231,7 @@ function buildRanking() {
       return rows[rows.length - 1];
     });
   }
-  if (!scoped.length && !F.scRankWeek) {
+  if (!scoped.length && !scopeWeek) {
     var byA = groupBy(off.filter(function (r) { return F.agent === 'ALL' || r.agent === F.agent; }), function (r) { return r.agent; });
     scoped = byA.keys.map(function (a) {
       var rows = byA.map[a].slice().sort(function (x, y) { return (x.week || '').localeCompare(y.week || ''); });
@@ -236,9 +239,18 @@ function buildRanking() {
     });
   }
 
-  var qaBy = groupBy(slice(DATA.qaScores), function (r) { return r.agent; });
-  var prBy = groupBy(slice(DATA.dailyProductivity), function (r) { return r.agent; });
-  var clBy = groupBy(slice(DATA.weeklyCallStats), function (r) { return r.agent; });
+  // when a specific week is scoped, QA / productivity / calls stats are limited to that week too
+  var qaSrc = slice(DATA.qaScores);
+  var prSrc = slice(DATA.dailyProductivity);
+  var clSrc = slice(DATA.weeklyCallStats);
+  if (scopeWeek) {
+    qaSrc = qaSrc.filter(function (r) { return r.week === scopeWeek; });
+    prSrc = prSrc.filter(function (r) { return r.week === scopeWeek; });
+    clSrc = clSrc.filter(function (r) { return r.week === scopeWeek; });
+  }
+  var qaBy = groupBy(qaSrc, function (r) { return r.agent; });
+  var prBy = groupBy(prSrc, function (r) { return r.agent; });
+  var clBy = groupBy(clSrc, function (r) { return r.agent; });
 
   var agents = uniq(scoped.map(function (r) { return r.agent; })
     .concat(qaBy.keys).concat(prBy.keys));
