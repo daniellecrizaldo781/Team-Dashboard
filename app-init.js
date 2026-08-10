@@ -93,25 +93,12 @@ function wire() {
   $('fAgent').onchange = function () { F.agent = this.value; render(); };
   $('fWeek').onchange  = function () {
     F.week = this.value;
-    // a specific week supersedes an explicit date range
-    if (F.week !== 'ALL') { F.from = ''; F.to = ''; $('fFrom').value = ''; $('fTo').value = ''; }
-    render();
-  };
-  $('fFrom').onchange = function () {
-    F.from = this.value;
-    if (F.from && F.week !== 'ALL') { F.week = 'ALL'; $('fWeek').value = 'ALL'; }
-    render();
-  };
-  $('fTo').onchange = function () {
-    F.to = this.value;
-    if (F.to && F.week !== 'ALL') { F.week = 'ALL'; $('fWeek').value = 'ALL'; }
     render();
   };
   $('btnReset').onclick = function () {
     F = { agent: 'ALL', week: 'ALL', moMonth: '', moAgent: '', lvMonth: '', qaAgent: 'ALL', scAgent: '', scWeek: '',
           tsWeek: '', otWeek: '', scRankWeek: '', from: '', to: '' };
     $('fAgent').value = 'ALL'; $('fWeek').value = 'ALL';
-    $('fFrom').value = ''; $('fTo').value = '';
     ['otWeek', 'scRankWeek'].forEach(function (id) { if ($(id)) $(id).value = ''; });
     ['prSearch', 'clSearch', 'scSearch', 'bkSearch']
       .forEach(function (id) { if ($(id)) $(id).value = ''; });

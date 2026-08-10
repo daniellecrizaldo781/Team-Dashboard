@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Team Danielle Dashboard</title>
-<link rel="stylesheet" href="styles.css?v=33">
+<link rel="stylesheet" href="styles.css?v=34">
 </head>
 <body>
 
@@ -57,14 +57,6 @@
       <label for="fWeek">Week</label>
       <select id="fWeek"><option value="ALL">All Weeks</option></select>
     </div>
-    <div class="f">
-      <label for="fFrom">Date From</label>
-      <input type="date" id="fFrom">
-    </div>
-    <div class="f">
-      <label for="fTo">Date To</label>
-      <input type="date" id="fTo">
-    </div>
     <button class="btn-reset" id="btnReset">Reset Filters</button>
   </section>
 
@@ -72,16 +64,12 @@
   <section class="page" id="pageOverview">
     <div class="kpis" id="ovKpis"></div>
     <div class="top-performer" id="topPerformer"></div>
-    <div class="card"><h3>Productivity by Agent</h3><div class="chartbox"><canvas id="chOvProd"></canvas></div></div>
     <div class="card"><h3>Team Leaderboard</h3><div class="tscroll" id="ovBoard"></div></div>
   </section>
 
   <!-- DAILY PRODUCTIVITY -->
   <section class="page" id="pageProductivity" hidden>
     <div class="kpis" id="prKpis"></div>
-    <div class="grid2">
-      <div class="card"><h3>Tickets Handled by Agent</h3><div class="chartbox"><canvas id="chPrAgent"></canvas></div></div>
-    </div>
     <div class="card">
       <div class="card-head"><h3>Daily Records</h3><input class="search" id="prSearch" placeholder="Search&hellip;"></div>
       <div class="tscroll" id="prTable"></div>
@@ -92,7 +80,6 @@
   <!-- WEEKLY CALL STATS -->
   <section class="page" id="pageCalls" hidden>
     <div class="kpis" id="clKpis"></div>
-    <div class="card"><h3>Calls Handled by CSR</h3></div>
     <div class="card">
       <div class="card-head"><h3>Weekly Call Statistics</h3><input class="search" id="clSearch" placeholder="Search&hellip;"></div>
       <div class="tscroll" id="clTable"></div>
@@ -249,12 +236,12 @@
 <div class="toast" id="toast" hidden></div>
 
 <script src="chart.umd.min.js"></script>
-<script src="config.js?v=33"></script>
-<script src="data.js?v=33"></script>
-<script src="app-core.js?v=33"></script>
-<script src="app-charts.js?v=33"></script>
-<script src="app-render.js?v=33"></script>
-<script src="app-render2.js?v=33"></script>
-<script src="app-init.js?v=33"></script>
+<script src="config.js?v=34"></script>
+<script src="data.js?v=34"></script>
+<script src="app-core.js?v=34"></script>
+<script src="app-charts.js?v=34"></script>
+<script src="app-render.js?v=34"></script>
+<script src="app-render2.js?v=34"></script>
+<script src="app-init.js?v=34"></script>
 </body>
 </html>
