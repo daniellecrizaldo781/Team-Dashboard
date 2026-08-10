@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Team Danielle Dashboard</title>
-<link rel="stylesheet" href="styles.css?v=26">
+<link rel="stylesheet" href="styles.css?v=27">
 </head>
 <body>
 
@@ -142,21 +142,10 @@
   <section class="page" id="pageSchedule" hidden>
     <div class="kpis" id="tsKpis"></div>
     <div class="card">
-      <div class="card-head"><h3>OHA Schedule</h3>
-        <div class="range-toggle">
-          <label>From <input type="date" id="ohaFrom"></label>
-          <label>To <input type="date" id="ohaTo"></label>
-        </div>
+      <div class="card-head"><h3>Team Schedule</h3>
+        <select class="search" id="tsWeek"></select>
       </div>
       <div class="tscroll" id="tsGridOHA"></div>
-    </div>
-    <div class="card">
-      <div class="card-head"><h3>All Brands Schedule</h3>
-        <div class="range-toggle">
-          <label>From <input type="date" id="abFrom"></label>
-          <label>To <input type="date" id="abTo"></label>
-        </div>
-      </div>
       <div class="tscroll" id="tsGridAB"></div>
     </div>
   </section>
@@ -256,12 +245,12 @@
 <div class="toast" id="toast" hidden></div>
 
 <script src="chart.umd.min.js"></script>
-<script src="config.js?v=26"></script>
-<script src="data.js?v=26"></script>
-<script src="app-core.js?v=26"></script>
-<script src="app-charts.js?v=26"></script>
-<script src="app-render.js?v=26"></script>
-<script src="app-render2.js?v=26"></script>
-<script src="app-init.js?v=26"></script>
+<script src="config.js?v=27"></script>
+<script src="data.js?v=27"></script>
+<script src="app-core.js?v=27"></script>
+<script src="app-charts.js?v=27"></script>
+<script src="app-render.js?v=27"></script>
+<script src="app-render2.js?v=27"></script>
+<script src="app-init.js?v=27"></script>
 </body>
 </html>

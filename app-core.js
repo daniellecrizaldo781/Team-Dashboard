@@ -3,7 +3,7 @@
  * ============================================================ */
 
 var DATA = null;                 // last good payload
-var F = { agent: 'ALL', week: 'ALL', moMonth: '', lvMonth: '', qaAgent: 'ALL', scAgent: '', scWeek: '', ohaFrom: '', ohaTo: '', abFrom: '', abTo: '', otFrom: '', otTo: '', from: '', to: '' };
+var F = { agent: 'ALL', week: 'ALL', moMonth: '', lvMonth: '', qaAgent: 'ALL', scAgent: '', scWeek: '', tsWeek: '', otFrom: '', otTo: '', from: '', to: '' };
 var PAGE = 'overview';
 var CACHE_KEY = 'tpcc_cache_v1'; // data cache only - never a credential
 

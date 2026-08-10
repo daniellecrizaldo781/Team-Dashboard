@@ -204,49 +204,52 @@ function renderSchedule() {
   var hlMap = agentHotlineMap();
   var now = thisWeekStart();
 
-  // archive past weeks: only keep upcoming schedule weeks by default
+  // archive past weeks: only keep upcoming schedule weeks
   var upcoming = tsAll.filter(function (r) { return (r.week || '') >= now; });
   var base = upcoming.length ? upcoming : tsAll;
 
-  // per-hotline date ranges (toggle). empty = whole upcoming span.
-  function inRange(r, from, to) {
-    if (from && r.date < from) return false;
-    if (to && r.date > to) return false;
-    return true;
+  // one week at a time: week selector (default = earliest upcoming week)
+  var weeks = uniq(base.map(function (r) { return r.week; })).sort();
+  if (!weeks.length) weeks = uniq(tsAll.map(function (r) { return r.week; })).sort();
+  var sel = $('tsWeek');
+  if (sel) {
+    sel.innerHTML = weeks.map(function (w) { return '<option value="' + esc(w) + '">' + esc(fmtWeek(w)) + '</option>'; }).join('');
+    if (F.tsWeek && weeks.indexOf(F.tsWeek) >= 0) sel.value = F.tsWeek;
+    else { F.tsWeek = weeks[0] || ''; sel.value = F.tsWeek; }
+    sel.onchange = function () { F.tsWeek = this.value; renderSchedule(); };
   }
-  var ohaRows = base.filter(function (r) { return (hlMap[r.agent] || 'ALL BRANDS') === 'OHA'; })
-                   .filter(function (r) { return inRange(r, F.ohaFrom, F.ohaTo); });
-  var abRows  = base.filter(function (r) { return (hlMap[r.agent] || 'ALL BRANDS') === 'ALL BRANDS'; })
-                   .filter(function (r) { return inRange(r, F.abFrom, F.abTo); });
+
+  var wk = F.tsWeek || weeks[0] || '';
+  var wkRows = base.filter(function (r) { return r.week === wk; });
+
+  var ohaRows = wkRows.filter(function (r) { return (hlMap[r.agent] || 'ALL BRANDS') === 'OHA'; });
+  var abRows  = wkRows.filter(function (r) { return (hlMap[r.agent] || 'ALL BRANDS') === 'ALL BRANDS'; });
   var shown = ohaRows.concat(abRows);
 
-  // KPIs: agents on leave (this filtered span) + half-day schedules (this span)
-  var spanFrom = [F.ohaFrom, F.abFrom].filter(Boolean).sort()[0] || now;
-  var spanTo   = [F.ohaTo, F.abTo].filter(Boolean).sort().reverse()[0] || '2999-12-31';
+  // KPIs: agents on leave this week + half-day schedules this week
   var lv = (DATA.leaveRequests || []).filter(function (r) {
-    var d = r.dateManila || r.date || '';
-    return d >= spanFrom && d <= spanTo;
+    return (r.week || '') === wk;
   });
   var onLeave = uniq(lv.map(function (r) { return r.agent; })).length;
   var halfDay = shown.filter(function (r) { return isHalfDayShift(r.shift); }).length;
 
   kpi('tsKpis', [
-    { label: 'Agents on Leave', value: n0(onLeave), sub: 'in selected span', tone: onLeave ? 'warn' : '' },
+    { label: 'Agents on Leave', value: n0(onLeave), sub: 'this week', tone: onLeave ? 'warn' : '' },
     { label: 'Half-Day Schedules', value: n0(halfDay), sub: 'part-day shifts', tone: '' },
     { label: 'Scheduled (shown)', value: n0(shown.length), sub: 'rows in view' },
-    { label: 'Weeks Shown', value: n0(uniq(shown.map(function (r) { return r.week; })).length), sub: 'upcoming only' }
+    { label: 'Week', value: fmtWeek(wk), sub: 'upcoming only' }
   ]);
 
   renderScheduleTable('tsGridOHA', 'OHA', ohaRows, hlMap);
   renderScheduleTable('tsGridAB', 'ALL BRANDS', abRows, hlMap);
 }
 
-// one hotline's schedule, chronological (by date), agent + hotline in the row header
+// one hotline's schedule for a single week, columns = dates, hotline shown only in header
 function renderScheduleTable(mountId, hotline, rows, hlMap) {
   var grid = $(mountId);
   if (!grid) return;
   if (!rows.length) {
-    grid.innerHTML = '<div class="empty"><b>No ' + esc(hotline) + ' schedule</b>No upcoming schedule rows for the selected date range.</div>';
+    grid.innerHTML = '<div class="empty"><b>No ' + esc(hotline) + ' schedule</b>No schedule rows for this week.</div>';
     return;
   }
   var dates = uniq(rows.map(function (r) { return r.date; })).sort();
@@ -254,7 +257,7 @@ function renderScheduleTable(mountId, hotline, rows, hlMap) {
   var idx = {};
   rows.forEach(function (r) { idx[r.agent + '|' + r.date] = r; });
 
-  var h = '<table><thead><tr><th>Agent <span class="hl-tag">' + esc(hotline) + '</span></th>';
+  var h = '<table class="sched-table"><thead><tr><th>Agent</th>';
   dates.forEach(function (d) {
     var dd = ymd(d);
     h += '<th>' + (dd ? dd.toLocaleDateString('en-US', { weekday: 'short' }) + '<br>' +
@@ -262,7 +265,7 @@ function renderScheduleTable(mountId, hotline, rows, hlMap) {
   });
   h += '</tr></thead><tbody>';
   agents.forEach(function (a) {
-    h += '<tr><td><b>' + esc(a) + '</b> <span class="hl-inline">' + esc(hlMap[a] || hotline) + '</span></td>';
+    h += '<tr><td class="agent-cell"><b>' + esc(a) + '</b></td>';
     dates.forEach(function (d) {
       var r = idx[a + '|' + d];
       h += '<td>' + (r ? shiftPill(r.shift, r.off) : '—') + '</td>';

@@ -174,7 +174,14 @@ select,input{font:inherit;color:var(--ink)}
 .pod .mt{font-size:11.5px;color:var(--ink3);margin-top:2px}
 
 /* ---------- tables ---------- */
-.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:11px}
+/* schedule / OT tables: show full grid, no horizontal scroll (one week fits) */
+.tscroll{overflow-x:visible;border-radius:11px}
+.sched-table{border-collapse:collapse;width:100%;table-layout:fixed}
+.sched-table th,.sched-table td{border:1px solid var(--line);padding:9px 10px;font-size:13px;text-align:center;vertical-align:middle}
+.sched-table thead th{background:#FFF0F6;color:var(--ink2);font-weight:800;font-size:12.5px}
+.sched-table tbody tr:nth-child(even){background:#FCF6FA}
+.sched-table .agent-cell{text-align:left;background:#FBF1F7;font-weight:700;position:sticky;left:0}
+.sched-table td:empty:before{content:'\2014';color:var(--ink3)}
 .qa-by-agent{display:flex;flex-direction:column;gap:16px}
 .qa-agent-block{background:#FBF7FA;border:1px solid var(--line);border-radius:14px;overflow:hidden}
 .qa-agent-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:10px 14px;background:linear-gradient(180deg,#FFF0F6,#FDEAF3)}
@@ -402,8 +409,10 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   font:12.5px/1.6 ui-monospace,Menlo,Consolas,monospace;
   color:var(--ink);white-space:pre-wrap;word-break:break-word;
 }
-.range-toggle{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.range-toggle label{font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.03em;display:flex;flex-direction:column;gap:3px}
-.range-toggle input{width:auto;padding:6px 8px;border:1.5px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);font-size:13px;font-weight:500}
-.hl-tag{font-size:10.5px;font-weight:800;color:#fff;background:var(--rose-d);padding:2px 7px;border-radius:7px;vertical-align:middle;margin-left:4px}
-.hl-inline{font-size:10.5px;font-weight:700;color:var(--rose-d);background:#FCE4EE;padding:1px 6px;border-radius:6px;margin-left:5px}
+/* OT schedule grid lines + no horizontal scroll (one week fits) */
+#otGrid table{border-collapse:collapse;width:100%;min-width:0;table-layout:fixed}
+#otGrid th,#otGrid td{border:1px solid var(--line);padding:8px 9px;font-size:12.5px;text-align:center;vertical-align:middle}
+#otGrid thead th{background:#FFF0F6;color:var(--ink2);font-weight:800;white-space:normal}
+#otGrid tbody tr:nth-child(even){background:#FCF6FA}
+#otGrid tbody td:first-child{text-align:left;background:#FBF1F7;font-weight:700}
+#otGrid tbody td:nth-child(2){text-align:left}

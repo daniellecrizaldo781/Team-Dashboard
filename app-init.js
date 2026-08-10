@@ -109,10 +109,10 @@ function wire() {
   };
   $('btnReset').onclick = function () {
     F = { agent: 'ALL', week: 'ALL', moMonth: '', lvMonth: '', qaAgent: 'ALL', scAgent: '', scWeek: '',
-          ohaFrom: '', ohaTo: '', abFrom: '', abTo: '', otFrom: '', otTo: '', from: '', to: '' };
+          tsWeek: '', otFrom: '', otTo: '', from: '', to: '' };
     $('fAgent').value = 'ALL'; $('fWeek').value = 'ALL';
     $('fFrom').value = ''; $('fTo').value = '';
-    ['ohaFrom', 'ohaTo', 'abFrom', 'abTo', 'otFrom', 'otTo'].forEach(function (id) { if ($(id)) $(id).value = ''; });
+    ['otFrom', 'otTo'].forEach(function (id) { if ($(id)) $(id).value = ''; });
     ['prSearch', 'clSearch', 'scSearch', 'bkSearch']
       .forEach(function (id) { if ($(id)) $(id).value = ''; });
     ['prTable', 'clTable', 'scTable', 'bkTable']
@@ -139,13 +139,13 @@ function wire() {
   wireSearch('scSearch', 'scTable');
   wireSearch('bkSearch', 'bkTable');
 
-  // Team Schedule: per-hotline date-range toggles (replace the removed top filters)
+  // Team Schedule: week selector (replaces the removed per-hotline date ranges)
   function bindRange(id, key) {
     var el = $(id);
     if (!el) return;
     el.onchange = function () { F[key] = this.value; renderSchedule(); };
   }
-  ['ohaFrom', 'ohaTo', 'abFrom', 'abTo', 'otFrom', 'otTo'].forEach(function (id) { bindRange(id, id); });
+  ['tsWeek'].forEach(function (id) { bindRange(id, id); });
 
   // ---- Leave Request PIN gate (Option B) ----
   var lf = $('leaveForm');
