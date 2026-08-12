@@ -33,7 +33,7 @@ const T = {
   otSchedule:        ['agent','date','week','day','otTime','hours','hotline'],
   breakSchedule:     ['agent','day','firstBreak','lunchBreak','lastBreak','team','off','source'],
   leaveRequests:     ['agent','month','leaveType','reason','details','dateManila','datePST',
-                      'date','week','status','statusNorm','approvedOn','notes']
+                     'date','week','status','statusNorm','requestedOn','approvedOn','notes']
 };
 
 Object.keys(T).forEach(k => (d[k] || []).forEach(row => T[k].forEach(c => count(row[c]))));
