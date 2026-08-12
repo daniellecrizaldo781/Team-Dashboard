@@ -275,7 +275,7 @@ function parseLeave(ss) {
     else if (/date of leave.*pst/i.test(h))  col.datePST = c;
     else if (/date of leave/i.test(h))       col.dateMNL = c;
     else if (/date of approval|approved on/i.test(h)) col.approvedOn = c;
-    else if (/request(ed)?\s*(on|date)?|date requested/i.test(h)) col.requestedOn = c;
+    else if (/request|submit|filed|created|timestamp/i.test(h)) col.requestedOn = c;
     else if (/approved/i.test(h))         col.status = c;
     else if (/tl notes/i.test(h))         col.notes = c;
     else if (/^w$/i.test(h) || /month/i.test(h)) col.month = c;
