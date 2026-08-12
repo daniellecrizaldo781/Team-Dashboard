@@ -31,8 +31,9 @@ var DATA_FROM = '2026-08-01';
 
 /** Schedule-type datasets (Team Schedule, OT, Break) are capped at this date so
  * far-future roster weeks don't clutter the dashboard. Other datasets keep their
- * DATA_FROM lower bound only. */
-var DATA_TO = '2026-08-31';
+ * DATA_FROM lower bound only. Extended to year-end so plotted schedules through
+ * Dec 27 (and any further) appear. */
+var DATA_TO = '2026-12-31';
 
 /** Publish only this calendar year's data. Change in one place if needed. */
 var DATA_YEAR = 2026;
