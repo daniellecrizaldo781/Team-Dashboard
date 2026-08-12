@@ -450,6 +450,10 @@ function renderLeaves() {
             '<span class="pill ' + k + '">' + esc(r.statusNorm || r.status || '—') + '</span></div>' +
           '<div class="lc-meta">' + esc(r.leaveType || '—') + ' &middot; ' + esc(r.reason || '—') + '</div>' +
           '<div class="lc-date">📅 ' + when + '</div>' +
+          '<div class="lc-times">' +
+            '<span class="lc-time">Requested: ' + (r.requestedOn ? esc(fmtDate(r.requestedOn)) : '—') + '</span>' +
+            '<span class="lc-time">Approved: ' + (r.approvedOn ? esc(fmtDate(r.approvedOn)) : '—') + '</span>' +
+          '</div>' +
           (r.details ? '<div class="lc-details">' + esc(r.details) + '</div>' : '') +
         '</div>';
       }).join('');
