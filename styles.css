@@ -322,6 +322,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .lc-details{margin-top:6px;font-size:12.5px;color:var(--ink3);background:#FFF0F6;border-radius:9px;padding:7px 10px}
 .lc-times{margin-top:6px;display:flex;flex-wrap:wrap;gap:6px 16px}
 .lc-time{font-size:11.5px;color:var(--ink3);font-weight:600}
+.lv-note{margin:0 0 12px;font-size:12.5px;color:var(--ink3);background:var(--blush);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
 
 /* ---------- leave calendar (at-a-glance per date) ---------- */
 .cal-wrap{display:flex;flex-direction:column;gap:16px;margin-bottom:14px}
