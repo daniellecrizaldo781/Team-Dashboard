@@ -12,6 +12,7 @@ var PAGE_META = {
   schedule:     ['Team Schedule', 'Shifts and rest days by agent'],
   otbreak:      ['OT & Break Schedule', 'Overtime and break assignments'],
   leave:        ['Leave Requests', 'File and view leave requests'],
+  resources:     ['Resources', 'Quick links, guides and contacts for the team'],
 };
 
 /** Single dispatcher - every page re-renders from current filter state. */
@@ -26,6 +27,7 @@ function render() {
   try { renderSchedule(); }     catch (e) { console.error('schedule', e); }
   try { renderOtBreak(); }      catch (e) { console.error('otbreak', e); }
   try { renderLeaves(); }       catch (e) { console.error('leave', e); }
+  try { renderResources(); }    catch (e) { console.error('resources', e); }
   setTimeout(resizeCharts, 30);
 }
 
@@ -41,7 +43,7 @@ function setPage(p) {
   $('pageSub').textContent = m[1];
   // Schedule, OT&Break, Leave, Scorecards & Monthly use their own controls, not the global filter bar
   var filters = $('filters');
-  if (filters) filters.style.display = (p === 'schedule' || p === 'otbreak' || p === 'leave' || p === 'scorecards' || p === 'monthly') ? 'none' : '';
+  if (filters) filters.style.display = (p === 'schedule' || p === 'otbreak' || p === 'leave' || p === 'scorecards' || p === 'monthly' || p === 'resources') ? 'none' : '';
   closeNav();
   window.scrollTo(0, 0);
   setTimeout(resizeCharts, 40);   // charts sized inside a hidden box measure 0
@@ -216,6 +218,41 @@ function wire() {
 
   var rt;
   window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(resizeCharts, 160); });
+}
+
+/* Resources page: a curated, editable library - no Agent/Week filters.
+ * Edit the arrays below to change what shows. */
+var RESOURCE_DATA = {
+  links: [
+    { t: 'Oricle CRM', d: 'Main CRM login', u: 'https://oricle.example.com' },
+    { t: 'Call Script Library', d: 'Approved scripts & rebuttals', u: '#' },
+    { t: 'Knowledge Base', d: 'Product & policy docs', u: '#' },
+    { t: 'Shift Swap Board', d: 'Request / offer shifts', u: '#' }
+  ],
+  guides: [
+    { t: 'New Hire Onboarding', d: 'Week 1-2 checklist', u: '#' },
+    { t: 'QA Rubric', d: 'How calls are scored', u: '#' },
+    { t: 'Escalation Flow', d: 'When & how to escalate', u: '#' },
+    { t: 'PST Shift Guide', d: 'Timezone & break rules', u: '#' }
+  ],
+  contacts: [
+    { t: 'Danielle Crizaldo', d: 'Team Lead', u: 'mailto:danielle@example.com' },
+    { t: 'IT Support', d: 'Login / tool issues', u: 'mailto:it@example.com' },
+    { t: 'HR', d: 'Leave & payroll', u: 'mailto:hr@example.com' }
+  ]
+};
+
+function renderResources() {
+  var map = { resLinks: 'links', resGuides: 'guides', resContacts: 'contacts' };
+  Object.keys(map).forEach(function (id) {
+    var el = $(id);
+    if (!el) return;
+    el.innerHTML = (RESOURCE_DATA[map[id]] || []).map(function (r) {
+      return '<a class="res-card" href="' + esc(r.u) + '" target="_blank" rel="noopener">' +
+        '<div class="res-t">' + esc(r.t) + '</div>' +
+        '<div class="res-d">' + esc(r.d) + '</div></a>';
+    }).join('');
+  });
 }
 
 /* Snapshot mode: the data cannot change while the page is open, so there is
