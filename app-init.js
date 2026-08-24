@@ -224,22 +224,10 @@ function wire() {
  * Edit the arrays below to change what shows. */
 var RESOURCE_DATA = {
   links: [
-    { t: 'Oricle CRM', d: 'Main CRM login', u: 'https://oricle.example.com' },
-    { t: 'Call Script Library', d: 'Approved scripts & rebuttals', u: '#' },
-    { t: 'Knowledge Base', d: 'Product & policy docs', u: '#' },
-    { t: 'Shift Swap Board', d: 'Request / offer shifts', u: '#' }
+    { t: 'Team Resources Sheet', d: 'Live shared spreadsheet', u: 'https://docs.google.com/spreadsheets/d/1H6OP8ZFmYZUdFuT0ZAI-0QPdVf_6Z4L6PISUoh46h3k/edit?gid=0#gid=0' }
   ],
-  guides: [
-    { t: 'New Hire Onboarding', d: 'Week 1-2 checklist', u: '#' },
-    { t: 'QA Rubric', d: 'How calls are scored', u: '#' },
-    { t: 'Escalation Flow', d: 'When & how to escalate', u: '#' },
-    { t: 'PST Shift Guide', d: 'Timezone & break rules', u: '#' }
-  ],
-  contacts: [
-    { t: 'Danielle Crizaldo', d: 'Team Lead', u: 'mailto:danielle@example.com' },
-    { t: 'IT Support', d: 'Login / tool issues', u: 'mailto:it@example.com' },
-    { t: 'HR', d: 'Leave & payroll', u: 'mailto:hr@example.com' }
-  ]
+  guides: [],
+  contacts: []
 };
 
 function renderResources() {
