@@ -56,14 +56,29 @@ jobs:
       - name: Sanity-check the result
         run: node tools/checkdata.js
 
-      - name: Commit if changed
+      - name: Bump cache-buster ONLY when data.js changed
         run: |
           if git diff --quiet -- data.js; then
-            echo "data.js unchanged - nothing to commit"
+            echo "data.js unchanged - leaving ?v as-is"
+            exit 0
+          fi
+          node -e '
+            const fs = require("fs");
+            const p = "index.html";
+            let s = fs.readFileSync(p, "utf8");
+            s = s.replace(/(\?v=)(\d+)/g, (_, pre, n) => pre + (parseInt(n, 10) + 1));
+            fs.writeFileSync(p, s);
+            console.log("bumped ?v in index.html (data changed)");
+          '
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- data.js index.html; then
+            echo "data.js/index.html unchanged - nothing to commit"
             exit 0
           fi
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data.js
+          git add data.js index.html
           git commit -m "Refresh dashboard data ($(date -u '+%Y-%m-%d %H:%M UTC'))"
           git push

@@ -258,6 +258,9 @@ function buildRanking(weekOverride) {
   var rows = agents.map(function (a) {
     var offRows = scoped.filter(function (r) { return r.agent === a; });
     var qa = qaBy.map[a] || [], pr = prBy.map[a] || [], cl = clBy.map[a] || [];
+    // the scorecard week actually being shown for this agent - used so Calls /
+    // Attempts reflect ONLY that week (not a sum across every week they appear in)
+    var scWeek = offRows.length ? offRows[offRows.length - 1].week : null;
     return {
       agent: a,
       overall: offRows.length ? avg(offRows.map(function (r) { return r.overall; })) : null,
@@ -271,8 +274,12 @@ function buildRanking(weekOverride) {
       prod: pr.length ? avg(uniq(pr.map(function (r) { return r.week + '|' + r.productivityPct; }))
               .map(function (k) { var v = parseFloat(k.split('|')[1]); return isNaN(v) ? null : v; })) : null,
       tickets: pr.length ? sum(pr.map(function (r) { return r.tickets; })) : null,
-      calls: cl.length ? sum(cl.map(function (r) { return r.pickedUp; })) : null,
-      attempts: cl.length ? sum(cl.map(function (r) { return r.attempts; })) : null
+      // Calls / attempts reflect ONLY the week being shown (not a sum across
+      // every week the agent appears in) so the column matches the sheet's
+      // "Call Pick Up #" for that week - whether a single week is selected or
+      // the default most-recent-scorecard view is used.
+      calls: cl.length ? sum(cl.filter(function (r) { return !scWeek || r.week === scWeek; }).map(function (r) { return r.pickedUp; })) : null,
+      attempts: cl.length ? sum(cl.filter(function (r) { return !scWeek || r.week === scWeek; }).map(function (r) { return r.attempts; })) : null
     };
   });
 
