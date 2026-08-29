@@ -289,7 +289,7 @@ function renderResources() {
 }
 
 /* ---------------- Cascades & Handling ---------------- */
-var CASC_STATE = { cat: 'ALL', detail: null };
+var CASC_STATE = { cat: 'ALL', brand: 'ALL', detail: null };
 
 // Render rich-text runs [[text, bold, italic], ...] exactly as on the sheet.
 function renderRuns(runs, plain) {
@@ -360,7 +360,21 @@ function renderCascades() {
     });
   }
 
-  var rows = all.filter(function (r) { return CASC_STATE.cat === 'ALL' || r.category === CASC_STATE.cat; });
+  // brand selector: All Brands / Oricle Hearing Aid / Other Brands
+  var brandSel = $('cascBrand');
+  if (brandSel) {
+    brandSel.value = CASC_STATE.brand;
+    brandSel.onchange = function () { CASC_STATE.brand = brandSel.value; CASC_STATE.detail = null; renderCascades(); };
+  }
+
+  var isOricle = function (b) { return !!b && /oricle/i.test(b); };
+
+  var rows = all.filter(function (r) {
+    if (CASC_STATE.cat !== 'ALL' && r.category !== CASC_STATE.cat) return false;
+    if (CASC_STATE.brand === 'ORICLE' && !isOricle(r.brand)) return false;
+    if (CASC_STATE.brand === 'OTHER' && isOricle(r.brand)) return false;
+    return true;
+  });
   if (!rows.length) { list.innerHTML = '<div class="empty"><b>No cascades yet</b>Add a row to the Cascades tab in the team sheet and it will appear here.</div>'; return; }
 
   // ----- detail view: full cascade on its own page -----
@@ -387,9 +401,9 @@ function renderCascades() {
       }
       var embHtml = embImgs.length ? '<div class="casc-imgs">' + embImgs.map(function (im) {
         var src = im.src;
-        return '<a class="casc-img" href="' + esc(im.url || '#') + '" target="_blank" rel="noopener" title="Click to enlarge">' +
-          '<img src="' + esc(src) + '" alt="cascade reference image" loading="lazy" onclick="openLb(this.src)">' +
-          '<span class="casc-img-zoom">&#128269;</span></a>';
+        return '<span class="casc-img" title="Click to enlarge">' +
+          '<img src="' + esc(src) + '" alt="cascade reference image" loading="lazy">' +
+          '<span class="casc-img-zoom">&#128269;</span></span>';
       }).join('') + '</div>' : '';
 
       // URLs that live in the cascade BODY (separate from the Link References
@@ -405,9 +419,9 @@ function renderCascades() {
       // Image links from the body -> show the ACTUAL image (clickable to enlarge)
       var imagesHtml = imgs.length ? '<div class="casc-imgs">' + imgs.map(function (u) {
         var direct = toDirectImg(u);
-        return '<a class="casc-img" href="' + esc(u) + '" target="_blank" rel="noopener" title="Click to enlarge">' +
+        return '<span class="casc-img" title="Click to enlarge">' +
           '<img src="' + esc(direct) + '" alt="cascade image" loading="lazy" data-href="' + esc(u) + '" onerror="cascImgFallback(this)">' +
-          '<span class="casc-img-zoom">&#128269;</span></a>';
+          '<span class="casc-img-zoom">&#128269;</span></span>';
       }).join('') + '</div>' : '';
 
       // Dedicated "Link / Image References" section.
@@ -454,11 +468,11 @@ function renderCascades() {
 
       var back = $('cascBack');
       if (back) back.onclick = function () { CASC_STATE.detail = null; renderCascades(); };
-      // image thumbnails open the lightbox
-      Array.prototype.forEach.call(list.querySelectorAll('.casc-img'), function (a) {
-        a.onclick = function (e) {
+      // image thumbnails open the lightbox (no new-tab redirect)
+      Array.prototype.forEach.call(list.querySelectorAll('.casc-img'), function (span) {
+        span.onclick = function (e) {
           e.stopPropagation();
-          var img = a.querySelector('img');
+          var img = span.querySelector('img');
           var lb = $('lb'), lbImg = $('lbImg');
           if (lb && lbImg && img) { lbImg.src = img.src; lb.classList.add('show'); }
         };
