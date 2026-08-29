@@ -458,6 +458,8 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .casc-refs h4{margin:0 0 10px;font-size:13px;color:var(--rose-d);letter-spacing:.3px;text-transform:uppercase}
 .casc-ref-text{font-size:13.5px;line-height:1.7;color:var(--ink2);white-space:pre-wrap;word-break:break-word;margin-bottom:10px}
 .casc-ref-text a,.casc-refs a.casc-open{word-break:break-word}
+/* actual image shown inline inside the references text; click to enlarge */
+.casc-inline-img{max-width:260px;max-height:260px;border-radius:12px;border:1px solid var(--line);box-shadow:var(--sh);display:inline-block;vertical-align:top;margin:6px 8px 6px 0;cursor:zoom-in}
 .casc-open{display:inline-block;margin:0 8px 8px 0;padding:8px 14px;border-radius:10px;background:linear-gradient(100deg,var(--rose),var(--rose-d));color:#fff;font-weight:600;text-decoration:none;font-size:12.5px}
 .casc-open:hover{filter:brightness(1.05)}
 
