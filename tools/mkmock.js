@@ -40,6 +40,39 @@ const out = {
   leaveRequests: parseLeave(SCHED),
   cascades: parseCascades(CASC)
 };
+// Embed cascade reference images as base64 data-URIs so they always render on
+// the dashboard (Google Drive blocks cross-origin browser hotlinks by referrer;
+// a server-side curl download with no referrer succeeds). One image per cell URL.
+(function embedCascadeImages() {
+  const { execSync } = require('child_process');
+  const casc = out.cascades || [];
+  const URL_RE = /https?:\/\/[^\s)<>"'\]]+/g;
+  const isImg = u => /\.(png|jpe?g|gif|webp|bmp|svg)(\?|$)/i.test(u) ||
+    /drive\.google\.com|docs\.google\.com\/uc|lh3\.googleusercontent\.com|imgur\.com/i.test(u);
+  const direct = u => {
+    u = (u || '').replace(/&amp;/g, '&');
+    const m = u.match(/drive\.google\.com\/file\/d\/([^\/?]+)/) || u.match(/drive\.google\.com\/open\?id=([^&]+)/) || u.match(/drive\.google\.com\/uc\?[^&]*id=([^&]+)/);
+    return m ? 'https://lh3.googleusercontent.com/d/' + m[1] : u;
+  };
+  casc.forEach(row => {
+    const text = (row.linkRefs || '') + ' ' + (row.cascade || '');
+    const urls = (text.match(URL_RE) || []).filter(isImg).map(direct);
+    const seen = {}; const imgs = [];
+    urls.forEach(u => {
+      if (seen[u]) return; seen[u] = 1;
+      try {
+        const b64 = execSync('curl -sL --max-time 25 ' + JSON.stringify(u), { maxBuffer: 8 * 1024 * 1024 });
+        if (b64 && b64.length > 200) {
+          const sig = b64.slice(0, 4).toString('hex');
+          const ext = sig === '89504e47' ? 'png' : sig.startsWith('ffd8') ? 'jpeg' : sig === '474946' ? 'gif' : sig === '524946' ? 'webp' : 'png';
+          imgs.push({ url: u, src: 'data:image/' + ext + ';base64,' + b64.toString('base64') });
+        }
+      } catch (e) { /* skip undownloadable image */ }
+    });
+    if (imgs.length) row.cascadeImages = imgs;
+  });
+})();
+
 const before = {}; Object.keys(out).forEach(k=>{ if(Array.isArray(out[k])) before[k]=out[k].length; });
 restrictToYear(out, DATA_YEAR);
 // Scorecards stay full-history (WEEKLY SCORECARD reaches back to January);

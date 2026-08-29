@@ -335,6 +335,11 @@ function cascImgFallback(img) {
   a.innerHTML = 'Click Here &#8599;';
   if (img.parentNode) img.parentNode.replaceChild(a, img);
 }
+// Open the lightbox with a given image src (used by embedded/inline cascade images).
+function openLb(src) {
+  var lb = document.getElementById('lb'), i = document.getElementById('lbImg');
+  if (lb && i && src) { i.src = src; lb.classList.add('show'); }
+}
 
 function renderCascades() {
   var list = $('cascList');
@@ -370,6 +375,23 @@ function renderCascades() {
         var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
         dateTxt = MON[d.getUTCMonth()] + ' ' + d.getUTCDate() + ', ' + d.getUTCFullYear();
       }
+      // Embedded images (server-downloaded base64 data-URIs) - always render as
+      // the actual picture, clickable to enlarge. Immune to Drive's browser hotlink block.
+      var embImgs = (r.cascadeImages || []).filter(function (im) { return im && im.src; });
+      function embFor(u) {
+        u = (u || '').replace(/&amp;/g, '&');
+        for (var k = 0; k < embImgs.length; k++) {
+          if (embImgs[k].url && embImgs[k].url.replace(/&amp;/g, '&') === u) return embImgs[k].src;
+        }
+        return null;
+      }
+      var embHtml = embImgs.length ? '<div class="casc-imgs">' + embImgs.map(function (im) {
+        var src = im.src;
+        return '<a class="casc-img" href="' + esc(im.url || '#') + '" target="_blank" rel="noopener" title="Click to enlarge">' +
+          '<img src="' + esc(src) + '" alt="cascade reference image" loading="lazy" onclick="openLb(this.src)">' +
+          '<span class="casc-img-zoom">&#128269;</span></a>';
+      }).join('') + '</div>' : '';
+
       // URLs that live in the cascade BODY (separate from the Link References
       // cell, which is rendered verbatim below). Exclude any URL that also
       // appears in linkRefs so it is never rendered twice.
@@ -398,9 +420,11 @@ function renderCascades() {
       if (r.linkRefs && r.linkRefs.trim()) {
         // replace each URL: image -> inline <img> (click to enlarge); other -> "Click Here" button
         var refText = esc(r.linkRefs).replace(/https?:\/\/[^<>\s"']+/g, function (u) {
-          return isImage(u)
-            ? '<img class="casc-inline-img" src="' + toDirectImg(u) + '" alt="reference image" loading="lazy" data-href="' + u + '" onclick="(function(){var lb=document.getElementById(\'lb\'),i=document.getElementById(\'lbImg\');if(lb&&i){i.src=\'' + toDirectImg(u) + '\';lb.classList.add(\'show\');}})()" onerror="cascImgFallback(this)">'
-            : '<a class="casc-open" href="' + u + '" target="_blank" rel="noopener">Click Here &#8599;</a>';
+          var dataUri = embFor(u);
+          if (dataUri) {
+            return '<img class="casc-inline-img" src="' + dataUri + '" alt="reference image" loading="lazy" onclick="openLb(this.src)">';
+          }
+          return '<a class="casc-open" href="' + u + '" target="_blank" rel="noopener">Click Here &#8599;</a>';
         });
         refParts.push('<div class="casc-ref-text">' + refText + '</div>');
       }
@@ -410,6 +434,7 @@ function renderCascades() {
         }).join(' '));
       }
       if (imgs.length) refParts.push(imagesHtml);  // body images row (also enlargeable)
+      if (embImgs.length) refParts.push(embHtml);   // embedded reference images (always show)
       if (refParts.length) {
         refHtml = '<section class="casc-refs"><h4>Link / Image References</h4>' + refParts.join('') + '</section>';
       }
