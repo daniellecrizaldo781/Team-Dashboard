@@ -194,8 +194,9 @@ function buildData() {
     monthlyScores:     safe(function () { return parseMonthly(perf); },           [], 'monthlyScores'),
     teamSchedule:      safe(function () { return parseTeamSchedule(sched); },     [], 'teamSchedule'),
     otSchedule:        safe(function () { return parseOT(sched); },               [], 'otSchedule'),
-    breakSchedule:     safe(function () { return parseBreaks(sched); },           [], 'breakSchedule'),
-    leaveRequests:     safe(function () { return parseLeave(sched); },            [], 'leaveRequests')
+    breakSchedule:      safe(function () { return parseBreaks(sched); },           [], 'breakSchedule'),
+    leaveRequests:     safe(function () { return parseLeave(sched); },            [], 'leaveRequests'),
+    cascades:          safe(function () { return parseCascades(sched); },         [], 'cascades')
   };
   d.leaveFormOptions = safe(function () { return leaveFormOptions(); },
                             { leaveTypes: [], reasons: [] }, 'leaveFormOptions');
