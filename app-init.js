@@ -97,6 +97,13 @@ function wire() {
   };
   $('backdrop').onclick = closeNav;
 
+  // lightbox close
+  var lb = $('lb');
+  if (lb) {
+    lb.onclick = function () { lb.classList.remove('show'); };
+    var lc = $('lbClose'); if (lc) lc.onclick = function (e) { e.stopPropagation(); lb.classList.remove('show'); };
+  }
+
   $('fAgent').onchange = function () { F.agent = this.value; render(); };
   $('fWeek').onchange  = function () {
     F.week = this.value;
@@ -282,43 +289,95 @@ function renderResources() {
 }
 
 /* ---------------- Cascades & Handling ---------------- */
-var CASC_STATE = { cat: 'ALL' };
+var CASC_STATE = { cat: 'ALL', open: {} };
 function renderCascades() {
   var list = $('cascList');
+  var chips = $('cascChips');
   if (!list) return;
   var all = (DATA && DATA.cascades) || [];
-  // category filter
-  var sel = $('cascCat');
-  if (sel) {
-    var cats = uniq(all.map(function (r) { return r.category; })).sort();
-    sel.innerHTML = '<option value="ALL">All Categories</option>' +
-      cats.map(function (c) { return '<option value="' + esc(c) + '">' + esc(c) + '</option>'; }).join('');
-    if (CASC_STATE.cat && cats.indexOf(CASC_STATE.cat) >= 0) sel.value = CASC_STATE.cat;
-    else { CASC_STATE.cat = 'ALL'; sel.value = 'ALL'; }
-    if (!sel.onchange) sel.onchange = function () { CASC_STATE.cat = this.value; renderCascades(); };
+
+  // category chips (incl. All)
+  var cats = uniq(all.map(function (r) { return r.category; })).sort();
+  if (chips) {
+    var chipHtml = '<button class="chip' + (CASC_STATE.cat === 'ALL' ? ' active' : '') + '" data-cat="ALL">All</button>' +
+      cats.map(function (c) {
+        return '<button class="chip' + (CASC_STATE.cat === c ? ' active' : '') + '" data-cat="' + esc(c) + '">' + esc(c) + '</button>';
+      }).join('');
+    chips.innerHTML = chipHtml;
+    Array.prototype.forEach.call(chips.querySelectorAll('.chip'), function (b) {
+      b.onclick = function () { CASC_STATE.cat = b.getAttribute('data-cat'); renderCascades(); };
+    });
   }
+
   var rows = all.filter(function (r) { return CASC_STATE.cat === 'ALL' || r.category === CASC_STATE.cat; });
   if (!rows.length) { list.innerHTML = '<div class="empty"><b>No cascades yet</b>Add a row to the Cascades tab in the team sheet and it will appear here.</div>'; return; }
 
-  function linkify(t) {
-    return esc(t).replace(/https?:\/\/[^\s)<>"'\]]+/g, function (u) {
-      return '<a href="' + u + '" target="_blank" rel="noopener">' + u + '</a>';
-    });
+  // pull URLs + image links out of cascade body + linkRefs text
+  function extractUrls(t) {
+    var out = [], re = /https?:\/\/[^\s)<>"'\]]+/g, m;
+    while ((m = re.exec(t || ''))) out.push(m[0].replace(/[.,;]+$/, ''));
+    return out;
   }
-  list.innerHTML = rows.map(function (r) {
+  function isImage(u) { return /\.(png|jpe?g|gif|webp|bmp|svg)(\?|$)/i.test(u) || /drive\.google\.com|docs\.google\.com\/uc|lh3\.googleusercontent\.com|imgur\.com/i.test(u); }
+
+  list.innerHTML = rows.map(function (r, i) {
+    var key = (r.title || '') + '|' + (r.dateLabel || '');
+    var open = CASC_STATE.open[key];
     var m = r.month ? r.month.charAt(0).toUpperCase() + r.month.slice(1) : '';
     var dateTxt = (m && r.dayNum) ? (m + ' ' + r.dayNum) : (r.dateLabel || r.date || '');
-    return '<article class="casc-card">' +
+
+    var urls = extractUrls((r.cascade || '') + '\n' + (r.linkRefs || ''));
+    var imgs = urls.filter(isImage);
+    var links = urls.filter(function (u) { return !isImage(u); });
+
+    // collapsed preview: first ~160 chars of the cascade text (plain, no URLs)
+    var plain = (r.cascade || '').replace(/https?:\/\/[^\s)<>"'\]]+/g, '').replace(/\s+/g, ' ').trim();
+    var preview = plain.length > 160 ? plain.slice(0, 160) + '…' : plain;
+
+    var imagesHtml = imgs.length ? '<div class="casc-imgs">' + imgs.map(function (u) {
+      return '<a class="casc-img" href="' + esc(u) + '" target="_blank" rel="noopener" title="Open image">' +
+        '<img src="' + esc(u) + '" alt="cascade image" loading="lazy" onerror="this.parentNode.style.display=\'none\'">' +
+        '<span class="casc-img-zoom">&#128269;</span></a>';
+    }).join('') + '</div>' : '';
+
+    var linksHtml = links.length ? '<div class="casc-links"><b>Link &amp; Image References</b>' +
+      links.map(function (u, k) {
+        return '<a class="casc-open" href="' + esc(u) + '" target="_blank" rel="noopener">Open Link ' + (links.length > 1 ? (k + 1) : '') + ' &#8599;</a>';
+      }).join('') + '</div>' : '';
+
+    return '<article class="casc-card' + (open ? ' open' : '') + '" data-key="' + esc(key) + '">' +
       '<div class="casc-head">' +
         '<span class="pill n casc-cat">' + esc(r.category) + '</span>' +
         (r.brand ? '<span class="casc-brand">' + esc(r.brand) + '</span>' : '') +
         '<span class="casc-date">' + esc(dateTxt) + '</span>' +
+        '<span class="casc-toggle">' + (open ? 'Hide &#9650;' : 'View &#9660;') + '</span>' +
       '</div>' +
       '<h4 class="casc-title">' + esc(r.title || '(untitled)') + '</h4>' +
-      '<div class="casc-body">' + linkify(r.cascade || '') + '</div>' +
-      (r.linkRefs ? '<div class="casc-links"><b>Link References</b>' + linkify(r.linkRefs) + '</div>' : '') +
+      (open
+        ? '<div class="casc-body">' + esc(r.cascade || '') + '</div>' + imagesHtml + linksHtml
+        : '<div class="casc-preview">' + esc(preview || '(no description)') + '</div>') +
     '</article>';
   }).join('');
+
+  // click to expand/collapse (whole card header + title)
+  Array.prototype.forEach.call(list.querySelectorAll('.casc-card'), function (card) {
+    card.onclick = function (e) {
+      // don't toggle when clicking an actual link/image
+      if (e.target.closest('a')) return;
+      var k = card.getAttribute('data-key');
+      CASC_STATE.open[k] = !CASC_STATE.open[k];
+      renderCascades();
+    };
+  });
+  // image thumbnails open the lightbox
+  Array.prototype.forEach.call(list.querySelectorAll('.casc-img'), function (a) {
+    a.onclick = function (e) {
+      e.stopPropagation();
+      var img = a.querySelector('img');
+      var lb = $('lb'), lbImg = $('lbImg');
+      if (lb && lbImg && img) { lbImg.src = img.src; lb.classList.add('show'); }
+    };
+  });
 }
 
 /* Snapshot mode: the data cannot change while the page is open, so there is

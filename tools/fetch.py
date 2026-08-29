@@ -10,9 +10,10 @@ which is how the Call EOD and Sales dashboards already work.
 Sheet IDs come from the environment so they stay out of the committed files:
   PERF_SHEET_ID   - Team QA sheet id
   SCHED_SHEET_ID  - Leave / Schedule sheet id
+  CASC_SHEET_ID   - Cascades & Handling sheet id
 
 Run locally:
-  PERF_SHEET_ID=... SCHED_SHEET_ID=... python tools/fetch.py
+  PERF_SHEET_ID=... SCHED_SHEET_ID=... CASC_SHEET_ID=... python tools/fetch.py
 """
 import os
 import sys

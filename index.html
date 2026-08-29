@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Team Danielle Dashboard</title>
-<link rel="stylesheet" href="styles.css?v=48">
+<link rel="stylesheet" href="styles.css?v=49">
 </head>
 <body>
 
@@ -19,10 +19,9 @@
     <button class="nav-btn" data-page="calls"><span>&#9742;</span>Weekly Call Stats</button>
     <button class="nav-btn" data-page="qa"><span>&#9733;</span>QA Scores</button>
     <button class="nav-btn" data-page="scorecards"><span>&#9878;</span>Scorecards</button>
-    <button class="nav-btn" data-page="roster"><span>&#9200;</span>Team Schedule &amp; OT</button>
-    <button class="nav-btn" data-page="cascades"><span>&#128279;</span>Cascades &amp; Handling</button>
     <button class="nav-btn" data-page="leave"><span>&#9786;</span>Leave Requests</button>
     <button class="nav-btn" data-page="resources"><span>&#128218;</span>Resources</button>
+    <button class="nav-btn" data-page="cascades"><span>&#128279;</span>Cascades &amp; Handling</button>
   </nav>
   <button class="navtoggle" id="navToggle" aria-label="Menu">&#9776;</button>
 </header>
@@ -232,9 +231,8 @@
   <!-- CASCADES & HANDLING -->
   <section class="page" id="pageCascades" hidden>
     <div class="card">
-      <div class="card-head"><h3>Cascades &amp; Handling</h3>
-        <select class="search" id="cascCat"></select>
-      </div>
+      <div class="card-head"><h3>Cascades &amp; Handling</h3></div>
+      <div class="chips" id="cascChips"></div>
       <div id="cascList" class="casc-list"></div>
     </div>
   </section>
@@ -252,14 +250,15 @@
 
 <div class="loader" id="loader" hidden><div class="spin"></div><p>Updating dashboard&hellip;</p></div>
 <div class="toast" id="toast" hidden></div>
+<div class="lb" id="lb"><span class="lb-close" id="lbClose">&times;</span><img id="lbImg" src="" alt=""></div>
 
 <script src="chart.umd.min.js"></script>
-<script src="config.js?v=48"></script>
-<script src="data.js?v=48"></script>
-<script src="app-core.js?v=48"></script>
-<script src="app-charts.js?v=48"></script>
-<script src="app-render.js?v=48"></script>
-<script src="app-render2.js?v=48"></script>
-<script src="app-init.js?v=48"></script>
+<script src="config.js?v=49"></script>
+<script src="data.js?v=49"></script>
+<script src="app-core.js?v=49"></script>
+<script src="app-charts.js?v=49"></script>
+<script src="app-render.js?v=49"></script>
+<script src="app-render2.js?v=49"></script>
+<script src="app-init.js?v=49"></script>
 </body>
 </html>
