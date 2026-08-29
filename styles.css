@@ -20,30 +20,28 @@ h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.01em}
 button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
 select,input{font:inherit;color:var(--ink)}
 
-/* ---------- sidebar ---------- */
-.sidebar{
-  position:fixed; inset:0 auto 0 0; width:var(--sbw); z-index:60;
-  background:linear-gradient(170deg,#fff 0%,#FEF7FA 60%,#FBEAF2 100%);
-  border-right:1px solid var(--line); display:flex; flex-direction:column;
-  transition:transform .25s ease;
+/* ---------- top nav bar ---------- */
+.topnav{
+  position:sticky;top:0;z-index:60;
+  display:flex;align-items:center;gap:14px;
+  padding:10px 18px;background:linear-gradient(170deg,#fff 0%,#FEF7FA 60%,#FBEAF2 100%);
+  border-bottom:1px solid var(--line);box-shadow:var(--sh);flex-wrap:wrap;
 }
-.brand{display:flex;gap:11px;align-items:center;padding:20px 18px 16px;border-bottom:1px solid var(--line)}
+.tn-brand{display:flex;gap:11px;align-items:center}
 .brand-mark{
   width:40px;height:40px;border-radius:12px;flex:0 0 auto;
   background:linear-gradient(135deg,var(--rose),var(--rose-d) 60%,#8E5CA8);
   color:#fff;display:grid;place-items:center;font-weight:800;font-size:14px;
   box-shadow:0 4px 12px rgba(232,87,142,.34);
 }
-.brand h1{font-size:15px;line-height:1.2}
-.brand p{margin:2px 0 0;font-size:11.5px;color:var(--mauve);letter-spacing:.04em;text-transform:uppercase}
+.tn-brand-txt h1{font-size:15px;line-height:1.2}
+.tn-brand-txt p{margin:2px 0 0;font-size:11.5px;color:var(--mauve);letter-spacing:.04em;text-transform:uppercase}
 .brand-heart{color:var(--rose);font-size:13px;vertical-align:middle}
-.brand-mark{transition:transform .2s}
-.brand-mark:hover{transform:rotate(-6deg) scale(1.05)}
-#nav{padding:14px 10px;display:flex;flex-direction:column;gap:3px;overflow-y:auto;flex:1}
+.tn-nav{display:flex;align-items:center;gap:4px;flex:1;flex-wrap:wrap;overflow-x:auto}
 .nav-btn{
-  display:flex;align-items:center;gap:10px;width:100%;
-  padding:10px 12px;border-radius:11px;text-align:left;
-  color:var(--ink2);font-size:14px;font-weight:500;transition:.16s;
+  display:flex;align-items:center;gap:8px;white-space:nowrap;
+  padding:9px 13px;border-radius:11px;text-align:left;
+  color:var(--ink2);font-size:13.5px;font-weight:500;transition:.16s;
 }
 .nav-btn span{font-size:14px;opacity:.65;width:16px;text-align:center}
 .nav-btn:hover{background:var(--blush2);color:var(--rose-d)}
@@ -52,10 +50,8 @@ select,input{font:inherit;color:var(--ink)}
   color:#fff;font-weight:600;box-shadow:0 4px 12px rgba(232,87,142,.3);
 }
 .nav-btn.active span{opacity:1}
-.side-foot{padding:14px 18px;border-top:1px solid var(--line);font-size:11px;color:var(--ink3);line-height:1.45}
-
 .navtoggle{
-  display:none;position:fixed;top:12px;left:12px;z-index:80;
+  display:none;position:relative;z-index:80;
   width:42px;height:42px;border-radius:12px;background:#fff;
   border:1px solid var(--line);box-shadow:var(--sh);color:var(--rose-d);font-size:18px;
 }
@@ -367,9 +363,9 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 @media(max-width:900px){
   :root{--sbw:0px}
   .navtoggle{display:block}
-  .sidebar{transform:translateX(-100%);width:250px}
-  .sidebar.open{transform:none;box-shadow:0 0 40px rgba(58,34,51,.25)}
-  .main{margin-left:0;padding:64px 16px 34px}
+  .tn-nav{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;background:#fff;border-bottom:1px solid var(--line);box-shadow:var(--sh);padding:8px;gap:3px;z-index:70}
+  .topnav.open .tn-nav{display:flex}
+  .main{margin-left:0;padding:18px 16px 34px}
   .topbar{align-items:flex-start}
 }
 @media(max-width:640px){
@@ -419,6 +415,18 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 #otGrid tbody tr:nth-child(even){background:#FCF6FA}
 #otGrid tbody td:first-child{text-align:left;background:#FBF1F7;font-weight:700}
 #otGrid tbody td:nth-child(2){text-align:left}
+
+/* ---------- chips (scorecard weekly/monthly toggle) ---------- */
+.chips{display:flex;gap:8px;margin-bottom:14px}
+.chip{
+  padding:9px 18px;border-radius:999px;font-size:13.5px;font-weight:600;
+  color:var(--ink2);background:#fff;border:1px solid var(--line);transition:.16s;
+}
+.chip:hover{background:var(--blush2);color:var(--rose-d)}
+.chip.active{
+  background:linear-gradient(100deg,var(--rose),var(--rose-d));color:#fff;
+  border-color:transparent;box-shadow:0 4px 12px rgba(232,87,142,.3);
+}
 
 /* ---------- resources page (no filters) ---------- */
 .res-table{width:100%;border-collapse:collapse;margin-top:6px;font-size:13px;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}

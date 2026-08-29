@@ -4,32 +4,28 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Team Danielle Dashboard</title>
-<link rel="stylesheet" href="styles.css?v=44">
+<link rel="stylesheet" href="styles.css?v=45">
 </head>
 <body>
 
-<button class="navtoggle" id="navToggle" aria-label="Menu">&#9776;</button>
-<div class="backdrop" id="backdrop"></div>
-
-<aside class="sidebar" id="sidebar">
-  <div class="brand">
+<header class="topnav" id="topnav">
+  <div class="tn-brand">
     <div class="brand-mark">TD</div>
-    <div><h1>Team Danielle</h1><p>Dashboard <span class="brand-heart">&#10084;</span></p></div>
+    <div class="tn-brand-txt"><h1>Team Danielle</h1><p>Dashboard <span class="brand-heart">&#10084;</span></p></div>
   </div>
-  <nav id="nav">
+  <nav id="nav" class="tn-nav">
     <button class="nav-btn active" data-page="overview"><span>&#9673;</span>Overview</button>
     <button class="nav-btn" data-page="productivity"><span>&#9634;</span>Daily Productivity</button>
     <button class="nav-btn" data-page="calls"><span>&#9742;</span>Weekly Call Stats</button>
     <button class="nav-btn" data-page="qa"><span>&#9733;</span>QA Scores</button>
     <button class="nav-btn" data-page="scorecards"><span>&#9878;</span>Scorecards</button>
-    <button class="nav-btn" data-page="monthly"><span>&#128202;</span>Monthly Scorecard</button>
-    <button class="nav-btn" data-page="schedule"><span>&#9200;</span>Team Schedule</button>
-    <button class="nav-btn" data-page="otbreak"><span>&#9203;</span>OT &amp; Break</button>
+    <button class="nav-btn" data-page="roster"><span>&#9200;</span>Team Schedule &amp; OT</button>
     <button class="nav-btn" data-page="leave"><span>&#9786;</span>Leave Requests</button>
     <button class="nav-btn" data-page="resources"><span>&#128218;</span>Resources</button>
   </nav>
-  <div class="side-foot">Created by Danielle Ann Mari Crizaldo &mdash; Call Team Lead</div>
-</aside>
+  <button class="navtoggle" id="navToggle" aria-label="Menu">&#9776;</button>
+</header>
+<div class="backdrop" id="backdrop"></div>
 
 <main class="main">
 
@@ -106,27 +102,56 @@
     </div>
   </section>
 
-  <!-- SCORECARDS -->
+  <!-- SCORECARDS (weekly + monthly toggle) -->
   <section class="page" id="pageScorecards" hidden>
-    <div class="top-performer" id="scTop"></div>
-    <div class="kpis" id="scKpis"></div>
-    <div class="card">
-      <div class="card-head"><h3>Official Scorecard Ranking</h3>
-        <select class="search" id="scRankWeek"></select>
-      </div>
-      <div class="tscroll" id="scTable"></div>
+    <div class="chips" id="scChips">
+      <button class="chip active" data-mode="weekly">Weekly</button>
+      <button class="chip" data-mode="monthly">Monthly</button>
     </div>
-    <div class="card">
-      <div class="card-head"><h3>Weekly Scorecard Detail</h3>
-        <select class="search" id="scAgentSel"></select>
+
+    <!-- WEEKLY -->
+    <div id="scWeekly">
+      <div class="top-performer" id="scTop"></div>
+      <div class="kpis" id="scKpis"></div>
+      <div class="card">
+        <div class="card-head"><h3>Official Scorecard Ranking</h3>
+          <select class="search" id="scRankWeek"></select>
+        </div>
+        <div class="tscroll" id="scTable"></div>
       </div>
-      <div id="scDetailWrap" class="sc-detail"></div>
+      <div class="card">
+        <div class="card-head"><h3>Weekly Scorecard Detail</h3>
+          <select class="search" id="scAgentSel"></select>
+        </div>
+        <div id="scDetailWrap" class="sc-detail"></div>
+      </div>
+    </div>
+
+    <!-- MONTHLY -->
+    <div id="scMonthly" hidden>
+      <div class="card">
+        <div class="card-head"><h3>Monthly Scorecard</h3>
+          <select class="search" id="moMonth"></select>
+        </div>
+      </div>
+      <div class="top-performer" id="moTop"></div>
+      <div class="card">
+        <div class="card-head"><h3>Official Scorecard Ranking &mdash; Monthly</h3></div>
+        <div class="tscroll"><table id="moRankTable"></table></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Agent Monthly Score</h3>
+          <select class="search" id="moAgentSel"></select>
+        </div>
+        <div class="top-performer" id="moAgentTop"></div>
+        <div class="card-head"><h3>Weekly Overall Score Breakdown</h3></div>
+        <div class="tscroll"><table id="moWeekTable"></table></div>
+      </div>
     </div>
   </section>
 
-  <!-- TEAM SCHEDULE -->
-  <section class="page" id="pageSchedule" hidden>
-    <div class="kpis" id="tsKpis"></div>
+  <!-- ROSTER (Team Schedule + OT & Break) -->
+  <section class="page" id="pageRoster" hidden>
     <div class="card">
       <div class="card-head"><h3>Team Schedule</h3>
         <select class="search" id="tsWeek"></select>
@@ -134,26 +159,22 @@
       <div class="tscroll" id="tsGridOHA"></div>
       <div class="tscroll" id="tsGridAB"></div>
     </div>
-  </section>
 
-  <!-- OT & BREAK -->
-  <section class="page" id="pageOtbreak" hidden>
-    <div class="tabs" id="obTabs">
-      <button class="tab active" data-tab="ot">OT Schedule</button>
-      <button class="tab" data-tab="brk">Break Schedule</button>
-    </div>
-    <div id="obOt">
-      <div class="kpis" id="otKpis"></div>
-      <div class="card">
-        <div class="card-head"><h3>OT Schedule</h3>
+    <div class="card">
+      <div class="card-head"><h3>OT &amp; Break</h3></div>
+      <div class="tabs" id="obTabs">
+        <button class="tab active" data-tab="ot">OT Schedule</button>
+        <button class="tab" data-tab="brk">Break Schedule</button>
+      </div>
+      <div id="obOt">
+        <div class="kpis" id="otKpis"></div>
+        <div class="card-head" style="border-top:none"><h3>OT Schedule</h3>
           <select class="search" id="otWeek"></select>
         </div>
         <div class="tscroll" id="otGrid"></div>
       </div>
-    </div>
-    <div id="obBrk" hidden>
-      <div class="card">
-        <div class="card-head"><h3>Break Schedule</h3><input class="search" id="bkSearch" placeholder="Search&hellip;"></div>
+      <div id="obBrk" hidden>
+        <div class="card-head" style="border-top:none"><h3>Break Schedule</h3><input class="search" id="bkSearch" placeholder="Search&hellip;"></div>
         <div class="tscroll" id="bkTable"></div>
       </div>
     </div>
@@ -207,28 +228,6 @@
     </div>
   </section>
 
-  <!-- MONTHLY SCORECARD -->
-  <section class="page" id="pageMonthly" hidden>
-    <div class="card">
-      <div class="card-head"><h3>Monthly Scorecard</h3>
-        <select class="search" id="moMonth"></select>
-      </div>
-    </div>
-    <div class="top-performer" id="moTop"></div>
-    <div class="card">
-      <div class="card-head"><h3>Official Scorecard Ranking &mdash; Monthly</h3></div>
-      <div class="tscroll"><table id="moRankTable"></table></div>
-    </div>
-    <div class="card">
-      <div class="card-head"><h3>Agent Monthly Score</h3>
-        <select class="search" id="moAgentSel"></select>
-      </div>
-      <div class="top-performer" id="moAgentTop"></div>
-      <div class="card-head"><h3>Weekly Overall Score Breakdown</h3></div>
-      <div class="tscroll"><table id="moWeekTable"></table></div>
-    </div>
-  </section>
-
   <!-- RESOURCES -->
   <section class="page" id="pageResources" hidden>
     <div class="card">
@@ -244,12 +243,12 @@
 <div class="toast" id="toast" hidden></div>
 
 <script src="chart.umd.min.js"></script>
-<script src="config.js?v=44"></script>
-<script src="data.js?v=44"></script>
-<script src="app-core.js?v=44"></script>
-<script src="app-charts.js?v=44"></script>
-<script src="app-render.js?v=44"></script>
-<script src="app-render2.js?v=44"></script>
-<script src="app-init.js?v=44"></script>
+<script src="config.js?v=45"></script>
+<script src="data.js?v=45"></script>
+<script src="app-core.js?v=45"></script>
+<script src="app-charts.js?v=45"></script>
+<script src="app-render.js?v=45"></script>
+<script src="app-render2.js?v=45"></script>
+<script src="app-init.js?v=45"></script>
 </body>
 </html>

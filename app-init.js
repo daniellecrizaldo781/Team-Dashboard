@@ -8,9 +8,7 @@ var PAGE_META = {
   calls:        ['Weekly Call Stats', 'Call volume and pickup performance by week'],
   qa:           ['QA Scores', 'Quality evaluations and rankings for all agents'],
   scorecards:   ['Scorecards', 'Official overall scores and team ranking'],
-  monthly:      ['Monthly Scorecard', 'Monthly overall scores from the Monthly Scorecard tab'],
-  schedule:     ['Team Schedule', 'Shifts and rest days by agent'],
-  otbreak:      ['OT & Break Schedule', 'Overtime and break assignments'],
+  roster:       ['Team Schedule & OT', 'Shifts, rest days, overtime and breaks by agent'],
   leave:        ['Leave Requests', 'File and view leave requests'],
   resources:     ['Resources', 'Quick links, guides and contacts for the team'],
 };
@@ -18,14 +16,13 @@ var PAGE_META = {
 /** Single dispatcher - every page re-renders from current filter state. */
 function render() {
   if (!DATA) return;
+  // Each page re-renders; the Scorecards page internally toggles Weekly/Monthly.
   try { renderOverview(); }     catch (e) { console.error('overview', e); }
   try { renderProductivity(); } catch (e) { console.error('productivity', e); }
   try { renderCalls(); }        catch (e) { console.error('calls', e); }
   try { renderQa(); }           catch (e) { console.error('qa', e); }
   try { renderScorecards(); }   catch (e) { console.error('scorecards', e); }
-  try { renderMonthly(); }      catch (e) { console.error('monthly', e); }
-  try { renderSchedule(); }     catch (e) { console.error('schedule', e); }
-  try { renderOtBreak(); }      catch (e) { console.error('otbreak', e); }
+  try { renderRoster(); }       catch (e) { console.error('roster', e); }
   try { renderLeaves(); }       catch (e) { console.error('leave', e); }
   try { renderResources(); }    catch (e) { console.error('resources', e); }
   setTimeout(resizeCharts, 30);
@@ -43,14 +40,20 @@ function setPage(p) {
   $('pageSub').textContent = m[1];
   // Schedule, OT&Break, Leave, Scorecards & Monthly use their own controls, not the global filter bar
   var filters = $('filters');
-  if (filters) filters.style.display = (p === 'schedule' || p === 'otbreak' || p === 'leave' || p === 'scorecards' || p === 'monthly' || p === 'resources') ? 'none' : '';
+  if (filters) filters.style.display = (p === 'roster' || p === 'leave' || p === 'scorecards' || p === 'resources') ? 'none' : '';
   closeNav();
   window.scrollTo(0, 0);
   setTimeout(resizeCharts, 40);   // charts sized inside a hidden box measure 0
 }
 
-function openNav() { $('sidebar').classList.add('open'); $('backdrop').classList.add('show'); }
-function closeNav() { $('sidebar').classList.remove('open'); $('backdrop').classList.remove('show'); }
+function openNav() { $('topnav').classList.add('open'); $('backdrop').classList.add('show'); }
+function closeNav() { $('topnav').classList.remove('open'); $('backdrop').classList.remove('show'); }
+
+/** Roster page = Team Schedule + OT & Break rendered into the combined page. */
+function renderRoster() {
+  try { renderSchedule(); } catch (e) { console.error('schedule', e); }
+  try { renderOtBreak(); }  catch (e) { console.error('otbreak', e); }
+}
 
 /** Populate filter dropdowns from the data - nothing hard-coded. */
 function fillSelects() {
@@ -88,7 +91,7 @@ function wire() {
     b.onclick = function () { setPage(b.getAttribute('data-page')); };
   });
   $('navToggle').onclick = function () {
-    $('sidebar').classList.contains('open') ? closeNav() : openNav();
+    $('topnav').classList.contains('open') ? closeNav() : openNav();
   };
   $('backdrop').onclick = closeNav;
 
@@ -119,6 +122,21 @@ function wire() {
       var k = t.getAttribute('data-tab');
       $('obOt').hidden = k !== 'ot';
       $('obBrk').hidden = k !== 'brk';
+      setTimeout(resizeCharts, 30);
+    };
+  });
+
+  // Scorecards Weekly / Monthly chip toggle (single page)
+  document.querySelectorAll('#scChips .chip').forEach(function (c) {
+    c.onclick = function () {
+      document.querySelectorAll('#scChips .chip').forEach(function (x) { x.classList.remove('active'); });
+      c.classList.add('active');
+      var mode = c.getAttribute('data-mode');
+      var weekly = mode === 'weekly';
+      $('scWeekly').hidden = !weekly;
+      $('scMonthly').hidden = weekly;
+      if (!weekly) { try { renderMonthly(); } catch (e) { console.error('monthly', e); } }
+      else { try { renderScorecards(); } catch (e) { console.error('scorecards', e); } }
       setTimeout(resizeCharts, 30);
     };
   });
