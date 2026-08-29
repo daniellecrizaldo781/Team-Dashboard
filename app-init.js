@@ -9,6 +9,7 @@ var PAGE_META = {
   qa:           ['QA Scores', 'Quality evaluations and rankings for all agents'],
   scorecards:   ['Scorecards', 'Official overall scores and team ranking'],
   roster:       ['Team Schedule & OT', 'Shifts, rest days, overtime and breaks by agent'],
+  cascades:     ['Cascades & Handling', 'Process cascades, handling notes and reference links'],
   leave:        ['Leave Requests', 'File and view leave requests'],
   resources:     ['Resources', 'Quick links, guides and contacts for the team'],
 };
@@ -23,6 +24,7 @@ function render() {
   try { renderQa(); }           catch (e) { console.error('qa', e); }
   try { renderScorecards(); }   catch (e) { console.error('scorecards', e); }
   try { renderRoster(); }       catch (e) { console.error('roster', e); }
+  try { renderCascades(); }     catch (e) { console.error('cascades', e); }
   try { renderLeaves(); }       catch (e) { console.error('leave', e); }
   try { renderResources(); }    catch (e) { console.error('resources', e); }
   setTimeout(resizeCharts, 30);
@@ -40,7 +42,7 @@ function setPage(p) {
   $('pageSub').textContent = m[1];
   // Schedule, OT&Break, Leave, Scorecards & Monthly use their own controls, not the global filter bar
   var filters = $('filters');
-  if (filters) filters.style.display = (p === 'roster' || p === 'leave' || p === 'scorecards' || p === 'resources') ? 'none' : '';
+  if (filters) filters.style.display = (p === 'roster' || p === 'cascades' || p === 'leave' || p === 'scorecards' || p === 'resources') ? 'none' : '';
   closeNav();
   window.scrollTo(0, 0);
   setTimeout(resizeCharts, 40);   // charts sized inside a hidden box measure 0
@@ -279,12 +281,52 @@ function renderResources() {
   el.innerHTML = html;
 }
 
+/* ---------------- Cascades & Handling ---------------- */
+var CASC_STATE = { cat: 'ALL' };
+function renderCascades() {
+  var list = $('cascList');
+  if (!list) return;
+  var all = (DATA && DATA.cascades) || [];
+  // category filter
+  var sel = $('cascCat');
+  if (sel) {
+    var cats = uniq(all.map(function (r) { return r.category; })).sort();
+    sel.innerHTML = '<option value="ALL">All Categories</option>' +
+      cats.map(function (c) { return '<option value="' + esc(c) + '">' + esc(c) + '</option>'; }).join('');
+    if (CASC_STATE.cat && cats.indexOf(CASC_STATE.cat) >= 0) sel.value = CASC_STATE.cat;
+    else { CASC_STATE.cat = 'ALL'; sel.value = 'ALL'; }
+    if (!sel.onchange) sel.onchange = function () { CASC_STATE.cat = this.value; renderCascades(); };
+  }
+  var rows = all.filter(function (r) { return CASC_STATE.cat === 'ALL' || r.category === CASC_STATE.cat; });
+  if (!rows.length) { list.innerHTML = '<div class="empty"><b>No cascades yet</b>Add a row to the Cascades tab in the team sheet and it will appear here.</div>'; return; }
+
+  function linkify(t) {
+    return esc(t).replace(/https?:\/\/[^\s)<>"'\]]+/g, function (u) {
+      return '<a href="' + u + '" target="_blank" rel="noopener">' + u + '</a>';
+    });
+  }
+  list.innerHTML = rows.map(function (r) {
+    var m = r.month ? r.month.charAt(0).toUpperCase() + r.month.slice(1) : '';
+    var dateTxt = (m && r.dayNum) ? (m + ' ' + r.dayNum) : (r.dateLabel || r.date || '');
+    return '<article class="casc-card">' +
+      '<div class="casc-head">' +
+        '<span class="pill n casc-cat">' + esc(r.category) + '</span>' +
+        (r.brand ? '<span class="casc-brand">' + esc(r.brand) + '</span>' : '') +
+        '<span class="casc-date">' + esc(dateTxt) + '</span>' +
+      '</div>' +
+      '<h4 class="casc-title">' + esc(r.title || '(untitled)') + '</h4>' +
+      '<div class="casc-body">' + linkify(r.cascade || '') + '</div>' +
+      (r.linkRefs ? '<div class="casc-links"><b>Link References</b>' + linkify(r.linkRefs) + '</div>' : '') +
+    '</article>';
+  }).join('');
+}
+
 /* Snapshot mode: the data cannot change while the page is open, so there is
  * nothing to poll for. Refresh Data re-reads and re-renders on demand. */
 function init() {
   wire();
   setPage('overview');
-  fetchData(false);
+  fetchData(false).then(function () { if (typeof startAutoPoll === 'function') startAutoPoll(45000); });
 }
 
 document.addEventListener('DOMContentLoaded', init);

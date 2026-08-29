@@ -431,6 +431,20 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   border-color:transparent;box-shadow:0 4px 12px rgba(232,87,142,.3);
 }
 
+/* ---------- cascades & handling ---------- */
+.casc-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;margin-top:6px}
+.casc-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px 17px;box-shadow:var(--sh);transition:.16s}
+.casc-card:hover{box-shadow:0 8px 22px rgba(224,69,123,.16);transform:translateY(-2px)}
+.casc-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:8px}
+.casc-cat{background:var(--blush);color:var(--rose-d);font-weight:700}
+.casc-brand{font-size:12.5px;color:var(--ink3)}
+.casc-date{margin-left:auto;font-size:12px;color:var(--mauve);font-weight:600}
+.casc-title{margin:2px 0 8px;font-size:15.5px;color:var(--ink)}
+.casc-body{font-size:13px;line-height:1.6;color:var(--ink2);white-space:pre-wrap;word-break:break-word}
+.casc-body a,.casc-links a{color:#E0457B;font-weight:600;text-decoration:none;border-bottom:1px solid #F3B6CF}
+.casc-body a:hover,.casc-links a:hover{color:#C22e63}
+.casc-links{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--ink3);line-height:1.7}
+
 /* ---------- resources page (no filters) ---------- */
 .res-table{width:100%;border-collapse:collapse;margin-top:6px;font-size:13px;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
 .res-table thead th{background:var(--blush);color:var(--ink);text-align:left;font-weight:700;padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap}

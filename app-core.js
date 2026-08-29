@@ -458,3 +458,42 @@ function fetchData(isManual) {
     }, isManual ? 260 : 0);
   });
 }
+
+/* ---------------- real-time auto-poll ----------------
+ * The dashboard reads a static data.js snapshot. To avoid forcing the user to
+ * hard-refresh, the open tab quietly re-fetches data.js on an interval and
+ * re-renders the moment the snapshot's content changes (cache-busting query so
+ * the browser never serves a stale copy). Combined with the sheet's onEdit
+ * webhook (which rebuilds data.js on every new row), this makes new entries
+ * appear within ~1 minute without any manual refresh. */
+var _pollTimer = null;
+function startAutoPoll(intervalMs) {
+  if (_pollTimer) clearInterval(_pollTimer);
+  _pollTimer = setInterval(function () {
+    if (document.hidden) return;            // don't poll a backgrounded tab
+    var url = 'data.js?poll=' + Date.now();
+    fetch(url, { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.text() : null; })
+      .then(function (txt) {
+        if (!txt) return;
+        var prev = window.DASHBOARD_DATA ? JSON.stringify(window.DASHBOARD_DATA) : '';
+        // data.js assigns window.DASHBOARD_DATA = {...}; eval only the assignment
+        var m = txt.match(/window\.DASHBOARD_DATA\s*=\s*([\s\S]*?);\s*$/);
+        if (!m) return;
+        var next;
+        try { next = JSON.parse(m[1]); } catch (e) { return; }
+        if (prev && prev === JSON.stringify(next)) return;   // unchanged
+        window.DASHBOARD_DATA = next;
+        DATA = expandSnapshot(next);
+        writeCache(next);
+        setSync('ok', 'Last Updated: ' + fmtStamp(DATA.lastUpdated) +
+          (window.DATA_SOURCE_NOTE ? ' · ' + window.DATA_SOURCE_NOTE : ''));
+        fillSelects();
+        render();
+        if (window.location.hash && window.location.hash.indexOf('cascades') >= 0) {
+          // nudge so the user notices fresh handling notes arrived
+        }
+      })
+      .catch(function () { /* transient network blip - next tick retries */ });
+  }, intervalMs || 45000);
+}

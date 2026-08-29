@@ -11,7 +11,7 @@ for (const k in sc) sc[k] = rev(sc[k]);
 
 global.SpreadsheetApp = null;
 global.grid = (ss, tab) => (ss.__d[tab] || []);
-const src = ['Code.gs', 'Parsers.gs', 'Parsers2.gs', 'Parsers3.gs']
+const src = ['Code.gs', 'Parsers.gs', 'Parsers2.gs', 'Parsers3.gs', 'Parsers4.gs']
   .map(f => fs.readFileSync('../apps-script/' + f, 'utf8')).join('\n');
 eval(src.replace(/function grid\(ss, tabName\)[\s\S]*?\n}/, ''));
 
@@ -31,7 +31,8 @@ const out = {
   teamSchedule: parseTeamSchedule(SCHED),
   otSchedule: parseOT(SCHED),
   breakSchedule: parseBreaks(SCHED),
-  leaveRequests: parseLeave(SCHED)
+  leaveRequests: parseLeave(SCHED),
+  cascades: parseCascades(SCHED)
 };
 const before = {}; Object.keys(out).forEach(k=>{ if(Array.isArray(out[k])) before[k]=out[k].length; });
 restrictToYear(out, DATA_YEAR);
