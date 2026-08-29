@@ -11,6 +11,7 @@ var PAGE_META = {
   roster:       ['Team Schedule & OT', 'Shifts, rest days, overtime and breaks by agent'],
   cascades:     ['Cascades & Handling', 'Process cascades, handling notes and reference links'],
   leave:        ['Leave Requests', 'File and view leave requests'],
+  products:      ['Products', 'Product guides, inclusions and handling'],
   resources:     ['Resources', 'Quick links, guides and contacts for the team'],
 };
 
@@ -26,6 +27,7 @@ function render() {
   try { renderRoster(); }       catch (e) { console.error('roster', e); }
   try { renderCascades(); }     catch (e) { console.error('cascades', e); }
   try { renderLeaves(); }       catch (e) { console.error('leave', e); }
+  try { renderProducts(); }     catch (e) { console.error('products', e); }
   try { renderResources(); }    catch (e) { console.error('resources', e); }
   setTimeout(resizeCharts, 30);
 }
@@ -42,7 +44,7 @@ function setPage(p) {
   $('pageSub').textContent = m[1];
   // Schedule, OT&Break, Leave, Scorecards & Monthly use their own controls, not the global filter bar
   var filters = $('filters');
-  if (filters) filters.style.display = (p === 'roster' || p === 'cascades' || p === 'leave' || p === 'scorecards' || p === 'resources') ? 'none' : '';
+  if (filters) filters.style.display = (p === 'roster' || p === 'cascades' || p === 'leave' || p === 'scorecards' || p === 'resources' || p === 'products') ? 'none' : '';
   closeNav();
   window.scrollTo(0, 0);
   setTimeout(resizeCharts, 40);   // charts sized inside a hidden box measure 0
@@ -499,6 +501,104 @@ function renderCascades() {
   });
 }
 
+/* ---------------- Products ---------------- */
+// Placeholder products - replaced once the product sheet is wired in.
+// Each square is clickable and opens a detail view with picture, description,
+// inclusion, instruction manual placeholder and troubleshooting/handling steps.
+var PRODUCTS = [
+  { id: 'oricle-mini',    name: 'Oricle Mini',        brand: 'Oricle Hearing Aid',     img: '', desc: 'Placeholder product description.', },
+  { id: 'oricle-pro',     name: 'Oricle Pro',         brand: 'Oricle Hearing Aid',     img: '', desc: 'Placeholder product description.', },
+  { id: 'oricle-air',     name: 'Oricle Air',         brand: 'Oricle Hearing Aid',     img: '', desc: 'Placeholder product description.', },
+  { id: 'other-nexus',    name: 'Nexus Sound',        brand: 'Other Brands',           img: '', desc: 'Placeholder product description.', },
+  { id: 'other-clarity',  name: 'Clarity One',        brand: 'Other Brands',           img: '', desc: 'Placeholder product description.', },
+  { id: 'other-echo',     name: 'Echo Comfort',       brand: 'Other Brands',           img: '', desc: 'Placeholder product description.', },
+];
+
+// Shared placeholder content shown on every product until the real sheet lands.
+function prodPlaceholders(p) {
+  return {
+    inclusions: [
+      '1x ' + p.name + ' device (placeholder)',
+      '1x Charging case / cable (placeholder)',
+      '1x User guide (placeholder)',
+      '1x Warranty card (placeholder)',
+    ],
+    manual: 'Instruction manual placeholder — to be added from the product sheet.',
+    troubleshooting: [
+      { q: 'Device will not turn on', a: 'Placeholder handling step — charge for 2 hours, then retry.' },
+      { q: 'No sound / low volume',   a: 'Placeholder handling step — check fit and clean the dome.' },
+      { q: 'Pairing issue',           a: 'Placeholder handling step — reset and re-pair per manual.' },
+    ],
+  };
+}
+
+function renderProducts() {
+  var grid = $('prodGrid'), detail = $('prodDetail');
+  if (!grid) return;
+
+  // detail view
+  if (detail && !detail.hidden && detail.dataset.id) {
+    var p = PRODUCTS.filter(function (x) { return x.id === detail.dataset.id; })[0];
+    if (p) {
+      var ph = prodPlaceholders(p);
+      detail.innerHTML =
+        '<button class="casc-back" id="prodBack">&larr; Back to all products</button>' +
+        '<article class="prod-card">' +
+          '<div class="prod-media">' +
+            (p.img
+              ? '<img src="' + esc(p.img) + '" alt="' + esc(p.name) + '" loading="lazy" onclick="openLb(this.src)">'
+              : '<div class="prod-photo-ph">Product photo<br>placeholder</div>') +
+          '</div>' +
+          '<div class="prod-info">' +
+            '<span class="pill n casc-cat">' + esc(p.brand) + '</span>' +
+            '<h3 class="prod-name">' + esc(p.name) + '</h3>' +
+            '<p class="prod-desc">' + esc(p.desc) + '</p>' +
+            '<section class="prod-sec"><h4>What\'s Included</h4><ul>' +
+              ph.inclusions.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') +
+            '</ul></section>' +
+            '<section class="prod-sec"><h4>Instruction Manual</h4><p>' + esc(ph.manual) + '</p></section>' +
+            '<section class="prod-sec"><h4>Troubleshooting &amp; Handling</h4><div class="prod-ts">' +
+              ph.troubleshooting.map(function (t) {
+                return '<div class="prod-ts-item"><b>' + esc(t.q) + '</b><span>' + esc(t.a) + '</span></div>';
+              }).join('') +
+            '</div></section>' +
+          '</div>' +
+        '</article>';
+      var back = $('prodBack');
+      if (back) back.onclick = function () {
+        detail.hidden = true; detail.dataset.id = '';
+        grid.hidden = false; renderProducts();
+      };
+      return;
+    }
+  }
+
+  // grid view
+  detail.hidden = true;
+  grid.hidden = false;
+  grid.innerHTML = PRODUCTS.map(function (p) {
+    return '<button class="prod-square" data-id="' + esc(p.id) + '">' +
+      (p.img
+        ? '<img class="prod-square-img" src="' + esc(p.img) + '" alt="' + esc(p.name) + '" loading="lazy">'
+        : '<span class="prod-square-ph">&#128247;</span>') +
+      '<span class="prod-square-name">' + esc(p.name) + '</span>' +
+      '<span class="prod-square-brand">' + esc(p.brand) + '</span>' +
+    '</button>';
+  }).join('');
+
+  Array.prototype.forEach.call(grid.querySelectorAll('.prod-square'), function (btn) {
+    btn.onclick = function () {
+      var id = btn.getAttribute('data-id');
+      if (!detail) return;
+      detail.dataset.id = id;
+      detail.hidden = false;
+      grid.hidden = true;
+      renderProducts();
+      window.scrollTo(0, 0);
+    };
+  });
+}
+
 /* Snapshot mode: the data cannot change while the page is open, so there is
  * nothing to poll for. Refresh Data re-reads and re-renders on demand. */
 function init() {
@@ -508,3 +608,4 @@ function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
