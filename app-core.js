@@ -373,6 +373,13 @@ function expandSnapshot(raw) {
           }) : null;
           continue;
         }
+        if (cols[i] === 'cascadeImages') {
+          // array of {url, src} objects - already in final form, do NOT run the
+          // string-interning decoder on it (dec() would mistake the array for a
+          // shared-string reference and corrupt it).
+          o.cascadeImages = i < arr.length ? arr[i] : null;
+          continue;
+        }
         o[cols[i]] = i < arr.length ? dec(arr[i]) : null;
       }
       return o;
