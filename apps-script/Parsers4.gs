@@ -62,14 +62,26 @@ function parseCascades(ss) {
   var iLink  = col('link');
   if (iCat < 0 || iCasc < 0) return [];
 
+  // Turn a raw cell value into { text, runs }.
+  //  - snapshot mode: a rich cell is { __rt: [[text, bold, italic], ...] }
+  //  - live mode / plain: fall back to the plain string.
+  function rich(cell) {
+    if (cell && typeof cell === 'object' && Array.isArray(cell.__rt) && cell.__rt.length) {
+      var txt = cell.__rt.map(function (r) { return r[0] || ''; }).join('');
+      return { text: txt, runs: cell.__rt.map(function (r) { return [r[0] || '', !!r[1], !!r[2]]; }) };
+    }
+    return { text: S(cell), runs: null };
+  }
+
   var out = [];
   var MONTHS = { jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11 };
   for (var r = 1; r < g.length; r++) {
     var row = g[r];
     var cat = S(row[iCat]);
     if (!cat) continue;                       // skip blank / trailing rows
+    var rc = rich(row[iCasc]);
+
     var rawDate = row[iDate];
-    // rawDate may be a Date object, a JS-date string, or a plain "August 28".
     var dateLabel;
     if (rawDate && typeof rawDate === 'object' && typeof rawDate.__d === 'string') {
       dateLabel = rawDate.__d;                // togrid.py date shape
@@ -98,7 +110,8 @@ function parseCascades(ss) {
       month:     month,
       dayNum:    dayNum,
       dateLabel: dateLabel,
-      cascade:   S(row[iCasc]),
+      cascade:   rc.text,                     // plain text (fallback / search)
+      cascadeRuns: rc.runs,                   // [[text, bold, italic], ...] or null
       linkRefs:  iLink >= 0 ? S(row[iLink]) : ''
       // URLs are extracted at render time from cascade + linkRefs (no nested arrays in snapshot)
     });

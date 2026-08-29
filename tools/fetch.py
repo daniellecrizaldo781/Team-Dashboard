@@ -63,7 +63,7 @@ def main():
     perf = os.environ.get('PERF_SHEET_ID', '').strip()
     sched = os.environ.get('SCHED_SHEET_ID', '').strip()
     casc = os.environ.get('CASC_SHEET_ID', '').strip()
-    missing = [n for n, v in (('PERF_SHEET_ID', perf), ('SCHED_SHEET_ID', sched), ('CASC_SHEET_ID', casc)) if not v]
+    missing = [n for n, v in (('PERF_SHEET_ID', perf), ('SCHED_SHEET_ID', sched)) if not v]
     if missing:
         die('missing environment variable(s): ' + ', '.join(missing))
 

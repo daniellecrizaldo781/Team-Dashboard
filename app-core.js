@@ -365,6 +365,14 @@ function expandSnapshot(raw) {
       var o = {};
       for (var i = 0; i < cols.length; i++) {
         // trailing nulls were trimmed when packing - restore them
+        if (cols[i] === 'cascadeRuns') {
+          // runs: [[textIdx|text, bold, italic], ...] -> decode run text
+          var runs = i < arr.length ? arr[i] : null;
+          o.cascadeRuns = runs ? runs.map(function (r) {
+            return [dec(r[0]), !!r[1], !!r[2]];
+          }) : null;
+          continue;
+        }
         o[cols[i]] = i < arr.length ? dec(arr[i]) : null;
       }
       return o;

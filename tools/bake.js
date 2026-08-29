@@ -34,7 +34,7 @@ const T = {
   breakSchedule:     ['agent','day','firstBreak','lunchBreak','lastBreak','team','off','source'],
   leaveRequests:     ['agent','month','leaveType','reason','details','dateManila','datePST',
                      'date','week','status','statusNorm','requestedOn','approvedOn','notes'],
-  cascades:         ['category','brand','title','date','month','dayNum','dateLabel','cascade','linkRefs']
+  cascades:         ['category','brand','title','date','month','dayNum','dateLabel','cascade','linkRefs','cascadeRuns']
 };
 
 Object.keys(T).forEach(k => (d[k] || []).forEach(row => T[k].forEach(c => count(row[c]))));
@@ -52,7 +52,15 @@ function pack(rows, cols) {
   return {
     c: cols,
     r: (rows || []).map(row => {
-      const a = cols.map(k => (row[k] === undefined ? null : enc(row[k])));
+      const a = cols.map(k => {
+        if (k === 'cascadeRuns') {
+          // runs: [[text, bold, italic], ...] -> intern the run text
+          const runs = row[k];
+          if (!runs) return null;
+          return runs.map(r => [enc(typeof r[0] === 'string' ? r[0] : ''), !!r[1], !!r[2]]);
+        }
+        return (row[k] === undefined ? null : enc(row[k]));
+      });
       while (a.length && a[a.length - 1] === null) a.pop();  // re-filled on expand
       return a;
     })

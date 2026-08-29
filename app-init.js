@@ -289,7 +289,33 @@ function renderResources() {
 }
 
 /* ---------------- Cascades & Handling ---------------- */
-var CASC_STATE = { cat: 'ALL', open: {} };
+var CASC_STATE = { cat: 'ALL', detail: null };
+
+// Render rich-text runs [[text, bold, italic], ...] exactly as on the sheet.
+function renderRuns(runs, plain) {
+  if (runs && runs.length) {
+    return runs.map(function (r) {
+      var t = esc(r[0]);
+      if (r[1] && r[2]) return '<b><i>' + t + '</i></b>';
+      if (r[1]) return '<b>' + t + '</b>';
+      if (r[2]) return '<i>' + t + '</i>';
+      return t;
+    }).join('');
+  }
+  return esc(plain || '');
+}
+
+// Pull URLs out of a block of text (used for the Links/Image References area).
+function extractUrls(t) {
+  var out = [], re = /https?:\/\/[^\s)<>"'\]]+/g, m;
+  while ((m = re.exec(t || ''))) out.push(m[0].replace(/[.,;]+$/, ''));
+  return out;
+}
+function isImage(u) {
+  return /\.(png|jpe?g|gif|webp|bmp|svg)(\?|$)/i.test(u) ||
+    /drive\.google\.com|docs\.google\.com\/uc|lh3\.googleusercontent\.com|imgur\.com/i.test(u);
+}
+
 function renderCascades() {
   var list = $('cascList');
   var chips = $('cascChips');
@@ -305,77 +331,76 @@ function renderCascades() {
       }).join('');
     chips.innerHTML = chipHtml;
     Array.prototype.forEach.call(chips.querySelectorAll('.chip'), function (b) {
-      b.onclick = function () { CASC_STATE.cat = b.getAttribute('data-cat'); renderCascades(); };
+      b.onclick = function () { CASC_STATE.cat = b.getAttribute('data-cat'); CASC_STATE.detail = null; renderCascades(); };
     });
   }
 
   var rows = all.filter(function (r) { return CASC_STATE.cat === 'ALL' || r.category === CASC_STATE.cat; });
   if (!rows.length) { list.innerHTML = '<div class="empty"><b>No cascades yet</b>Add a row to the Cascades tab in the team sheet and it will appear here.</div>'; return; }
 
-  // pull URLs + image links out of cascade body + linkRefs text
-  function extractUrls(t) {
-    var out = [], re = /https?:\/\/[^\s)<>"'\]]+/g, m;
-    while ((m = re.exec(t || ''))) out.push(m[0].replace(/[.,;]+$/, ''));
-    return out;
-  }
-  function isImage(u) { return /\.(png|jpe?g|gif|webp|bmp|svg)(\?|$)/i.test(u) || /drive\.google\.com|docs\.google\.com\/uc|lh3\.googleusercontent\.com|imgur\.com/i.test(u); }
+  // ----- detail view: full cascade on its own page -----
+  if (CASC_STATE.detail != null) {
+    var r = rows[CASC_STATE.detail];
+    if (r) {
+      var m = r.month ? r.month.charAt(0).toUpperCase() + r.month.slice(1) : '';
+      var dateTxt = (m && r.dayNum) ? (m + ' ' + r.dayNum) : (r.dateLabel || r.date || '');
+      var urls = extractUrls((r.cascade || '') + '\n' + (r.linkRefs || ''));
+      var imgs = urls.filter(isImage);
+      var links = urls.filter(function (u) { return !isImage(u); });
 
-  list.innerHTML = rows.map(function (r, i) {
-    var key = (r.title || '') + '|' + (r.dateLabel || '');
-    var open = CASC_STATE.open[key];
-    var m = r.month ? r.month.charAt(0).toUpperCase() + r.month.slice(1) : '';
-    var dateTxt = (m && r.dayNum) ? (m + ' ' + r.dayNum) : (r.dateLabel || r.date || '');
-
-    var urls = extractUrls((r.cascade || '') + '\n' + (r.linkRefs || ''));
-    var imgs = urls.filter(isImage);
-    var links = urls.filter(function (u) { return !isImage(u); });
-
-    // collapsed preview: first ~160 chars of the cascade text (plain, no URLs)
-    var plain = (r.cascade || '').replace(/https?:\/\/[^\s)<>"'\]]+/g, '').replace(/\s+/g, ' ').trim();
-    var preview = plain.length > 160 ? plain.slice(0, 160) + '…' : plain;
-
-    var imagesHtml = imgs.length ? '<div class="casc-imgs">' + imgs.map(function (u) {
-      return '<a class="casc-img" href="' + esc(u) + '" target="_blank" rel="noopener" title="Open image">' +
-        '<img src="' + esc(u) + '" alt="cascade image" loading="lazy" onerror="this.parentNode.style.display=\'none\'">' +
-        '<span class="casc-img-zoom">&#128269;</span></a>';
-    }).join('') + '</div>' : '';
-
-    var linksHtml = links.length ? '<div class="casc-links"><b>Link &amp; Image References</b>' +
-      links.map(function (u, k) {
-        return '<a class="casc-open" href="' + esc(u) + '" target="_blank" rel="noopener">Open Link ' + (links.length > 1 ? (k + 1) : '') + ' &#8599;</a>';
+      var imagesHtml = imgs.length ? '<div class="casc-imgs">' + imgs.map(function (u) {
+        return '<a class="casc-img" href="' + esc(u) + '" target="_blank" rel="noopener" title="Open image">' +
+          '<img src="' + esc(u) + '" alt="cascade image" loading="lazy" onerror="this.parentNode.style.display=\'none\'">' +
+          '<span class="casc-img-zoom">&#128269;</span></a>';
       }).join('') + '</div>' : '';
 
-    return '<article class="casc-card' + (open ? ' open' : '') + '" data-key="' + esc(key) + '">' +
-      '<div class="casc-head">' +
-        '<span class="pill n casc-cat">' + esc(r.category) + '</span>' +
-        (r.brand ? '<span class="casc-brand">' + esc(r.brand) + '</span>' : '') +
-        '<span class="casc-date">' + esc(dateTxt) + '</span>' +
-        '<span class="casc-toggle">' + (open ? 'Hide &#9650;' : 'View &#9660;') + '</span>' +
-      '</div>' +
-      '<h4 class="casc-title">' + esc(r.title || '(untitled)') + '</h4>' +
-      (open
-        ? '<div class="casc-body">' + esc(r.cascade || '') + '</div>' + imagesHtml + linksHtml
-        : '<div class="casc-preview">' + esc(preview || '(no description)') + '</div>') +
-    '</article>';
+      var linksHtml = links.length ? '<div class="casc-links"><b>Link &amp; Image References</b>' +
+        links.map(function (u, k) {
+          return '<a class="casc-open" href="' + esc(u) + '" target="_blank" rel="noopener">Open Link ' + (links.length > 1 ? (k + 1) : '') + ' &#8599;</a>';
+        }).join('') + '</div>' : '';
+
+      list.innerHTML =
+        '<button class="casc-back" id="cascBack">&larr; Back to all cascades</button>' +
+        '<article class="casc-detail">' +
+          '<div class="casc-head">' +
+            '<span class="pill n casc-cat">' + esc(r.category) + '</span>' +
+            (r.brand ? '<span class="casc-brand">' + esc(r.brand) + '</span>' : '') +
+            '<span class="casc-date">' + esc(dateTxt) + '</span>' +
+          '</div>' +
+          '<h3 class="casc-detail-title">' + esc(r.title || '(untitled)') + '</h3>' +
+          '<div class="casc-body">' + renderRuns(r.cascadeRuns, r.cascade) + '</div>' +
+          imagesHtml + linksHtml +
+        '</article>';
+
+      var back = $('cascBack');
+      if (back) back.onclick = function () { CASC_STATE.detail = null; renderCascades(); };
+      // image thumbnails open the lightbox
+      Array.prototype.forEach.call(list.querySelectorAll('.casc-img'), function (a) {
+        a.onclick = function (e) {
+          e.stopPropagation();
+          var img = a.querySelector('img');
+          var lb = $('lb'), lbImg = $('lbImg');
+          if (lb && lbImg && img) { lbImg.src = img.src; lb.classList.add('show'); }
+        };
+      });
+      return;
+    }
+  }
+
+  // ----- list view: clickable titles only -----
+  list.innerHTML = rows.map(function (r, i) {
+    return '<button class="casc-row" data-i="' + i + '">' +
+      '<span class="pill n casc-cat">' + esc(r.category) + '</span>' +
+      '<span class="casc-row-title">' + esc(r.title || '(untitled)') + '</span>' +
+      '<span class="casc-row-arrow">&#8250;</span>' +
+    '</button>';
   }).join('');
 
-  // click to expand/collapse (whole card header + title)
-  Array.prototype.forEach.call(list.querySelectorAll('.casc-card'), function (card) {
-    card.onclick = function (e) {
-      // don't toggle when clicking an actual link/image
-      if (e.target.closest('a')) return;
-      var k = card.getAttribute('data-key');
-      CASC_STATE.open[k] = !CASC_STATE.open[k];
+  Array.prototype.forEach.call(list.querySelectorAll('.casc-row'), function (btn) {
+    btn.onclick = function () {
+      CASC_STATE.detail = parseInt(btn.getAttribute('data-i'), 10);
       renderCascades();
-    };
-  });
-  // image thumbnails open the lightbox
-  Array.prototype.forEach.call(list.querySelectorAll('.casc-img'), function (a) {
-    a.onclick = function (e) {
-      e.stopPropagation();
-      var img = a.querySelector('img');
-      var lb = $('lb'), lbImg = $('lbImg');
-      if (lb && lbImg && img) { lbImg.src = img.src; lb.classList.add('show'); }
+      window.scrollTo(0, 0);
     };
   });
 }
