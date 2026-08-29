@@ -62,13 +62,16 @@ def get(sheet_id, out):
 def main():
     perf = os.environ.get('PERF_SHEET_ID', '').strip()
     sched = os.environ.get('SCHED_SHEET_ID', '').strip()
-    missing = [n for n, v in (('PERF_SHEET_ID', perf), ('SCHED_SHEET_ID', sched)) if not v]
+    casc = os.environ.get('CASC_SHEET_ID', '').strip()
+    missing = [n for n, v in (('PERF_SHEET_ID', perf), ('SCHED_SHEET_ID', sched), ('CASC_SHEET_ID', casc)) if not v]
     if missing:
         die('missing environment variable(s): ' + ', '.join(missing))
 
     print('downloading sheets (no credentials needed)')
     get(perf, 'qa.xlsx')
     get(sched, 'sched.xlsx')
+    if casc:
+        get(casc, 'casc.xlsx')
 
 
 if __name__ == '__main__':

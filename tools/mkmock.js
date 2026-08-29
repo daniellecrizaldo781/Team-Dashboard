@@ -2,21 +2,27 @@
 const fs = require('fs');
 const qa = JSON.parse(fs.readFileSync('qa.json', 'utf8'));
 const sc = JSON.parse(fs.readFileSync('sched.json', 'utf8'));
+const casc = fs.existsSync('casc.json') ? JSON.parse(fs.readFileSync('casc.json', 'utf8')) : {};
 const rev = g => g.map(r => r.map(c => {
   if (c && typeof c === 'object' && c.__d) { const p = c.__d.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
   return c;
 }));
 for (const k in qa) qa[k] = rev(qa[k]);
 for (const k in sc) sc[k] = rev(sc[k]);
+for (const k in casc) casc[k] = rev(casc[k]);
 
 global.SpreadsheetApp = null;
 global.grid = (ss, tab) => (ss.__d[tab] || []);
 const src = ['Code.gs', 'Parsers.gs', 'Parsers2.gs', 'Parsers3.gs', 'Parsers4.gs']
   .map(f => fs.readFileSync('../apps-script/' + f, 'utf8')).join('\n');
-eval(src.replace(/function grid\(ss, tabName\)[\s\S]*?\n}/, ''));
+// Strip the live Apps Script grid() (uses SpreadsheetApp) so the mock below wins.
+const srcNoGrid = src.replace(/function grid\(ss, tabName\)[\s\S]*?\n\}/, '');
+eval(srcNoGrid);
+// Guarantee the mock grid is what all parsers use (covers stripHtml edge cases).
+var grid = (ss, tab) => (ss.__d[tab] || []);
 
 global.PropertiesService = { getScriptProperties: () => ({ getProperty: () => 'FAKE' }) };
-const PERF = { __d: qa }, SCHED = { __d: sc };
+const PERF = { __d: qa }, SCHED = { __d: sc }, CASC = { __d: casc };
 const os = parseOfficialScorecard(PERF);
 const out = {
   ok: true, mode: 'data', warnings: [],
@@ -32,7 +38,7 @@ const out = {
   otSchedule: parseOT(SCHED),
   breakSchedule: parseBreaks(SCHED),
   leaveRequests: parseLeave(SCHED),
-  cascades: parseCascades(SCHED)
+  cascades: parseCascades(CASC)
 };
 const before = {}; Object.keys(out).forEach(k=>{ if(Array.isArray(out[k])) before[k]=out[k].length; });
 restrictToYear(out, DATA_YEAR);

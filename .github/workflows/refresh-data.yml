@@ -40,6 +40,7 @@ jobs:
         env:
           PERF_SHEET_ID: ${{ secrets.PERF_SHEET_ID }}
           SCHED_SHEET_ID: ${{ secrets.SCHED_SHEET_ID }}
+          CASC_SHEET_ID: ${{ secrets.CASC_SHEET_ID }}
         run: python fetch.py
 
       - name: Convert sheets to grids

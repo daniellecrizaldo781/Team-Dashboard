@@ -1,4 +1,4 @@
-import openpyxl, json, datetime
+import openpyxl, json, datetime, os
 
 # Hidden tabs are deliberately excluded: they are drafts, archives and old
 # copies that the team has taken out of circulation. Filtering here means every
@@ -40,3 +40,5 @@ def grid(path, out):
 
 grid("qa.xlsx", "qa.json")
 grid("sched.xlsx", "sched.json")
+if os.path.exists("casc.xlsx"):
+    grid("casc.xlsx", "casc.json")
