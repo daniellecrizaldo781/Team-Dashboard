@@ -315,6 +315,24 @@ function isImage(u) {
   return /\.(png|jpe?g|gif|webp|bmp|svg)(\?|$)/i.test(u) ||
     /drive\.google\.com|docs\.google\.com\/uc|lh3\.googleusercontent\.com|imgur\.com/i.test(u);
 }
+// Rewrite a URL to one that actually returns image bytes (Google Drive "view"
+// / "open" links serve an HTML page, not the image, so an <img> on them breaks).
+function toDirectImg(u) {
+  u = (u || '').replace(/&amp;/g, '&');
+  var m = u.match(/drive\.google\.com\/file\/d\/([^\/?]+)/) || u.match(/drive\.google\.com\/open\?id=([^&]+)/);
+  if (m) return 'https://drive.google.com/uc?export=view&id=' + m[1];
+  return u;
+}
+// If a reference image fails to load (e.g. hotlink-blocked), swap it for a
+// working "Click Here" link so the reference is never lost.
+function cascImgFallback(img) {
+  var a = document.createElement('a');
+  a.className = 'casc-open';
+  a.href = img.getAttribute('data-href') || '#';
+  a.target = '_blank'; a.rel = 'noopener';
+  a.innerHTML = 'Click Here &#8599;';
+  if (img.parentNode) img.parentNode.replaceChild(a, img);
+}
 
 function renderCascades() {
   var list = $('cascList');
@@ -351,16 +369,20 @@ function renderCascades() {
         dateTxt = MON[d.getUTCMonth()] + ' ' + d.getUTCDate() + ', ' + d.getUTCFullYear();
       }
       // URLs that live in the cascade BODY (separate from the Link References
-      // cell, which is rendered verbatim below). Used only for images/links
-      // embedded in the narrative text.
-      var bodyUrls = extractUrls(r.cascade || '');
+      // cell, which is rendered verbatim below). Exclude any URL that also
+      // appears in linkRefs so it is never rendered twice.
+      var linkRefsText = r.linkRefs || '';
+      var bodyUrls = (extractUrls(r.cascade || '')).filter(function (u) {
+        return linkRefsText.indexOf(u.replace(/&amp;/g, '&')) < 0;
+      });
       var imgs = bodyUrls.filter(isImage);
       var links = bodyUrls.filter(function (u) { return !isImage(u); });
 
       // Image links from the body -> show the ACTUAL image (clickable to enlarge)
       var imagesHtml = imgs.length ? '<div class="casc-imgs">' + imgs.map(function (u) {
+        var direct = toDirectImg(u);
         return '<a class="casc-img" href="' + esc(u) + '" target="_blank" rel="noopener" title="Click to enlarge">' +
-          '<img src="' + esc(u) + '" alt="cascade image" loading="lazy" onerror="this.parentNode.style.display=\'none\'">' +
+          '<img src="' + esc(direct) + '" alt="cascade image" loading="lazy" data-href="' + esc(u) + '" onerror="cascImgFallback(this)">' +
           '<span class="casc-img-zoom">&#128269;</span></a>';
       }).join('') + '</div>' : '';
 
@@ -375,7 +397,7 @@ function renderCascades() {
         // replace each URL: image -> inline <img> (click to enlarge); other -> "Click Here" button
         var refText = esc(r.linkRefs).replace(/https?:\/\/[^<>\s"']+/g, function (u) {
           return isImage(u)
-            ? '<img class="casc-inline-img" src="' + u + '" alt="reference image" loading="lazy" onclick="(function(){var lb=document.getElementById(\'lb\'),i=document.getElementById(\'lbImg\');if(lb&&i){i.src=\'' + u + '\';lb.classList.add(\'show\');}})()" onerror="this.style.display=\'none\'">'
+            ? '<img class="casc-inline-img" src="' + toDirectImg(u) + '" alt="reference image" loading="lazy" data-href="' + u + '" onclick="(function(){var lb=document.getElementById(\'lb\'),i=document.getElementById(\'lbImg\');if(lb&&i){i.src=\'' + toDirectImg(u) + '\';lb.classList.add(\'show\');}})()" onerror="cascImgFallback(this)">'
             : '<a class="casc-open" href="' + u + '" target="_blank" rel="noopener">Click Here &#8599;</a>';
         });
         refParts.push('<div class="casc-ref-text">' + refText + '</div>');

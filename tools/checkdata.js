@@ -19,7 +19,7 @@ const ok  = m => console.log('  ok   ' + m);
 /* decode data.js using the dashboard's own expander, so this validates the
    real shipped artifact rather than an assumption about it */
 const core = fs.readFileSync(path.join(ROOT, 'app-core.js'), 'utf8');
-const fn = core.match(/function expandSnapshot[\s\S]*?\n}\n/);
+const fn = core.match(/function expandSnapshot[\s\S]*?\r?\n\r?\}/);
 if (!fn) { console.log('FATAL: expandSnapshot not found in app-core.js'); process.exit(1); }
 const box = vm.createContext({});
 vm.runInContext(fn[0] + 'this.expandSnapshot = expandSnapshot;', box);
@@ -75,6 +75,29 @@ SECRET.test(fs.readFileSync(path.join(ROOT, 'data.js'), 'utf8'))
   ? bad('data.js contains something secret-looking')
   : ok('data.js clean');
 
+console.log('\n=== regression guard (never publish a data.js that lost rows vs last commit) ===');
+const { execSync } = require('child_process');
+function packedRowCount(src) {
+  if (!src || !src.packed) return 0;
+  let n = 0;
+  Object.keys(src.packed).forEach(k => { const t = src.packed[k]; if (t && t.r) n += t.r.length; });
+  return n;
+}
+function prevRowCount() {
+  try {
+    const prev = execSync('git show HEAD:data.js', { cwd: ROOT, encoding: 'utf8' });
+    const box2 = vm.createContext({});
+    vm.runInContext(prev.replace(/^window\./m, 'this.'), box2);
+    return packedRowCount(box2.DASHBOARD_DATA);
+  } catch (e) { return 0; } // no prior commit / not in a repo -> skip
+}
+const prev = prevRowCount();
+const cur = packedRowCount(win.DASHBOARD_DATA);
+if (prev > 0 && cur < prev * 0.7) {
+  bad(`row count dropped from ${prev} to ${cur} (>${(100*(1-cur/prev)).toFixed(0)}% loss) - refusing to publish a partial snapshot: ${cur} < ${(prev*0.7)|0}`);
+} else {
+  ok(`row count ${cur}${prev ? ' (prev ' + prev + ')' : ''}`);
+}
 console.log(fail ? `\nFAILED - ${fail} problem(s); refusing to publish this data.js`
                  : '\nPASSED - data.js looks good');
 process.exit(fail ? 1 : 0);
