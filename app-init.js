@@ -344,6 +344,13 @@ function renderCascades() {
     if (r) {
       var m = r.month ? r.month.charAt(0).toUpperCase() + r.month.slice(1) : '';
       var dateTxt = (m && r.dayNum) ? (m + ' ' + r.dayNum) : (r.dateLabel || r.date || '');
+      // Prefer a fully formatted date (Aug 28, 2026) when a timestamp exists.
+      if (r.ts) {
+        var d = new Date(r.ts);
+        var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        dateTxt = MON[d.getUTCMonth()] + ' ' + d.getUTCDate() + ', ' + d.getUTCFullYear();
+      }
+      // URLs: scan both the cascade body and the dedicated Link References column.
       var urls = extractUrls((r.cascade || '') + '\n' + (r.linkRefs || ''));
       var imgs = urls.filter(isImage);
       var links = urls.filter(function (u) { return !isImage(u); });
@@ -354,10 +361,26 @@ function renderCascades() {
           '<span class="casc-img-zoom">&#128269;</span></a>';
       }).join('') + '</div>' : '';
 
-      var linksHtml = links.length ? '<div class="casc-links"><b>Link &amp; Image References</b>' +
-        links.map(function (u, k) {
-          return '<a class="casc-open" href="' + esc(u) + '" target="_blank" rel="noopener">Open Link ' + (links.length > 1 ? (k + 1) : '') + ' &#8599;</a>';
-        }).join('') + '</div>' : '';
+      // Dedicated "Link & Image References" section. Shows the Link References
+      // text (URLs made clickable) plus any images pulled from the body.
+      var refHtml = '';
+      if ((r.linkRefs && r.linkRefs.trim()) || links.length || imgs.length) {
+        var refBody = '';
+        if (r.linkRefs && r.linkRefs.trim()) {
+          // make any raw URLs inside the reference text clickable
+          var refText = esc(r.linkRefs).replace(/https?:\/\/[^<>\s"']+/g, function (u) {
+            return '<a class="casc-open" href="' + u + '" target="_blank" rel="noopener">' + u + ' &#8599;</a>';
+          });
+          refBody += '<div class="casc-ref-text">' + refText + '</div>';
+        }
+        if (links.length) {
+          refBody += links.map(function (u, k) {
+            return '<a class="casc-open" href="' + esc(u) + '" target="_blank" rel="noopener">Open Link ' + (links.length > 1 ? (k + 1) : '') + ' &#8599;</a>';
+          }).join('');
+        }
+        if (imgs.length) refBody += imagesHtml;
+        refHtml = '<section class="casc-refs"><h4>Link / Image References</h4>' + refBody + '</section>';
+      }
 
       list.innerHTML =
         '<button class="casc-back" id="cascBack">&larr; Back to all cascades</button>' +
@@ -369,7 +392,7 @@ function renderCascades() {
           '</div>' +
           '<h3 class="casc-detail-title">' + esc(r.title || '(untitled)') + '</h3>' +
           '<div class="casc-body">' + renderRuns(r.cascadeRuns, r.cascade) + '</div>' +
-          imagesHtml + linksHtml +
+          refHtml +
         '</article>';
 
       var back = $('cascBack');

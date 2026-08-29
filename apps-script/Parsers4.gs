@@ -73,11 +73,22 @@ function parseCascades(ss) {
     return { text: S(cell), runs: null };
   }
 
+  // Plain text of a cell, handling rich-text ({__rt}) cells the same way as rich().
+  function plain(cell) {
+    if (cell && typeof cell === 'object') {
+      if (Array.isArray(cell.__rt) && cell.__rt.length) {
+        return cell.__rt.map(function (r) { return (r[0] || ''); }).join('');
+      }
+      if (typeof cell.__d === 'string') return cell.__d;
+    }
+    return S(cell);
+  }
+
   var out = [];
   var MONTHS = { jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11 };
   for (var r = 1; r < g.length; r++) {
     var row = g[r];
-    var cat = S(row[iCat]);
+    var cat = plain(row[iCat]);
     if (!cat) continue;                       // skip blank / trailing rows
     var rc = rich(row[iCasc]);
 
@@ -89,37 +100,47 @@ function parseCascades(ss) {
       var mm = rawDate.getMonth() + 1, dd = rawDate.getDate();
       dateLabel = rawDate.getFullYear() + '-' + (mm < 10 ? '0' + mm : mm) + '-' + (dd < 10 ? '0' + dd : dd);
     } else {
-      dateLabel = S(rawDate);
+      dateLabel = plain(rawDate);
     }
-    var month = '', dayNum = null;
+    var month = '', dayNum = null, ts = 0;
     if (/[a-z]/i.test(dateLabel)) {           // contains letters -> month name form
       var dm = dateLabel.match(/([A-Za-z]+)\s*(\d{1,2})?/);
       if (dm) {
         month = dm[1];
         if (dm[2]) dayNum = parseInt(dm[2], 10);
+        var mi = MONTHS[(month || '').toLowerCase().slice(0,3)];
+        if (mi != null && dayNum) ts = Date.UTC(2026, mi, dayNum);
       }
     } else {                                  // ISO form -> derive month/day
       var p = dateLabel.split('-');
-      if (p.length === 3) { month = Object.keys(MONTHS)[(+p[1] - 1 + 12) % 12]; dayNum = parseInt(p[2], 10); }
+      if (p.length === 3) {
+        month = Object.keys(MONTHS)[(+p[1] - 1 + 12) % 12];
+        dayNum = parseInt(p[2], 10);
+        ts = Date.UTC(+p[0], +p[1] - 1, +p[2]);
+      }
     }
     out.push({
       category:  cat,
-      brand:     S(row[iBrand]),
-      title:     S(row[iTitle]),
+      brand:     plain(row[iBrand]),
+      title:     plain(row[iTitle]),
       date:      dateLabel,                   // normalized form
       month:     month,
       dayNum:    dayNum,
+      ts:        ts,                           // epoch ms for newest-first sorting
       dateLabel: dateLabel,
-      cascade:   rc.text,                     // plain text (fallback / search)
-      cascadeRuns: rc.runs,                   // [[text, bold, italic], ...] or null
-      linkRefs:  iLink >= 0 ? S(row[iLink]) : ''
+      cascade:   rc.text,                      // plain text (fallback / search)
+      cascadeRuns: rc.runs,                    // [[text, bold, italic], ...] or null
+      linkRefs:  iLink >= 0 ? plain(row[iLink]) : ''
       // URLs are extracted at render time from cascade + linkRefs (no nested arrays in snapshot)
     });
   }
-  // newest first when a day number is present, otherwise keep sheet order
+  // newest first (by full date); rows without a parseable date keep sheet order
   out.sort(function (a, b) {
-    if (a.dayNum == null || b.dayNum == null) return 0;
-    return b.dayNum - a.dayNum;
+    if (a.ts && b.ts) return b.ts - a.ts;
+    if (a.ts && !b.ts) return -1;
+    if (!a.ts && b.ts) return 1;
+    if (a.dayNum != null && b.dayNum != null) return b.dayNum - a.dayNum;
+    return 0;
   });
   return out;
 }
