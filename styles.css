@@ -421,12 +421,14 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 #otGrid tbody td:nth-child(2){text-align:left}
 
 /* ---------- resources page (no filters) ---------- */
-.res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-top:4px}
-.res-card{
-  display:block;text-decoration:none;color:var(--ink);
-  background:var(--blush);border:1px solid var(--line);border-radius:14px;
-  padding:14px 15px;transition:transform .12s ease,box-shadow .12s ease,background .12s ease;
-}
-.res-card:hover{transform:translateY(-2px);box-shadow:var(--sh2);background:#FFF0F6}
-.res-t{font-weight:700;font-size:14.5px;margin-bottom:3px}
-.res-d{font-size:12.5px;color:var(--ink3)}
+.res-table{width:100%;border-collapse:collapse;margin-top:6px;font-size:13px;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.res-table thead th{background:var(--blush);color:var(--ink);text-align:left;font-weight:700;padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+.res-table tbody td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink3)}
+.res-table tbody tr:last-child td{border-bottom:none}
+.res-table tbody tr:hover{background:#FFF5FA}
+.res-td-title{font-weight:700;color:var(--ink);min-width:200px}
+.res-td-link{min-width:90px}
+.res-td-link a{color:#E0457B;font-weight:700;text-decoration:none;border-bottom:1px solid #F3B6CF}
+.res-td-link a:hover{color:#C22e63}
+.res-td-desc{max-width:520px;line-height:1.45}
+.res-empty{color:var(--ink3);padding:12px 2px}

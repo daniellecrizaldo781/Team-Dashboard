@@ -243,16 +243,22 @@ var RESOURCE_DATA = {
 };
 
 function renderResources() {
-  var map = { resLinks: 'links', resGuides: 'guides', resContacts: 'contacts' };
-  Object.keys(map).forEach(function (id) {
-    var el = $(id);
-    if (!el) return;
-    el.innerHTML = (RESOURCE_DATA[map[id]] || []).map(function (r) {
-      return '<a class="res-card" href="' + esc(r.u) + '" target="_blank" rel="noopener">' +
-        '<div class="res-t">' + esc(r.t) + '</div>' +
-        '<div class="res-d">' + esc(r.d) + '</div></a>';
-    }).join('');
-  });
+  var el = $('resLinks');
+  if (!el) return;
+  var rows = RESOURCE_DATA.links || [];
+  if (!rows.length) { el.innerHTML = '<p class="res-empty">No resources yet.</p>'; return; }
+  var html = '<table class="res-table"><thead><tr>' +
+    '<th>Title</th><th>Link</th><th>Description</th>' +
+    '</tr></thead><tbody>';
+  html += rows.map(function (r) {
+    return '<tr>' +
+      '<td class="res-td-title">' + esc(r.t) + '</td>' +
+      '<td class="res-td-link"><a href="' + esc(r.u) + '" target="_blank" rel="noopener">click here</a></td>' +
+      '<td class="res-td-desc">' + esc(r.d || '') + '</td>' +
+      '</tr>';
+  }).join('');
+  html += '</tbody></table>';
+  el.innerHTML = html;
 }
 
 /* Snapshot mode: the data cannot change while the page is open, so there is
