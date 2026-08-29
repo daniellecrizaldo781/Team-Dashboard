@@ -315,12 +315,14 @@ function isImage(u) {
   return /\.(png|jpe?g|gif|webp|bmp|svg)(\?|$)/i.test(u) ||
     /drive\.google\.com|docs\.google\.com\/uc|lh3\.googleusercontent\.com|imgur\.com/i.test(u);
 }
-// Rewrite a URL to one that actually returns image bytes (Google Drive "view"
-// / "open" links serve an HTML page, not the image, so an <img> on them breaks).
+// Rewrite a URL to one that actually returns image bytes. Google Drive "view"
+// / "open" / "uc?export=view" links serve an HTML page (or a redirect), not the
+// image, so an <img> on them breaks. The file's raw bytes live on the lh3 host,
+// which returns image/png directly - use that as the <img> src.
 function toDirectImg(u) {
   u = (u || '').replace(/&amp;/g, '&');
-  var m = u.match(/drive\.google\.com\/file\/d\/([^\/?]+)/) || u.match(/drive\.google\.com\/open\?id=([^&]+)/);
-  if (m) return 'https://drive.google.com/uc?export=view&id=' + m[1];
+  var m = u.match(/drive\.google\.com\/file\/d\/([^\/?]+)/) || u.match(/drive\.google\.com\/open\?id=([^&]+)/) || u.match(/drive\.google\.com\/uc\?[^&]*id=([^&]+)/);
+  if (m) return 'https://lh3.googleusercontent.com/d/' + m[1];
   return u;
 }
 // If a reference image fails to load (e.g. hotlink-blocked), swap it for a
