@@ -350,12 +350,14 @@ function renderCascades() {
         var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
         dateTxt = MON[d.getUTCMonth()] + ' ' + d.getUTCDate() + ', ' + d.getUTCFullYear();
       }
-      // URLs: scan both the cascade body and the dedicated Link References column.
-      var urls = extractUrls((r.cascade || '') + '\n' + (r.linkRefs || ''));
-      var imgs = urls.filter(isImage);
-      var links = urls.filter(function (u) { return !isImage(u); });
+      // URLs that live in the cascade BODY (separate from the Link References
+      // cell, which is rendered verbatim below). Used only for images/links
+      // embedded in the narrative text.
+      var bodyUrls = extractUrls(r.cascade || '');
+      var imgs = bodyUrls.filter(isImage);
+      var links = bodyUrls.filter(function (u) { return !isImage(u); });
 
-      // Image links -> show the ACTUAL image (clickable to enlarge via lightbox)
+      // Image links from the body -> show the ACTUAL image (clickable to enlarge)
       var imagesHtml = imgs.length ? '<div class="casc-imgs">' + imgs.map(function (u) {
         return '<a class="casc-img" href="' + esc(u) + '" target="_blank" rel="noopener" title="Click to enlarge">' +
           '<img src="' + esc(u) + '" alt="cascade image" loading="lazy" onerror="this.parentNode.style.display=\'none\'">' +
@@ -364,11 +366,13 @@ function renderCascades() {
 
       // Dedicated "Link / Image References" section.
       // Copy the sheet cell's exact text (incl. descriptive labels). Image URLs
-      // become the actual inline image; other URLs become "Click Here" buttons.
+      // become the actual inline image (click to enlarge); other URLs become
+      // "Click Here" buttons. This fully owns the Link References column, so the
+      // URLs are never rendered twice.
       var refHtml = '';
       var refParts = [];
       if (r.linkRefs && r.linkRefs.trim()) {
-        // replace each URL: image -> inline <img>; other -> "Click Here" button
+        // replace each URL: image -> inline <img> (click to enlarge); other -> "Click Here" button
         var refText = esc(r.linkRefs).replace(/https?:\/\/[^<>\s"']+/g, function (u) {
           return isImage(u)
             ? '<img class="casc-inline-img" src="' + u + '" alt="reference image" loading="lazy" onclick="(function(){var lb=document.getElementById(\'lb\'),i=document.getElementById(\'lbImg\');if(lb&&i){i.src=\'' + u + '\';lb.classList.add(\'show\');}})()" onerror="this.style.display=\'none\'">'
@@ -376,12 +380,12 @@ function renderCascades() {
         });
         refParts.push('<div class="casc-ref-text">' + refText + '</div>');
       }
-      if (links.length) {  // non-image URLs found only in the body
+      if (links.length) {  // non-image URLs found only in the body narrative
         refParts.push(links.map(function (u) {
           return '<a class="casc-open" href="' + esc(u) + '" target="_blank" rel="noopener">Click Here &#8599;</a>';
         }).join(' '));
       }
-      if (imgs.length) refParts.push(imagesHtml);  // thumbnails row (also enlargeable)
+      if (imgs.length) refParts.push(imagesHtml);  // body images row (also enlargeable)
       if (refParts.length) {
         refHtml = '<section class="casc-refs"><h4>Link / Image References</h4>' + refParts.join('') + '</section>';
       }
