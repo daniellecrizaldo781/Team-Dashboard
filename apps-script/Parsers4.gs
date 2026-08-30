@@ -247,6 +247,7 @@ function parseProducts(ss) {
     var row = g[r];
     var name = exact(row[iName]);
     if (!name) continue;  // skip blank/trailing rows
+    if (/^\s*product\s+information\s*$/i.test(name) || /^product\s+name$/i.test(name)) continue;  // skip title/header rows
     var ts = [];
     // The spiel for an issue lives either IN the title cell (multi-line) or in
     // the cell directly BELOW it (same column) - the sheet enters issue titles

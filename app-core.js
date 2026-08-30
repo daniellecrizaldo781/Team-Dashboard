@@ -385,6 +385,11 @@ function expandSnapshot(raw) {
           o.troubleshooting = i < arr.length ? arr[i] : null;
           continue;
         }
+        if (cols[i] === 'manualPhotos') {
+          // array of {url, thumb, thumbData} objects - final form, skip decoder.
+          o.manualPhotos = i < arr.length ? arr[i] : null;
+          continue;
+        }
         o[cols[i]] = i < arr.length ? dec(arr[i]) : null;
       }
       return o;
