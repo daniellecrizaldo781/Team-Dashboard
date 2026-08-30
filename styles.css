@@ -502,6 +502,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .prod-sec h4{margin:0 0 8px;font-size:13px;color:var(--rose-d);letter-spacing:.3px;text-transform:uppercase}
 .prod-sec ul{margin:0;padding-left:18px;color:var(--ink2);line-height:1.7}
 .prod-sec p{margin:0;color:var(--ink2);line-height:1.6}
+.prod-pre{white-space:pre-wrap;word-break:break-word}
 .prod-ts{display:flex;flex-direction:column;gap:10px}
 .prod-ts-item{display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 14px}
 .prod-ts-item b{color:var(--ink);margin-bottom:3px}

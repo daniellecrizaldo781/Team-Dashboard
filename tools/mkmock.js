@@ -3,6 +3,7 @@ const fs = require('fs');
 const qa = JSON.parse(fs.readFileSync('qa.json', 'utf8'));
 const sc = JSON.parse(fs.readFileSync('sched.json', 'utf8'));
 const casc = fs.existsSync('casc.json') ? JSON.parse(fs.readFileSync('casc.json', 'utf8')) : {};
+const prod = fs.existsSync('prod.json') ? JSON.parse(fs.readFileSync('prod.json', 'utf8')) : {};
 const rev = g => g.map(r => r.map(c => {
   if (c && typeof c === 'object' && c.__d) { const p = c.__d.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
   return c;
@@ -22,7 +23,7 @@ eval(srcNoGrid);
 var grid = (ss, tab) => (ss.__d[tab] || []);
 
 global.PropertiesService = { getScriptProperties: () => ({ getProperty: () => 'FAKE' }) };
-const PERF = { __d: qa }, SCHED = { __d: sc }, CASC = { __d: casc };
+const PERF = { __d: qa }, SCHED = { __d: sc }, CASC = { __d: casc }, PROD = { __d: prod };
 const os = parseOfficialScorecard(PERF);
 const out = {
   ok: true, mode: 'data', warnings: [],
@@ -38,7 +39,8 @@ const out = {
   otSchedule: parseOT(SCHED),
   breakSchedule: parseBreaks(SCHED),
   leaveRequests: parseLeave(SCHED),
-  cascades: parseCascades(CASC)
+  cascades: parseCascades(CASC),
+  products: parseProducts(PROD)
 };
 // Embed cascade reference images as base64 data-URIs so they always render on
 // the dashboard (Google Drive blocks cross-origin browser hotlinks by referrer;
@@ -70,6 +72,29 @@ const out = {
       } catch (e) { /* skip undownloadable image */ }
     });
     if (imgs.length) row.cascadeImages = imgs;
+  });
+})();
+
+// Embed product images as base64 data-URIs (same server-side download trick as
+// cascades - Drive blocks browser hotlinks by referrer, so we download + inline).
+(function embedProductImages() {
+  const { execSync } = require('child_process');
+  const direct = u => {
+    u = (u || '').replace(/&amp;/g, '&');
+    const m = u.match(/drive\.google\.com\/file\/d\/([^\/?]+)/) || u.match(/drive\.google\.com\/open\?id=([^&]+)/) || u.match(/drive\.google\.com\/uc\?[^&]*id=([^&]+)/);
+    return m ? 'https://lh3.googleusercontent.com/d/' + m[1] : u;
+  };
+  (out.products || []).forEach(row => {
+    const u = direct(row.image || '');
+    if (!/lh3\.googleusercontent\.com|drive\.google\.com|\.(png|jpe?g|gif|webp|bmp|svg)/i.test(u)) return;
+    try {
+      const b64 = execSync('curl -sL --max-time 30 ' + JSON.stringify(u), { maxBuffer: 8 * 1024 * 1024 });
+      if (b64 && b64.length > 200) {
+        const sig = b64.slice(0, 4).toString('hex');
+        const ext = sig === '89504e47' ? 'png' : sig.startsWith('ffd8') ? 'jpeg' : sig === '474946' ? 'gif' : sig === '524946' ? 'webp' : 'png';
+        row.imageData = 'data:image/' + ext + ';base64,' + b64.toString('base64');
+      }
+    } catch (e) { /* leave image as the link if download fails */ }
   });
 })();
 

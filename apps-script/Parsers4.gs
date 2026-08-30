@@ -144,3 +144,93 @@ function parseCascades(ss) {
   });
   return out;
 }
+
+/* ===========================================================
+ * Products  (FILE 5, row 2 of the Products sheet)
+ * Columns (by header name):
+ *   Product Name | Description | Package Inclusion | Instruction Manual |
+ *   Product Image (Drive link) | Email Support | Hotline Number |
+ *   Return Handling | Product Not Working | Damaged Package | Incorrect Bundle
+ * The "Trouble Shooting and Handling" header spans the last four columns.
+ * Cell text is preserved EXACTLY (no whitespace collapsing) so the sheet's
+ * formatting (line breaks in the manual, etc.) is kept verbatim.
+ * =========================================================== */
+function parseProducts(ss) {
+  var g = grid(ss, 'Sheet1');
+  if (!g || g.length < 2) return [];
+
+  function cellText(c) {
+    if (c && typeof c === 'object') {
+      if (Array.isArray(c.__rt) && c.__rt.length) return c.__rt.map(function (r) { return (r[0] || ''); }).join('');
+      if (typeof c.__d === 'string') return c.__d;
+    }
+    return (c === null || c === undefined) ? '' : String(c);
+  }
+  // keep the cell text exactly as written (only map null -> '')
+  function exact(c) {
+    if (c && typeof c === 'object') {
+      if (Array.isArray(c.__rt) && c.__rt.length) {
+        return c.__rt.map(function (r) { return (r[0] || ''); }).join('');
+      }
+      if (typeof c.__d === 'string') return c.__d;
+    }
+    return (c === null || c === undefined) ? '' : String(c);
+  }
+  function col() {  // locate a column index by header substring (case-insensitive)
+    for (var j = 0; j < arguments.length; j++) {
+      for (var i = 0; i < head.length; i++) {
+        if (('' + head[i]).toLowerCase().indexOf(arguments[j]) >= 0) return i;
+      }
+    }
+    return -1;
+  }
+
+  // The sheet has a title row ("Product Information") above the real header
+  // ("Product Name" ...). Find the header row by scanning the first few rows.
+  var hRow = -1;
+  for (var hr = 0; hr < Math.min(g.length, 6); hr++) {
+    var rowText = g[hr].map(cellText).join(' ').toLowerCase();
+    if (rowText.indexOf('product name') >= 0) { hRow = hr; break; }
+  }
+  if (hRow < 0) return [];
+
+  var head = g[hRow].map(function (c) {
+    return (c && typeof c === 'object' && typeof c.__d === 'string') ? c.__d : (c || '');
+  }).map(function (c) { return ('' + c).toLowerCase().replace(/\s+/g, ' ').trim(); });
+
+  var iName = col('product name');
+  if (iName < 0) return [];
+  var iDesc   = col('description');
+  var iIncl   = col('package inclusion');
+  var iManual = col('instruction manual');
+  var iImg    = col('product image');
+  var iEmail  = col('email support');
+  var iHot    = col('hotline');
+  var iReturn = col('return handling');
+  var iNotWork= col('product not working');
+  var iDamage = col('damaged package');
+  var iBundle = col('incorrect bundle');
+
+  var out = [];
+  for (var r = hRow + 1; r < g.length; r++) {
+    var row = g[r];
+    var name = exact(row[iName]);
+    if (!name) continue;  // skip blank/trailing rows
+    var ts = [];
+    if (iReturn >= 0 && exact(row[iReturn])) ts.push({ q: 'Return Handling', a: exact(row[iReturn]) });
+    if (iNotWork >= 0 && exact(row[iNotWork])) ts.push({ q: 'Product Not Working', a: exact(row[iNotWork]) });
+    if (iDamage >= 0 && exact(row[iDamage])) ts.push({ q: 'Damaged Package', a: exact(row[iDamage]) });
+    if (iBundle >= 0 && exact(row[iBundle])) ts.push({ q: 'Incorrect Bundle', a: exact(row[iBundle]) });
+    out.push({
+      name: name,
+      description: iDesc >= 0 ? exact(row[iDesc]) : '',
+      inclusion: iIncl >= 0 ? exact(row[iIncl]) : '',
+      manual: iManual >= 0 ? exact(row[iManual]) : '',
+      image: iImg >= 0 ? exact(row[iImg]) : '',       // Drive link (embedded at bake)
+      email: iEmail >= 0 ? exact(row[iEmail]) : '',
+      hotline: iHot >= 0 ? exact(row[iHot]) : '',
+      troubleshooting: ts                            // [{q,a}, ...]
+    });
+  }
+  return out;
+}

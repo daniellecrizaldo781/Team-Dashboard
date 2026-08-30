@@ -34,7 +34,8 @@ const T = {
   breakSchedule:     ['agent','day','firstBreak','lunchBreak','lastBreak','team','off','source'],
   leaveRequests:     ['agent','month','leaveType','reason','details','dateManila','datePST',
                      'date','week','status','statusNorm','requestedOn','approvedOn','notes'],
-  cascades:         ['category','brand','title','date','month','dayNum','ts','dateLabel','cascade','linkRefs','cascadeRuns','cascadeImages']
+  cascades:         ['category','brand','title','date','month','dayNum','ts','dateLabel','cascade','linkRefs','cascadeRuns','cascadeImages'],
+  products:         ['name','description','inclusion','manual','image','imageData','email','hotline','troubleshooting']
 };
 
 Object.keys(T).forEach(k => (d[k] || []).forEach(row => T[k].forEach(c => count(row[c]))));

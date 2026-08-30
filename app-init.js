@@ -504,64 +504,42 @@ function renderCascades() {
 /* ---------------- Products ---------------- */
 // Placeholder products - replaced once the product sheet is wired in.
 // Each square is clickable and opens a detail view with picture, description,
-// inclusion, instruction manual placeholder and troubleshooting/handling steps.
-var PRODUCTS = [
-  { id: 'oricle-mini',    name: 'Oricle Mini',        brand: 'Oricle Hearing Aid',     img: '', desc: 'Placeholder product description.', },
-  { id: 'oricle-pro',     name: 'Oricle Pro',         brand: 'Oricle Hearing Aid',     img: '', desc: 'Placeholder product description.', },
-  { id: 'oricle-air',     name: 'Oricle Air',         brand: 'Oricle Hearing Aid',     img: '', desc: 'Placeholder product description.', },
-  { id: 'other-nexus',    name: 'Nexus Sound',        brand: 'Other Brands',           img: '', desc: 'Placeholder product description.', },
-  { id: 'other-clarity',  name: 'Clarity One',        brand: 'Other Brands',           img: '', desc: 'Placeholder product description.', },
-  { id: 'other-echo',     name: 'Echo Comfort',       brand: 'Other Brands',           img: '', desc: 'Placeholder product description.', },
-];
-
-// Shared placeholder content shown on every product until the real sheet lands.
-function prodPlaceholders(p) {
-  return {
-    inclusions: [
-      '1x ' + p.name + ' device (placeholder)',
-      '1x Charging case / cable (placeholder)',
-      '1x User guide (placeholder)',
-      '1x Warranty card (placeholder)',
-    ],
-    manual: 'Instruction manual placeholder — to be added from the product sheet.',
-    troubleshooting: [
-      { q: 'Device will not turn on', a: 'Placeholder handling step — charge for 2 hours, then retry.' },
-      { q: 'No sound / low volume',   a: 'Placeholder handling step — check fit and clean the dome.' },
-      { q: 'Pairing issue',           a: 'Placeholder handling step — reset and re-pair per manual.' },
-    ],
-  };
-}
+// Products come from DATA.products (built from the Products sheet). Each row:
+//   name, description, inclusion, manual, image (Drive link), imageData
+//   (embedded base64), email, hotline, troubleshooting:[{q,a}]
+var PRODUCTS = (DATA && DATA.products) || [];
 
 function renderProducts() {
   var grid = $('prodGrid'), detail = $('prodDetail');
   if (!grid) return;
+  PRODUCTS = (DATA && DATA.products) || PRODUCTS;
 
   // detail view
   if (detail && !detail.hidden && detail.dataset.id) {
-    var p = PRODUCTS.filter(function (x) { return x.id === detail.dataset.id; })[0];
+    var idx = parseInt(detail.dataset.id, 10);
+    var p = PRODUCTS[idx];
     if (p) {
-      var ph = prodPlaceholders(p);
+      var imgSrc = p.imageData || p.image || '';
       detail.innerHTML =
         '<button class="casc-back" id="prodBack">&larr; Back to all products</button>' +
         '<article class="prod-card">' +
           '<div class="prod-media">' +
-            (p.img
-              ? '<img src="' + esc(p.img) + '" alt="' + esc(p.name) + '" loading="lazy" onclick="openLb(this.src)">'
-              : '<div class="prod-photo-ph">Product photo<br>placeholder</div>') +
+            (imgSrc
+              ? '<img src="' + esc(imgSrc) + '" alt="' + esc(p.name) + '" loading="lazy" onclick="openLb(this.src)">'
+              : '<div class="prod-photo-ph">Product photo<br>not available</div>') +
           '</div>' +
           '<div class="prod-info">' +
-            '<span class="pill n casc-cat">' + esc(p.brand) + '</span>' +
             '<h3 class="prod-name">' + esc(p.name) + '</h3>' +
-            '<p class="prod-desc">' + esc(p.desc) + '</p>' +
-            '<section class="prod-sec"><h4>What\'s Included</h4><ul>' +
-              ph.inclusions.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') +
-            '</ul></section>' +
-            '<section class="prod-sec"><h4>Instruction Manual</h4><p>' + esc(ph.manual) + '</p></section>' +
-            '<section class="prod-sec"><h4>Troubleshooting &amp; Handling</h4><div class="prod-ts">' +
-              ph.troubleshooting.map(function (t) {
+            (p.description ? '<p class="prod-desc">' + esc(p.description) + '</p>' : '') +
+            (p.inclusion ? '<section class="prod-sec"><h4>Package Inclusion</h4><p class="prod-pre">' + esc(p.inclusion) + '</p></section>' : '') +
+            (p.manual ? '<section class="prod-sec"><h4>Instruction Manual</h4><p class="prod-pre">' + esc(p.manual) + '</p></section>' : '') +
+            ((p.email || p.hotline) ? '<section class="prod-sec"><h4>Support</h4><p class="prod-pre">' +
+              (p.email ? 'Email: ' + esc(p.email) + '<br>' : '') +
+              (p.hotline ? 'Hotline: ' + esc(p.hotline) : '') + '</p></section>' : '') +
+            (p.troubleshooting && p.troubleshooting.length ? '<section class="prod-sec"><h4>Trouble Shooting &amp; Handling</h4><div class="prod-ts">' +
+              p.troubleshooting.map(function (t) {
                 return '<div class="prod-ts-item"><b>' + esc(t.q) + '</b><span>' + esc(t.a) + '</span></div>';
-              }).join('') +
-            '</div></section>' +
+              }).join('') + '</div></section>' : '') +
           '</div>' +
         '</article>';
       var back = $('prodBack');
@@ -576,13 +554,14 @@ function renderProducts() {
   // grid view
   detail.hidden = true;
   grid.hidden = false;
-  grid.innerHTML = PRODUCTS.map(function (p) {
-    return '<button class="prod-square" data-id="' + esc(p.id) + '">' +
-      (p.img
-        ? '<img class="prod-square-img" src="' + esc(p.img) + '" alt="' + esc(p.name) + '" loading="lazy">'
+  if (!PRODUCTS.length) { grid.innerHTML = '<div class="empty"><b>No products yet</b>Add a row to the Products sheet and it will appear here.</div>'; return; }
+  grid.innerHTML = PRODUCTS.map(function (p, i) {
+    var imgSrc = p.imageData || p.image || '';
+    return '<button class="prod-square" data-id="' + i + '">' +
+      (imgSrc
+        ? '<img class="prod-square-img" src="' + esc(imgSrc) + '" alt="' + esc(p.name) + '" loading="lazy">'
         : '<span class="prod-square-ph">&#128247;</span>') +
       '<span class="prod-square-name">' + esc(p.name) + '</span>' +
-      '<span class="prod-square-brand">' + esc(p.brand) + '</span>' +
     '</button>';
   }).join('');
 
