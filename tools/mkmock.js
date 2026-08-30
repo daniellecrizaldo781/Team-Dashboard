@@ -100,28 +100,11 @@ const out = {
   });
 })();
 
-// Manual photos: embed as base64 ONLY when the Drive file is a PUBLIC image
-// (so it renders inline with no Drive permission/referrer block). PDFs and
-// non-public files stay as 'doc' and open in the Drive viewer via the pink
-// "Click here to view document" CTA (which needs the file shared "anyone with
-// link"). We intentionally do NOT embed PDFs - they bloat data.js and the
-// viewer handles them fine.
-(function embedManualPhotos() {
-  const { execSync } = require('child_process');
-  const py = process.platform === 'win32' ? 'python' : 'python3';
-  (out.products || []).forEach(row => {
-    (row.manualPhotos || []).forEach(ph => {
-      const idm = (ph.url || '').match(/file\/d\/([^/]+)/);
-      if (!idm) return;
-      try {
-        const res = execSync(py + ' ' + require('path').join(__dirname, 'dl_manual.py') + ' ' + idm[1], { maxBuffer: 64 * 1024 * 1024, encoding: 'utf8', timeout: 120000 });
-        const meta = JSON.parse(res.trim().split('\n').pop());
-        if (meta.kind === 'image' && meta.imgData) { ph.kind = 'image'; ph.imgData = meta.imgData; }
-        else { ph.kind = 'doc'; }   // PDF / doc / non-public -> viewer CTA
-      } catch (e) { ph.kind = 'doc'; }
-    });
-  });
-})();
+// Manual photos are rendered directly from their Drive URLs in the browser
+// (Google serves public files as images to a real browser UA; see extractDriveLinks
+// in Parsers4.gs which sets src = uc?export=view and url = /preview viewer).
+// No server-side download/embed - it is unreliable from CI runners and bloats
+// data.js. The pink "Click here to view document" CTA opens the Drive viewer.
 
 const before = {}; Object.keys(out).forEach(k=>{ if(Array.isArray(out[k])) before[k]=out[k].length; });
 restrictToYear(out, DATA_YEAR);
