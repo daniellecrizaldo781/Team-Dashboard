@@ -1,9 +1,11 @@
 /* Generates mock-api.json from the REAL sheets using the REAL parsers. */
 const fs = require('fs');
-const qa = JSON.parse(fs.readFileSync('qa.json', 'utf8'));
-const sc = JSON.parse(fs.readFileSync('sched.json', 'utf8'));
-const casc = fs.existsSync('casc.json') ? JSON.parse(fs.readFileSync('casc.json', 'utf8')) : {};
-const prod = fs.existsSync('prod.json') ? JSON.parse(fs.readFileSync('prod.json', 'utf8')) : {};
+const path = require('path');
+const J = f => path.join(__dirname, f);
+const qa = JSON.parse(fs.readFileSync(J('qa.json'), 'utf8'));
+const sc = JSON.parse(fs.readFileSync(J('sched.json'), 'utf8'));
+const casc = fs.existsSync(J('casc.json')) ? JSON.parse(fs.readFileSync(J('casc.json'), 'utf8')) : {};
+const prod = fs.existsSync(J('prod.json')) ? JSON.parse(fs.readFileSync(J('prod.json'), 'utf8')) : {};
 const rev = g => g.map(r => r.map(c => {
   if (c && typeof c === 'object' && c.__d) { const p = c.__d.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
   return c;
@@ -15,7 +17,7 @@ for (const k in casc) casc[k] = rev(casc[k]);
 global.SpreadsheetApp = null;
 global.grid = (ss, tab) => (ss.__d[tab] || []);
 const src = ['Code.gs', 'Parsers.gs', 'Parsers2.gs', 'Parsers3.gs', 'Parsers4.gs']
-  .map(f => fs.readFileSync('../apps-script/' + f, 'utf8')).join('\n');
+  .map(f => fs.readFileSync(require('path').join(__dirname, '..', 'apps-script', f), 'utf8')).join('\n');
 // Strip the live Apps Script grid() (uses SpreadsheetApp) so the mock below wins.
 const srcNoGrid = src.replace(/function grid\(ss, tabName\)[\s\S]*?\n\}/, '');
 eval(srcNoGrid);
@@ -98,20 +100,24 @@ const out = {
   });
 })();
 
-// Embed Instruction-Manual page thumbnails as base64 (the Drive thumbnail URL
-// redirects to lh3 which the browser referrer-blocks, so download + inline).
+// Download + classify each Instruction-Manual page (image / small PDF / doc).
+// Images and small PDFs are embedded as base64 so they render on the page with
+// NO Drive permission needed; huge PDFs / HTML docs fall back to the Drive
+// /preview viewer (which only works if the file is shared "anyone with link").
 (function embedManualThumbs() {
   const { execSync } = require('child_process');
+  const py = process.platform === 'win32' ? 'python' : 'python3';
   (out.products || []).forEach(row => {
     (row.manualPhotos || []).forEach(ph => {
+      const idm = (ph.url || '').match(/file\/d\/([^/]+)/);
+      if (!idm) return;
       try {
-        const b64 = execSync('curl -sL --max-time 30 ' + JSON.stringify(ph.thumb), { maxBuffer: 8 * 1024 * 1024 });
-        if (b64 && b64.length > 200) {
-          const sig = b64.slice(0, 4).toString('hex');
-          const ext = sig === '89504e47' ? 'png' : sig.startsWith('ffd8') ? 'jpeg' : sig === '474946' ? 'gif' : sig === '524946' ? 'webp' : 'png';
-          ph.thumbData = 'data:image/' + ext + ';base64,' + b64.toString('base64');
-        }
-      } catch (e) { /* keep ph.thumb as a fallback link */ }
+        const res = execSync(py + ' tools/dl_manual.py ' + idm[1], { maxBuffer: 64 * 1024 * 1024, encoding: 'utf8', timeout: 120000 });
+        const meta = JSON.parse(res.trim().split('\n').pop());
+        ph.kind = meta.kind;
+        if (meta.imgData) ph.imgData = meta.imgData;
+        if (meta.pdfData) ph.pdfData = meta.pdfData;
+      } catch (e) { ph.kind = 'doc'; /* keep /preview fallback */ }
     });
   });
 })();
@@ -132,7 +138,7 @@ out.dataFrom = DATA_FROM;
 out.dataTo = DATA_TO;
 console.log('year filter (before -> after):');
 Object.keys(before).forEach(k=>{ if(before[k]!==out[k].length) console.log('  '+k+': '+before[k]+' -> '+out[k].length); });
-fs.writeFileSync('../mock-api.json', JSON.stringify(out));
+fs.writeFileSync(path.join(__dirname, '..', 'mock-api.json'), JSON.stringify(out));
 console.log('wrote mock-api.json');
 Object.keys(out).forEach(k => { if (Array.isArray(out[k])) console.log('  ' + k, out[k].length); });
 console.log('  officialScorecard.weekly', os.weekly.length, 'monthly', os.monthly.length);

@@ -543,8 +543,16 @@ function renderProducts() {
             (p.manual ? '<section class="prod-sec"><h4>Instruction Manual</h4><p class="prod-pre">' + p.manual + '</p>' +
               (p.manualPhotos && p.manualPhotos.length
                 ? '<div class="prod-photos">' + p.manualPhotos.map(function (ph) {
-                    var t = ph.thumbData || ph.thumb || '';
-                    return '<button type="button" class="prod-photo" data-url="' + esc(ph.url) + '" onclick="openLb(this.dataset.url,true)">' +
+                    var t = ph.thumbData || ph.thumb || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="150" height="200"><rect width="150" height="200" fill="%23ffe9f3"/><text x="75" y="105" font-size="13" text-anchor="middle" fill="%23e0457b" font-family="sans-serif">Manual PDF</text></svg>';
+                    if (ph.kind === 'image') {
+                      // embedded photo: clicking shows it full-screen in the image lightbox
+                      return '<button type="button" class="prod-photo" data-img="' + esc(ph.imgData || t) + '" onclick="openLb(this.dataset.img)">' +
+                        '<img src="' + esc(t) + '" alt="Manual page" loading="lazy">' +
+                        '<span class="prod-photo-open">View full screen</span></button>';
+                    }
+                    // pdf (embedded) or doc (Drive /preview): click opens the full-screen viewer
+                    var view = ph.pdfData || ph.url || '';
+                    return '<button type="button" class="prod-photo" data-url="' + esc(view) + '" onclick="openLb(this.dataset.url,true)">' +
                       '<img src="' + esc(t) + '" alt="Manual page" loading="lazy">' +
                       '<span class="prod-photo-open">View full screen</span></button>';
                   }).join('') + '</div>'
