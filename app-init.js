@@ -518,7 +518,7 @@ function renderCascades() {
 var PRODUCTS = (DATA && DATA.products) || [];
 
 function renderProducts() {
-  var grid = $('prodGrid'), detail = $('prodDetail');
+  var grid = $('prodGrid'), detail = $('prodDetail'), searchWrap = $('prodSearchWrap');
   if (!grid) return;
   PRODUCTS = (DATA && DATA.products) || PRODUCTS;
 
@@ -565,7 +565,7 @@ function renderProducts() {
       var back = $('prodBack');
       if (back) back.onclick = function () {
         detail.hidden = true; detail.dataset.id = '';
-        grid.hidden = false; renderProducts();
+        grid.hidden = false; if (searchWrap) searchWrap.hidden = false; renderProducts();
       };
       return;
     }
@@ -574,20 +574,28 @@ function renderProducts() {
   // grid view
   detail.hidden = true;
   grid.hidden = false;
-  if (!PRODUCTS.length) { grid.innerHTML = '<div class="empty"><b>No products yet</b>Add a row to the Products sheet and it will appear here.</div>'; return; }
-
-  // search bar (filters the product squares by name)
-  var q = (window.__prodQuery || '').toLowerCase();
-  var list = PRODUCTS.filter(function (p) { return !q || (p.name || '').toLowerCase().indexOf(q) >= 0; });
-  var search = '<div class="prod-search">' +
-    '<input id="prodSearch" type="search" placeholder="Search products..." value="' + esc(window.__prodQuery || '') + '" oninput="window.__prodQuery=this.value;renderProducts()">' +
-    (q ? '<button type="button" class="prod-search-clear" onclick="window.__prodQuery=\'\';renderProducts()">Clear</button>' : '') +
-    '</div>';
-  if (!list.length) {
-    grid.innerHTML = search + '<div class="empty"><b>No products match "' + esc(q) + '"</b></div>';
+  if (searchWrap) searchWrap.hidden = false;
+  if (!PRODUCTS.length) {
+    if (searchWrap) searchWrap.innerHTML = '';
+    grid.innerHTML = '<div class="empty"><b>No products yet</b>Add a row to the Products sheet and it will appear here.</div>';
     return;
   }
-  grid.innerHTML = search + list.map(function (p, i) {
+
+  // search bar (filters the product squares by name) - rendered in its own
+  // wrapper, NOT inside the grid, so it stays a block above the cards.
+  var q = (window.__prodQuery || '').toLowerCase();
+  var list = PRODUCTS.filter(function (p) { return !q || (p.name || '').toLowerCase().indexOf(q) >= 0; });
+  if (searchWrap) {
+    searchWrap.innerHTML = '<div class="prod-search">' +
+      '<input id="prodSearch" type="search" placeholder="Search products..." value="' + esc(window.__prodQuery || '') + '" oninput="window.__prodQuery=this.value;renderProducts()">' +
+      (q ? '<button type="button" class="prod-search-clear" onclick="window.__prodQuery=\'\';renderProducts()">Clear</button>' : '') +
+      '</div>';
+  }
+  if (!list.length) {
+    grid.innerHTML = '<div class="empty"><b>No products match "' + esc(q) + '"</b></div>';
+    return;
+  }
+  grid.innerHTML = list.map(function (p, i) {
     var realIdx = PRODUCTS.indexOf(p);
     var imgSrc = p.imageData || p.image || '';
     return '<button class="prod-square" data-id="' + realIdx + '">' +
@@ -605,6 +613,7 @@ function renderProducts() {
       detail.dataset.id = id;
       detail.hidden = false;
       grid.hidden = true;
+      if (searchWrap) searchWrap.hidden = true;
       renderProducts();
       window.scrollTo(0, 0);
     };
