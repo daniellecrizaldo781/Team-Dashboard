@@ -370,6 +370,9 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   .topnav.open .tn-nav{display:flex}
   .main{margin-left:0;padding:18px 16px 34px}
   .topbar{align-items:flex-start}
+  .prod-card{grid-template-columns:1fr}
+  .prod-media,.prod-info,.prod-ts-col{grid-column:1;position:static}
+  .prod-media img,.prod-photo-ph{width:100%;max-width:320px}
 }
 @media(max-width:640px){
   .tb-right{width:100%}
@@ -491,11 +494,12 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .prod-square-ph{width:96px;height:96px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--blush);color:var(--rose-d);font-size:34px}
 .prod-square-name{font-weight:700;color:var(--ink);font-size:14.5px}
 .prod-square-brand{font-size:12px;color:var(--ink3)}
-.prod-card{display:flex;flex-wrap:wrap;gap:22px;margin-top:8px}
-.prod-media{flex:0 0 260px;max-width:100%}
+.prod-card{display:grid;grid-template-columns:260px minmax(0,1fr) minmax(280px,380px);gap:22px;margin-top:8px;align-items:start}
+.prod-media{grid-column:1;position:sticky;top:14px}
 .prod-media img{width:260px;max-width:100%;border-radius:14px;border:1px solid var(--line);box-shadow:var(--sh);display:block;cursor:zoom-in}
 .prod-photo-ph{width:260px;max-width:100%;height:260px;border-radius:14px;display:flex;align-items:center;justify-content:center;text-align:center;background:var(--blush);color:var(--rose-d);font-weight:700;border:1px dashed var(--rose)}
-.prod-info{flex:1 1 320px;min-width:280px}
+.prod-info{grid-column:2;min-width:0}
+.prod-ts-col{grid-column:3;position:sticky;top:14px}
 .prod-name{margin:6px 0 4px;font-size:20px;color:var(--ink)}
 .prod-desc{margin:0 0 12px;color:var(--ink2);line-height:1.55}
 .prod-sec{margin:14px 0}
