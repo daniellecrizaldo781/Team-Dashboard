@@ -112,7 +112,7 @@ const out = {
       const idm = (ph.url || '').match(/file\/d\/([^/]+)/);
       if (!idm) return;
       try {
-        const res = execSync(py + ' tools/dl_manual.py ' + idm[1], { maxBuffer: 64 * 1024 * 1024, encoding: 'utf8', timeout: 120000 });
+        const res = execSync(py + ' ' + require('path').join(__dirname, 'dl_manual.py') + ' ' + idm[1], { maxBuffer: 64 * 1024 * 1024, encoding: 'utf8', timeout: 120000 });
         const meta = JSON.parse(res.trim().split('\n').pop());
         ph.kind = meta.kind;
         if (meta.imgData) ph.imgData = meta.imgData;
