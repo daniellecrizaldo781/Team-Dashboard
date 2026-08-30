@@ -581,16 +581,26 @@ function renderProducts() {
     return;
   }
 
-  // search bar (filters the product squares by name) - rendered in its own
-  // wrapper, NOT inside the grid, so it stays a block above the cards.
-  var q = (window.__prodQuery || '').toLowerCase();
-  var list = PRODUCTS.filter(function (p) { return !q || (p.name || '').toLowerCase().indexOf(q) >= 0; });
-  if (searchWrap) {
+  // Build the search input ONCE so keystrokes don't recreate it and steal focus.
+  // It lives in its own wrapper above the grid; only the grid re-renders on input.
+  if (searchWrap && !searchWrap.querySelector('#prodSearch')) {
     searchWrap.innerHTML = '<div class="prod-search">' +
-      '<input id="prodSearch" type="search" placeholder="Search products..." value="' + esc(window.__prodQuery || '') + '" oninput="window.__prodQuery=this.value;renderProducts()">' +
-      (q ? '<button type="button" class="prod-search-clear" onclick="window.__prodQuery=\'\';renderProducts()">Clear</button>' : '') +
+      '<input id="prodSearch" type="search" placeholder="Search products..." value="' + esc(window.__prodQuery || '') + '" oninput="window.__prodQuery=this.value;applyProductFilter()">' +
+      '<button type="button" class="prod-search-clear" id="prodSearchClear" onclick="window.__prodQuery=\'\';var i=document.getElementById(\'prodSearch\');if(i){i.value=\'\';}applyProductFilter();if(i)i.focus()">Clear</button>' +
       '</div>';
   }
+  applyProductFilter();
+}
+
+// Re-render only the product squares for the current query. Leaves the search
+// input element in place so it never loses focus while typing.
+function applyProductFilter() {
+  var grid = $('prodGrid'), searchWrap = $('prodSearchWrap');
+  if (!grid) return;
+  var q = (window.__prodQuery || '').toLowerCase();
+  var list = PRODUCTS.filter(function (p) { return !q || (p.name || '').toLowerCase().indexOf(q) >= 0; });
+  var clearBtn = searchWrap && searchWrap.querySelector('#prodSearchClear');
+  if (clearBtn) clearBtn.style.display = q ? '' : 'none';
   if (!list.length) {
     grid.innerHTML = '<div class="empty"><b>No products match "' + esc(q) + '"</b></div>';
     return;
@@ -609,9 +619,10 @@ function renderProducts() {
   Array.prototype.forEach.call(grid.querySelectorAll('.prod-square'), function (btn) {
     btn.onclick = function () {
       var id = btn.getAttribute('data-id');
-      if (!detail) return;
-      detail.dataset.id = id;
-      detail.hidden = false;
+      var d = $('prodDetail');
+      if (!d) return;
+      d.dataset.id = id;
+      d.hidden = false;
       grid.hidden = true;
       if (searchWrap) searchWrap.hidden = true;
       renderProducts();
