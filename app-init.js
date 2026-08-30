@@ -529,17 +529,17 @@ function renderProducts() {
               : '<div class="prod-photo-ph">Product photo<br>not available</div>') +
           '</div>' +
           '<div class="prod-info">' +
-            '<h3 class="prod-name">' + esc(p.name) + '</h3>' +
-            (p.description ? '<p class="prod-desc">' + esc(p.description) + '</p>' : '') +
-            (p.inclusion ? '<section class="prod-sec"><h4>Package Inclusion</h4><p class="prod-pre">' + esc(p.inclusion) + '</p></section>' : '') +
-            (p.manual ? '<section class="prod-sec"><h4>Instruction Manual</h4><p class="prod-pre">' + esc(p.manual) + '</p></section>' : '') +
-            ((p.email || p.hotline) ? '<section class="prod-sec"><h4>Support</h4><p class="prod-pre">' +
-              (p.email ? 'Email: ' + esc(p.email) + '<br>' : '') +
-              (p.hotline ? 'Hotline: ' + esc(p.hotline) : '') + '</p></section>' : '') +
-            (p.troubleshooting && p.troubleshooting.length ? '<section class="prod-sec"><h4>Trouble Shooting &amp; Handling</h4><div class="prod-ts">' +
-              p.troubleshooting.map(function (t) {
-                return '<details class="prod-ts-item"><summary>' + esc(t.q) + '</summary><span class="prod-ts-a">' + esc(t.a) + '</span></details>';
-              }).join('') + '</div></section>' : '') +
+          '<h3 class="prod-name">' + esc(p.name) + '</h3>' +
+          (p.description ? '<p class="prod-desc">' + p.description + '</p>' : '') +
+          (p.inclusion ? '<section class="prod-sec"><h4>Package Inclusion</h4><p class="prod-pre">' + p.inclusion + '</p></section>' : '') +
+          (p.manual ? '<section class="prod-sec"><h4>Instruction Manual</h4><p class="prod-pre">' + p.manual + '</p></section>' : '') +
+          ((p.email || p.hotline) ? '<section class="prod-sec"><h4>Support</h4><p class="prod-pre">' +
+            (p.email ? 'Email: ' + esc(p.email) + '<br>' : '') +
+            (p.hotline ? 'Hotline: ' + esc(p.hotline) : '') + '</p></section>' : '') +
+          (p.troubleshooting && p.troubleshooting.length ? '<section class="prod-sec"><h4>Trouble Shooting &amp; Handling</h4><div class="prod-ts">' +
+            p.troubleshooting.map(function (t) {
+              return '<details class="prod-ts-item"><summary>' + esc(t.q) + '</summary><span class="prod-ts-a">' + (t.aHtml || esc(t.a)) + '</span></details>';
+            }).join('') + '</div></section>' : '') +
           '</div>' +
         '</article>';
       var back = $('prodBack');

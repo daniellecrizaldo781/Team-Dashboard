@@ -166,6 +166,22 @@ function parseProducts(ss) {
     }
     return (c === null || c === undefined) ? '' : String(c);
   }
+  // Render a cell to HTML preserving BOLD / ITALIC runs and line breaks, so the
+  // dashboard shows the exact formatting from the sheet (e.g. the agent spiel
+  // headings "Agent:", "Step 1 ..." are bold). Text is escaped; only <b>/<i>/<br>
+  // are emitted, so it is safe to inject as innerHTML.
+  function richHtml(c) {
+    if (c && typeof c === 'object' && Array.isArray(c.__rt) && c.__rt.length) {
+      return c.__rt.map(function (r) {
+        var t = ('' + (r[0] || '')).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+        if (r[2]) t = '<i>' + t + '</i>';
+        if (r[1]) t = '<b>' + t + '</b>';
+        return t;
+      }).join('');
+    }
+    var s = (c === null || c === undefined) ? '' : String(c);
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+  }
   // keep the cell text exactly as written (only map null -> '')
   function exact(c) {
     if (c && typeof c === 'object') {
@@ -230,19 +246,21 @@ function parseProducts(ss) {
         var firstLine = body.split('\n')[0].replace(/[:\-\u2013\u2014]\s*$/, '').trim();
         title = firstLine || ('Issue ' + (ts.length + 1));
       }
-      var spiel = (body.indexOf('\n') >= 0) ? body : (rowBelow ? exact(rowBelow[c]) : '');
-      var answer = (spiel && spiel.trim()) ? spiel : body;
-      ts.push({ q: title, a: answer });
+      // answer cell: the title cell itself (if multi-line) or the cell directly
+      // below it (same column) where the sheet enters the agent spiel.
+      var answerCell = (body.indexOf('\n') >= 0) ? row[c] : (rowBelow ? rowBelow[c] : null);
+      if (!answerCell || !exact(answerCell).trim()) answerCell = row[c];
+      ts.push({ q: title, a: body, aHtml: richHtml(answerCell) });
     }
     out.push({
       name: name,
-      description: iDesc >= 0 ? exact(row[iDesc]) : '',
-      inclusion: iIncl >= 0 ? exact(row[iIncl]) : '',
-      manual: iManual >= 0 ? exact(row[iManual]) : '',
+      description: iDesc >= 0 ? richHtml(row[iDesc]) : '',
+      inclusion: iIncl >= 0 ? richHtml(row[iIncl]) : '',
+      manual: iManual >= 0 ? richHtml(row[iManual]) : '',
       image: iImg >= 0 ? exact(row[iImg]) : '',       // Drive link (embedded at bake)
       email: iEmail >= 0 ? exact(row[iEmail]) : '',
       hotline: iHot >= 0 ? exact(row[iHot]) : '',
-      troubleshooting: ts                            // [{q,a}, ...]
+      troubleshooting: ts                            // [{q,a,aHtml}, ...]
     });
   }
   return out;
