@@ -544,7 +544,7 @@ function renderProducts() {
               (p.manualPhotos && p.manualPhotos.length
                 ? '<div class="prod-photos">' + p.manualPhotos.map(function (ph) {
                     var t = ph.thumbData || ph.thumb || '';
-                    return '<button type="button" class="prod-photo" onclick="openLb(' + JSON.stringify(ph.url) + ',true)">' +
+                    return '<button type="button" class="prod-photo" data-url="' + esc(ph.url) + '" onclick="openLb(this.dataset.url,true)">' +
                       '<img src="' + esc(t) + '" alt="Manual page" loading="lazy">' +
                       '<span class="prod-photo-open">View full screen</span></button>';
                   }).join('') + '</div>'
