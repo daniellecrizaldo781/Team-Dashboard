@@ -538,23 +538,24 @@ function renderProducts() {
           '</div>' +
           '<div class="prod-info">' +
             '<h3 class="prod-name">' + esc(p.name) + '</h3>' +
-            (p.description ? '<p class="prod-desc">' + p.description + '</p>' : '') +
+            (p.description ? '<section class="prod-sec"><h4>Product Description</h4><p class="prod-pre">' + p.description + '</p></section>' : '') +
             (p.inclusion ? '<section class="prod-sec"><h4>Package Inclusion</h4><p class="prod-pre">' + p.inclusion + '</p></section>' : '') +
             (p.manual ? '<section class="prod-sec"><h4>Instruction Manual</h4><p class="prod-pre">' + p.manual + '</p>' +
               (p.manualPhotos && p.manualPhotos.length
                 ? '<div class="prod-photos">' + p.manualPhotos.map(function (ph) {
-                    if (ph.kind === 'image') {
-                      return '<button type="button" class="prod-photo prod-photo-cta" data-img="' + esc(ph.imgData || '') + '" onclick="openLb(this.dataset.img)">Click here to view document</button>';
-                    }
-                    // pdf (embedded) or doc (Drive /preview): open the full-screen viewer
-                    var view = ph.pdfData || ph.url || '';
-                    return '<button type="button" class="prod-photo prod-photo-cta" data-url="' + esc(view) + '" onclick="openLb(this.dataset.url,true)">Click here to view document</button>';
+                    var src = ph.src || '';
+                    var url = ph.url || '';
+                    var img = src
+                      ? '<img src="' + esc(src) + '" alt="Manual page" loading="lazy" onclick="openLb(this.src)">'
+                      : '';
+                    return '<div class="prod-photo">' + img +
+                      '<button type="button" class="prod-photo-cta" data-url="' + esc(url) + '" onclick="openLb(this.dataset.url,true)">Click here to view document</button></div>';
                   }).join('') + '</div>'
                 : '') + '</section>'
               : '') +
-            ((p.email || p.hotline) ? '<section class="prod-sec"><h4>Support</h4><p class="prod-pre">' +
-              (p.email ? 'Email: ' + esc(p.email) + '<br>' : '') +
-              (p.hotline ? 'Hotline: ' + esc(p.hotline) : '') + '</p></section>' : '') +
+            ((p.email || p.hotline) ? '<section class="prod-sec prod-support"><h4>Support</h4><p class="prod-pre">' +
+              (p.email ? 'Email: <a class="prod-link" href="mailto:' + esc(p.email) + '">' + esc(p.email) + '</a><br>' : '') +
+              (p.hotline ? 'Hotline: <a class="prod-link" href="tel:' + esc(p.hotline.replace(/[^0-9+]/g, '')) + '">' + esc(p.hotline) + '</a>' : '') + '</p></section>' : '') +
           '</div>' +
           (p.troubleshooting && p.troubleshooting.length ? '<div class="prod-ts-col"><section class="prod-sec"><h4>Trouble Shooting &amp; Handling</h4><div class="prod-ts">' +
             p.troubleshooting.map(function (t) {
@@ -574,9 +575,22 @@ function renderProducts() {
   detail.hidden = true;
   grid.hidden = false;
   if (!PRODUCTS.length) { grid.innerHTML = '<div class="empty"><b>No products yet</b>Add a row to the Products sheet and it will appear here.</div>'; return; }
-  grid.innerHTML = PRODUCTS.map(function (p, i) {
+
+  // search bar (filters the product squares by name)
+  var q = (window.__prodQuery || '').toLowerCase();
+  var list = PRODUCTS.filter(function (p) { return !q || (p.name || '').toLowerCase().indexOf(q) >= 0; });
+  var search = '<div class="prod-search">' +
+    '<input id="prodSearch" type="search" placeholder="Search products..." value="' + esc(window.__prodQuery || '') + '" oninput="window.__prodQuery=this.value;renderProducts()">' +
+    (q ? '<button type="button" class="prod-search-clear" onclick="window.__prodQuery=\'\';renderProducts()">Clear</button>' : '') +
+    '</div>';
+  if (!list.length) {
+    grid.innerHTML = search + '<div class="empty"><b>No products match "' + esc(q) + '"</b></div>';
+    return;
+  }
+  grid.innerHTML = search + list.map(function (p, i) {
+    var realIdx = PRODUCTS.indexOf(p);
     var imgSrc = p.imageData || p.image || '';
-    return '<button class="prod-square" data-id="' + i + '">' +
+    return '<button class="prod-square" data-id="' + realIdx + '">' +
       (imgSrc
         ? '<img class="prod-square-img" src="' + esc(imgSrc) + '" alt="' + esc(p.name) + '" loading="lazy">'
         : '<span class="prod-square-ph">&#128247;</span>') +

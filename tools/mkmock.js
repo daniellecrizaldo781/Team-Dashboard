@@ -100,27 +100,9 @@ const out = {
   });
 })();
 
-// Download + classify each Instruction-Manual page (image / small PDF / doc).
-// Images and small PDFs are embedded as base64 so they render on the page with
-// NO Drive permission needed; huge PDFs / HTML docs fall back to the Drive
-// /preview viewer (which only works if the file is shared "anyone with link").
-(function embedManualThumbs() {
-  const { execSync } = require('child_process');
-  const py = process.platform === 'win32' ? 'python' : 'python3';
-  (out.products || []).forEach(row => {
-    (row.manualPhotos || []).forEach(ph => {
-      const idm = (ph.url || '').match(/file\/d\/([^/]+)/);
-      if (!idm) return;
-      try {
-        const res = execSync(py + ' ' + require('path').join(__dirname, 'dl_manual.py') + ' ' + idm[1], { maxBuffer: 64 * 1024 * 1024, encoding: 'utf8', timeout: 120000 });
-        const meta = JSON.parse(res.trim().split('\n').pop());
-        ph.kind = meta.kind;
-        if (meta.imgData) ph.imgData = meta.imgData;
-        if (meta.pdfData) ph.pdfData = meta.pdfData;
-      } catch (e) { ph.kind = 'doc'; /* keep /preview fallback */ }
-    });
-  });
-})();
+// Manual photos come straight from the sheet's Drive links as renderable image
+// URLs (see extractDriveLinks in Parsers4.gs) - no server-side download/embed.
+// Each manualPhoto is {src, url}; the UI shows the image and opens url fullscreen.
 
 const before = {}; Object.keys(out).forEach(k=>{ if(Array.isArray(out[k])) before[k]=out[k].length; });
 restrictToYear(out, DATA_YEAR);

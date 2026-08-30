@@ -193,20 +193,21 @@ function parseProducts(ss) {
     return (c === null || c === undefined) ? '' : String(c);
   }
   // Pull every Google Drive FILE/OPEN link out of a cell's plain text. Returns an
-  // array of {url, thumb} where thumb is the Drive thumbnail API (unauthenticated,
-  // no referrer block) used for the scrollable preview strip.
+  // array of {src, url} where src is the Drive image-view URL (browser-renderable,
+  // no referrer block) shown directly as a photo, and url is the full viewer used
+  // for the click-to-open full-screen document.
   function extractDriveLinks(cell) {
     var s = exact(cell);
     if (!s) return [];
     var ids = [];
-    var re = /drive\.google\.com\/file\/d\/([^\\\/\?]+)/g, m;
+    var re = /drive\.google\.com\/file\/d\/([^\\\/\\?]+)/g, m;
     while ((m = re.exec(s))) ids.push(m[1]);
     re = /drive\.google\.com\/open\?id=([^&]+)/g;
     while ((m = re.exec(s))) ids.push(m[1]);
     var seen = {}, out = [];
     ids.forEach(function (id) {
       if (seen[id]) return; seen[id] = 1;
-      out.push({ url: 'https://drive.google.com/file/d/' + id + '/preview', thumb: 'https://drive.google.com/thumbnail?id=' + id + '&sz=w320' });
+      out.push({ src: 'https://drive.google.com/uc?export=view&id=' + id, url: 'https://drive.google.com/file/d/' + id + '/preview' });
     });
     return out;
   }
