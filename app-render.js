@@ -85,6 +85,41 @@ function renderOverview() {
     { key: 'calls', label: 'Calls', num: true, fmt: function (r) { return n0(r.calls); } },
     { key: 'evals', label: 'QA Evals', num: true, fmt: function (r) { return n0(r.evals); } }
   ], rank, { sort: 'rank', dir: 'asc' });
+
+  // ---- Latest Cascades (newest uploaded first) ----
+  var ovc = $('ovCascades');
+  if (ovc) {
+    var allC = (DATA && DATA.cascades) || [];
+    var datedC = allC.filter(function (r) { return r.ts; })
+      .sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
+    var undatedC = allC.filter(function (r) { return !r.ts; });
+    var latest = datedC.concat(undatedC).slice(0, 6);
+    if (!latest.length) {
+      ovc.innerHTML = '<div class="empty">No cascades yet.</div>';
+    } else {
+      ovc.innerHTML = latest.map(function (r) {
+        var idx = allC.indexOf(r);
+        var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        var dateTxt = r.dateLabel || r.date || '';
+        if (r.ts) { var d = new Date(r.ts); dateTxt = MON[d.getUTCMonth()] + ' ' + d.getUTCDate() + ', ' + d.getUTCFullYear(); }
+        return '<button class="casc-row" data-cidx="' + idx + '">' +
+          '<span class="pill n casc-cat">' + esc(r.category) + '</span>' +
+          '<span class="casc-row-title">' + esc(r.title || '(untitled)') + '</span>' +
+          (dateTxt ? '<span class="casc-row-date">' + esc(dateTxt) + '</span>' : '') +
+          '<span class="casc-row-arrow">&#8250;</span>' +
+        '</button>';
+      }).join('');
+      Array.prototype.forEach.call(ovc.querySelectorAll('.casc-row'), function (btn) {
+        btn.onclick = function () {
+          var i = parseInt(btn.getAttribute('data-cidx'), 10);
+          if (typeof CASC_STATE !== 'undefined') { CASC_STATE.cat = 'ALL'; CASC_STATE.brand = 'ALL'; CASC_STATE.detail = i; }
+          setPage('cascades');
+          if (typeof renderCascades === 'function') renderCascades();
+          window.scrollTo(0, 0);
+        };
+      });
+    }
+  }
 }
 
 /* ---------------- DAILY PRODUCTIVITY ---------------- */
