@@ -338,9 +338,17 @@ function cascImgFallback(img) {
   if (img.parentNode) img.parentNode.replaceChild(a, img);
 }
 // Open the lightbox with a given image src (used by embedded/inline cascade images).
-function openLb(src) {
-  var lb = document.getElementById('lb'), i = document.getElementById('lbImg');
-  if (lb && i && src) { i.src = src; lb.classList.add('show'); }
+function openLb(src, isDoc) {
+  var lb = document.getElementById('lb'), i = document.getElementById('lbImg'), fr = document.getElementById('lbFrame');
+  if (!lb) return;
+  if (isDoc && fr) {
+    i.style.display = 'none'; fr.style.display = 'block';
+    fr.src = src; lb.classList.add('show');
+  } else if (i) {
+    if (fr) fr.style.display = 'none';
+    i.style.display = 'block';
+    i.src = src; lb.classList.add('show');
+  }
 }
 
 function renderCascades() {
@@ -532,7 +540,16 @@ function renderProducts() {
             '<h3 class="prod-name">' + esc(p.name) + '</h3>' +
             (p.description ? '<p class="prod-desc">' + p.description + '</p>' : '') +
             (p.inclusion ? '<section class="prod-sec"><h4>Package Inclusion</h4><p class="prod-pre">' + p.inclusion + '</p></section>' : '') +
-            (p.manual ? '<section class="prod-sec"><h4>Instruction Manual</h4><p class="prod-pre">' + p.manual + '</p></section>' : '') +
+            (p.manual ? '<section class="prod-sec"><h4>Instruction Manual</h4><p class="prod-pre">' + p.manual + '</p>' +
+              (p.manualPhotos && p.manualPhotos.length
+                ? '<div class="prod-photos">' + p.manualPhotos.map(function (ph) {
+                    var t = ph.thumbData || ph.thumb || '';
+                    return '<button type="button" class="prod-photo" onclick="openLb(' + JSON.stringify(ph.url) + ',true)">' +
+                      '<img src="' + esc(t) + '" alt="Manual page" loading="lazy">' +
+                      '<span class="prod-photo-open">View full screen</span></button>';
+                  }).join('') + '</div>'
+                : '') + '</section>'
+              : '') +
             ((p.email || p.hotline) ? '<section class="prod-sec"><h4>Support</h4><p class="prod-pre">' +
               (p.email ? 'Email: ' + esc(p.email) + '<br>' : '') +
               (p.hotline ? 'Hotline: ' + esc(p.hotline) : '') + '</p></section>' : '') +

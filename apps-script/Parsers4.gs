@@ -192,6 +192,24 @@ function parseProducts(ss) {
     }
     return (c === null || c === undefined) ? '' : String(c);
   }
+  // Pull every Google Drive FILE/OPEN link out of a cell's plain text. Returns an
+  // array of {url, thumb} where thumb is the Drive thumbnail API (unauthenticated,
+  // no referrer block) used for the scrollable preview strip.
+  function extractDriveLinks(cell) {
+    var s = exact(cell);
+    if (!s) return [];
+    var ids = [];
+    var re = /drive\.google\.com\/file\/d\/([^\\\/\?]+)/g, m;
+    while ((m = re.exec(s))) ids.push(m[1]);
+    re = /drive\.google\.com\/open\?id=([^&]+)/g;
+    while ((m = re.exec(s))) ids.push(m[1]);
+    var seen = {}, out = [];
+    ids.forEach(function (id) {
+      if (seen[id]) return; seen[id] = 1;
+      out.push({ url: 'https://drive.google.com/file/d/' + id + '/preview', thumb: 'https://drive.google.com/thumbnail?id=' + id + '&sz=w320' });
+    });
+    return out;
+  }
   function col() {  // locate a column index by header substring (case-insensitive)
     for (var j = 0; j < arguments.length; j++) {
       for (var i = 0; i < head.length; i++) {
@@ -257,6 +275,10 @@ function parseProducts(ss) {
       description: iDesc >= 0 ? richHtml(row[iDesc]) : '',
       inclusion: iIncl >= 0 ? richHtml(row[iIncl]) : '',
       manual: iManual >= 0 ? richHtml(row[iManual]) : '',
+      // Manual cells may embed one or more Google Drive DOCUMENT links (multi-page
+      // manuals, e.g. X-All Air Pure Ionizer, Oricle Hearing Aid). Capture them so
+      // the UI can show a scrollable photo strip + click-to-fullscreen viewer.
+      manualPhotos: iManual >= 0 ? extractDriveLinks(row[iManual]) : [],
       image: iImg >= 0 ? exact(row[iImg]) : '',       // Drive link (embedded at bake)
       email: iEmail >= 0 ? exact(row[iEmail]) : '',
       hotline: iHot >= 0 ? exact(row[iHot]) : '',

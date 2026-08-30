@@ -515,6 +515,18 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .prod-ts-item[open] summary::after{content:'\2212'}
 .prod-ts-item[open] summary{border-bottom:1px solid var(--line)}
 .prod-ts-a{display:block;color:var(--ink2);font-size:13.5px;line-height:1.5;padding:10px 14px;white-space:pre-wrap;word-break:break-word}
+/* Scrollable strip of Instruction-Manual pages; click opens a full-screen viewer. */
+.prod-photos{display:flex;gap:10px;overflow-x:auto;padding:10px 2px 12px;margin-top:10px;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.prod-photo{position:relative;flex:0 0 auto;width:150px;height:200px;border:1px solid var(--rose);border-radius:12px;overflow:hidden;background:#fff;cursor:pointer;padding:0;box-shadow:var(--sh);transition:transform .12s}
+.prod-photo:hover{transform:translateY(-3px)}
+.prod-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.prod-photo-open{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,rgba(224,69,123,.92),rgba(224,69,123,0));color:#fff;font-size:11.5px;font-weight:700;padding:18px 8px 7px;text-align:center}
+/* Lightbox: full-screen document viewer (iframe) */
+.lb{position:fixed;inset:0;background:rgba(28,12,22,.92);display:none;align-items:center;justify-content:center;z-index:200}
+.lb.show{display:flex}
+.lb img{max-width:94vw;max-height:92vh;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.lb iframe{width:96vw;height:94vh;border:0;border-radius:8px;background:#fff}
+.lb-close{position:fixed;top:16px;right:22px;color:#fff;font-size:34px;line-height:1;cursor:pointer;z-index:201;font-weight:700;text-shadow:0 2px 8px rgba(0,0,0,.6)}
 /* Stack the product detail to one column on narrow screens. Placed AFTER the
    base .prod-card rule so it wins the cascade (equal specificity, later wins). */
 @media(max-width:900px){

@@ -98,6 +98,24 @@ const out = {
   });
 })();
 
+// Embed Instruction-Manual page thumbnails as base64 (the Drive thumbnail URL
+// redirects to lh3 which the browser referrer-blocks, so download + inline).
+(function embedManualThumbs() {
+  const { execSync } = require('child_process');
+  (out.products || []).forEach(row => {
+    (row.manualPhotos || []).forEach(ph => {
+      try {
+        const b64 = execSync('curl -sL --max-time 30 ' + JSON.stringify(ph.thumb), { maxBuffer: 8 * 1024 * 1024 });
+        if (b64 && b64.length > 200) {
+          const sig = b64.slice(0, 4).toString('hex');
+          const ext = sig === '89504e47' ? 'png' : sig.startsWith('ffd8') ? 'jpeg' : sig === '474946' ? 'gif' : sig === '524946' ? 'webp' : 'png';
+          ph.thumbData = 'data:image/' + ext + ';base64,' + b64.toString('base64');
+        }
+      } catch (e) { /* keep ph.thumb as a fallback link */ }
+    });
+  });
+})();
+
 const before = {}; Object.keys(out).forEach(k=>{ if(Array.isArray(out[k])) before[k]=out[k].length; });
 restrictToYear(out, DATA_YEAR);
 // Scorecards stay full-history (WEEKLY SCORECARD reaches back to January);
