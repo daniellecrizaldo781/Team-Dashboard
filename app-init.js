@@ -543,12 +543,8 @@ function renderProducts() {
             (p.manual ? '<section class="prod-sec"><h4>Instruction Manual</h4><p class="prod-pre">' + p.manual + '</p>' +
               (p.manualPhotos && p.manualPhotos.length
                 ? '<div class="prod-photos">' + p.manualPhotos.map(function (ph) {
-                    var src = ph.src || '';
                     var url = ph.url || '';
-                    var img = src
-                      ? '<img class="prod-photo-img" src="' + esc(src) + '" alt="Manual page" loading="lazy" onerror="this.style.display=\'none\'" onclick="openLb(this.dataset.url,true)" data-url="' + esc(url) + '">'
-                      : '';
-                    return '<div class="prod-photo">' + img +
+                    return '<div class="prod-photo">' +
                       '<button type="button" class="prod-photo-cta" data-url="' + esc(url) + '" onclick="openLb(this.dataset.url,true)">Click here to view document</button></div>';
                   }).join('') + '</div>'
                 : '') + '</section>'
