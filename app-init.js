@@ -538,7 +538,7 @@ function renderProducts() {
               (p.hotline ? 'Hotline: ' + esc(p.hotline) : '') + '</p></section>' : '') +
             (p.troubleshooting && p.troubleshooting.length ? '<section class="prod-sec"><h4>Trouble Shooting &amp; Handling</h4><div class="prod-ts">' +
               p.troubleshooting.map(function (t) {
-                return '<div class="prod-ts-item"><b>' + esc(t.q) + '</b><span>' + esc(t.a) + '</span></div>';
+                return '<details class="prod-ts-item"><summary>' + esc(t.q) + '</summary><span class="prod-ts-a">' + esc(t.a) + '</span></details>';
               }).join('') + '</div></section>' : '') +
           '</div>' +
         '</article>';

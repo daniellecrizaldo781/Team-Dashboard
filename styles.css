@@ -504,6 +504,11 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .prod-sec p{margin:0;color:var(--ink2);line-height:1.6}
 .prod-pre{white-space:pre-wrap;word-break:break-word}
 .prod-ts{display:flex;flex-direction:column;gap:10px}
-.prod-ts-item{display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 14px}
-.prod-ts-item b{color:var(--ink);margin-bottom:3px}
-.prod-ts-item span{color:var(--ink2);font-size:13.5px;line-height:1.5}
+.prod-ts-item{background:#fff;border:1px solid var(--line);border-radius:12px;padding:0;overflow:hidden}
+.prod-ts-item summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;
+  color:var(--ink);font-weight:600;padding:12px 14px;user-select:none}
+.prod-ts-item summary::-webkit-details-marker{display:none}
+.prod-ts-item summary::after{content:'+';font-size:18px;color:var(--rose-d);font-weight:700;margin-left:10px;transition:transform .15s}
+.prod-ts-item[open] summary::after{content:'\2212'}
+.prod-ts-item[open] summary{border-bottom:1px solid var(--line)}
+.prod-ts-a{display:block;color:var(--ink2);font-size:13.5px;line-height:1.5;padding:10px 14px;white-space:pre-wrap;word-break:break-word}
