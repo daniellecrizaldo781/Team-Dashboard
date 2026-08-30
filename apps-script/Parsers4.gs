@@ -206,10 +206,7 @@ function parseProducts(ss) {
   var iImg    = col('product image');
   var iEmail  = col('email support');
   var iHot    = col('hotline');
-  var iReturn = col('return handling');
-  var iNotWork= col('product not working');
-  var iDamage = col('damaged package');
-  var iBundle = col('incorrect bundle');
+  var FIXED = 7;  // name,desc,inclusion,manual,image,email,hotline are fixed; col 7+ are handling items
 
   var out = [];
   for (var r = hRow + 1; r < g.length; r++) {
@@ -217,10 +214,19 @@ function parseProducts(ss) {
     var name = exact(row[iName]);
     if (!name) continue;  // skip blank/trailing rows
     var ts = [];
-    if (iReturn >= 0 && exact(row[iReturn])) ts.push({ q: 'Return Handling', a: exact(row[iReturn]) });
-    if (iNotWork >= 0 && exact(row[iNotWork])) ts.push({ q: 'Product Not Working', a: exact(row[iNotWork]) });
-    if (iDamage >= 0 && exact(row[iDamage])) ts.push({ q: 'Damaged Package', a: exact(row[iDamage]) });
-    if (iBundle >= 0 && exact(row[iBundle])) ts.push({ q: 'Incorrect Bundle', a: exact(row[iBundle]) });
+    // col 7+ = handling/issue items (Return Handling, No Foaming Action, ...).
+    // Use the header text as the title; if blank, derive it from the cell's
+    // first line so every item still has a clickable collapsible heading.
+    for (var c = FIXED; c < row.length; c++) {
+      var title = (head[c] && head[c].trim()) ? head[c].trim() : null;
+      var body  = exact(row[c]);
+      if (!body) continue;
+      if (!title) {
+        var firstLine = body.split('\n')[0].replace(/[:\-\u2013\u2014]\s*$/, '').trim();
+        title = firstLine || ('Issue ' + (ts.length + 1));
+      }
+      ts.push({ q: title, a: body });
+    }
     out.push({
       name: name,
       description: iDesc >= 0 ? exact(row[iDesc]) : '',
