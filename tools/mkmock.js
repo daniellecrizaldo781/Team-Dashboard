@@ -100,9 +100,28 @@ const out = {
   });
 })();
 
-// Manual photos come straight from the sheet's Drive links as renderable image
-// URLs (see extractDriveLinks in Parsers4.gs) - no server-side download/embed.
-// Each manualPhoto is {src, url}; the UI shows the image and opens url fullscreen.
+// Manual photos: embed as base64 ONLY when the Drive file is a PUBLIC image
+// (so it renders inline with no Drive permission/referrer block). PDFs and
+// non-public files stay as 'doc' and open in the Drive viewer via the pink
+// "Click here to view document" CTA (which needs the file shared "anyone with
+// link"). We intentionally do NOT embed PDFs - they bloat data.js and the
+// viewer handles them fine.
+(function embedManualPhotos() {
+  const { execSync } = require('child_process');
+  const py = process.platform === 'win32' ? 'python' : 'python3';
+  (out.products || []).forEach(row => {
+    (row.manualPhotos || []).forEach(ph => {
+      const idm = (ph.url || '').match(/file\/d\/([^/]+)/);
+      if (!idm) return;
+      try {
+        const res = execSync(py + ' ' + require('path').join(__dirname, 'dl_manual.py') + ' ' + idm[1], { maxBuffer: 64 * 1024 * 1024, encoding: 'utf8', timeout: 120000 });
+        const meta = JSON.parse(res.trim().split('\n').pop());
+        if (meta.kind === 'image' && meta.imgData) { ph.kind = 'image'; ph.imgData = meta.imgData; }
+        else { ph.kind = 'doc'; }   // PDF / doc / non-public -> viewer CTA
+      } catch (e) { ph.kind = 'doc'; }
+    });
+  });
+})();
 
 const before = {}; Object.keys(out).forEach(k=>{ if(Array.isArray(out[k])) before[k]=out[k].length; });
 restrictToYear(out, DATA_YEAR);

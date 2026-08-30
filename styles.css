@@ -521,6 +521,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .prod-photo{display:flex;flex-direction:column;flex:0 0 auto;width:160px;border:1px solid var(--rose);border-radius:12px;overflow:hidden;background:#fff;box-shadow:var(--sh);transition:transform .12s}
 .prod-photo:hover{transform:translateY(-3px)}
 .prod-photo>img{width:100%;height:150px;object-fit:cover;display:block;cursor:zoom-in}
+.prod-photo-img{width:100%;height:150px;object-fit:cover;display:block;cursor:zoom-in}
 /* Pink "Click here to view document" button under each manual photo (manuals only). */
 .prod-photo-cta{width:100%;border:0;border-top:1px solid var(--rose);background:linear-gradient(160deg,#ffd6e7,#ffb3d1);color:#b3155b;font-weight:800;
   font-size:13.5px;line-height:1.3;padding:11px 10px;cursor:pointer;text-align:center}
