@@ -88,15 +88,16 @@ function renderOverview() {
 
   // ---- Latest Cascades (newest uploaded first) ----
   var ovc = $('ovCascades');
+  var ovd = $('ovCascDetail');
   if (ovc) {
     var allC = (DATA && DATA.cascades) || [];
     var datedC = allC.filter(function (r) { return r.ts; })
       .sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
     var undatedC = allC.filter(function (r) { return !r.ts; });
     var latest = datedC.concat(undatedC).slice(0, 6);
-    if (!latest.length) {
-      ovc.innerHTML = '<div class="empty">No cascades yet.</div>';
-    } else {
+    function showList() {
+      if (ovd) { ovd.hidden = true; ovd.innerHTML = ''; }
+      ovc.hidden = false;
       ovc.innerHTML = latest.map(function (r) {
         var idx = allC.indexOf(r);
         var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -112,12 +113,31 @@ function renderOverview() {
       Array.prototype.forEach.call(ovc.querySelectorAll('.casc-row'), function (btn) {
         btn.onclick = function () {
           var i = parseInt(btn.getAttribute('data-cidx'), 10);
-          if (typeof CASC_STATE !== 'undefined') { CASC_STATE.cat = 'ALL'; CASC_STATE.brand = 'ALL'; CASC_STATE.detail = i; }
-          setPage('cascades');
-          if (typeof renderCascades === 'function') renderCascades();
-          window.scrollTo(0, 0);
+          openCascadeInline(allC[i]);
         };
       });
+    }
+    function openCascadeInline(r) {
+      if (!r) return;
+      ovc.hidden = true;
+      ovd.hidden = false;
+      ovd.innerHTML = '<button class="casc-back" id="ovCascBack">&larr; Back to latest cascades</button>' + cascadeDetailHtml(r);
+      var back = $('ovCascBack');
+      if (back) back.onclick = function () { showList(); window.scrollTo(0, 0); };
+      Array.prototype.forEach.call(ovd.querySelectorAll('.casc-img'), function (span) {
+        span.onclick = function (e) {
+          e.stopPropagation();
+          var img = span.querySelector('img');
+          var lb = $('lb'), lbImg = $('lbImg');
+          if (lb && lbImg && img) { lbImg.src = img.src; lb.classList.add('show'); }
+        };
+      });
+      window.scrollTo(0, 0);
+    }
+    if (!latest.length) {
+      ovc.innerHTML = '<div class="empty">No cascades yet.</div>';
+    } else {
+      showList();
     }
   }
 }

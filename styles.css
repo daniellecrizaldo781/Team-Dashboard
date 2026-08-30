@@ -436,7 +436,11 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .casc-list{display:block;margin-top:6px}
 .casc-row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:10px;box-shadow:var(--sh);cursor:pointer;transition:.15s;font:inherit;color:var(--ink)}
 .casc-row:hover{box-shadow:0 8px 22px rgba(224,69,123,.16);transform:translateX(3px)}
-.casc-row-title{font-size:15px;font-weight:600;color:var(--ink);flex:1}
+/* Overview "Latest Cascades" standout card */
+.card-cascade{background:linear-gradient(180deg,#fff0f7,#ffe3f0);border:1px solid var(--rose);box-shadow:0 10px 30px rgba(224,69,123,.18)}
+.card-cascade>.card-head h3{color:var(--rose-d)}
+#ovCascDetail .casc-detail{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px 24px;box-shadow:var(--sh)}
+#ovCascDetail .casc-back{margin-bottom:14px}
 .casc-row-date{font-size:12px;color:var(--mauve);font-weight:600;white-space:nowrap}
 .casc-row-arrow{color:var(--rose-d);font-size:22px;font-weight:700}
 .casc-back{display:inline-flex;align-items:center;gap:6px;background:var(--blush);color:var(--rose-d);border:none;border-radius:10px;padding:8px 14px;font-weight:600;cursor:pointer;margin-bottom:14px;font:inherit}

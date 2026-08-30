@@ -352,6 +352,81 @@ function openLb(src, isDoc) {
   }
 }
 
+// Build the full cascade detail markup (used both on the Cascades page and
+// inline on the Overview "Latest Cascades" card). Caller injects it into a
+// container and wires the back button / image-lightbox separately.
+function cascadeDetailHtml(r) {
+  if (!r) return '';
+  var m = r.month ? r.month.charAt(0).toUpperCase() + r.month.slice(1) : '';
+  var dateTxt = (m && r.dayNum) ? (m + ' ' + r.dayNum) : (r.dateLabel || r.date || '');
+  if (r.ts) {
+    var d = new Date(r.ts);
+    var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    dateTxt = MON[d.getUTCMonth()] + ' ' + d.getUTCDate() + ', ' + d.getUTCFullYear();
+  }
+  var embImgs = (r.cascadeImages || []).filter(function (im) { return im && im.src; });
+  function embFor(u) {
+    u = (u || '').replace(/&amp;/g, '&');
+    for (var k = 0; k < embImgs.length; k++) {
+      if (embImgs[k].url && embImgs[k].url.replace(/&amp;/g, '&') === u) return embImgs[k].src;
+    }
+    return null;
+  }
+  var embHtml = embImgs.length ? '<div class="casc-imgs">' + embImgs.map(function (im) {
+    return '<span class="casc-img" title="Click to enlarge">' +
+      '<img src="' + esc(im.src) + '" alt="cascade reference image" loading="lazy">' +
+      '<span class="casc-img-zoom">&#128269;</span></span>';
+  }).join('') + '</div>' : '';
+
+  var linkRefsText = r.linkRefs || '';
+  var bodyUrls = (extractUrls(r.cascade || '')).filter(function (u) {
+    return linkRefsText.indexOf(u.replace(/&amp;/g, '&')) < 0;
+  });
+  var imgs = bodyUrls.filter(isImage);
+  var links = bodyUrls.filter(function (u) { return !isImage(u); });
+
+  var imagesHtml = imgs.length ? '<div class="casc-imgs">' + imgs.map(function (u) {
+    var direct = toDirectImg(u);
+    return '<span class="casc-img" title="Click to enlarge">' +
+      '<img src="' + esc(direct) + '" alt="cascade image" loading="lazy" data-href="' + esc(u) + '" onerror="cascImgFallback(this)">' +
+      '<span class="casc-img-zoom">&#128269;</span></span>';
+  }).join('') + '</div>' : '';
+
+  var refHtml = '';
+  var refParts = [];
+  if (r.linkRefs && r.linkRefs.trim()) {
+    var refText = esc(r.linkRefs).replace(/https?:\/\/[^<>\s"']+/g, function (u) {
+      var dataUri = embFor(u);
+      if (dataUri) {
+        return '<img class="casc-inline-img" src="' + dataUri + '" alt="reference image" loading="lazy" onclick="openLb(this.src)">';
+      }
+      return '<a class="casc-open" href="' + u + '" target="_blank" rel="noopener">Click Here &#8599;</a>';
+    });
+    refParts.push('<div class="casc-ref-text">' + refText + '</div>');
+  }
+  if (links.length) {
+    refParts.push(links.map(function (u) {
+      return '<a class="casc-open" href="' + esc(u) + '" target="_blank" rel="noopener">Click Here &#8599;</a>';
+    }).join(' '));
+  }
+  if (imgs.length) refParts.push(imagesHtml);
+  if (embImgs.length) refParts.push(embHtml);
+  if (refParts.length) {
+    refHtml = '<section class="casc-refs"><h4>Link / Image References</h4>' + refParts.join('') + '</section>';
+  }
+
+  return '<article class="casc-detail">' +
+    '<div class="casc-head">' +
+      '<span class="pill n casc-cat">' + esc(r.category) + '</span>' +
+      (r.brand ? '<span class="casc-brand">' + esc(r.brand) + '</span>' : '') +
+      '<span class="casc-date">' + esc(dateTxt) + '</span>' +
+    '</div>' +
+    '<h3 class="casc-detail-title">' + esc(r.title || '(untitled)') + '</h3>' +
+    '<div class="casc-body">' + renderRuns(r.cascadeRuns, r.cascade) + '</div>' +
+    refHtml +
+  '</article>';
+}
+
 function renderCascades() {
   var list = $('cascList');
   var chips = $('cascChips');
@@ -464,18 +539,7 @@ function renderCascades() {
         refHtml = '<section class="casc-refs"><h4>Link / Image References</h4>' + refParts.join('') + '</section>';
       }
 
-      list.innerHTML =
-        '<button class="casc-back" id="cascBack">&larr; Back to all cascades</button>' +
-        '<article class="casc-detail">' +
-          '<div class="casc-head">' +
-            '<span class="pill n casc-cat">' + esc(r.category) + '</span>' +
-            (r.brand ? '<span class="casc-brand">' + esc(r.brand) + '</span>' : '') +
-            '<span class="casc-date">' + esc(dateTxt) + '</span>' +
-          '</div>' +
-          '<h3 class="casc-detail-title">' + esc(r.title || '(untitled)') + '</h3>' +
-          '<div class="casc-body">' + renderRuns(r.cascadeRuns, r.cascade) + '</div>' +
-          refHtml +
-        '</article>';
+      list.innerHTML = '<button class="casc-back" id="cascBack">&larr; Back to all cascades</button>' + cascadeDetailHtml(r);
 
       var back = $('cascBack');
       if (back) back.onclick = function () { CASC_STATE.detail = null; renderCascades(); };
