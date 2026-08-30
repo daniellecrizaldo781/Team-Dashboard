@@ -540,6 +540,10 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .prod-support{background:linear-gradient(180deg,#fff5fa,#ffe9f3);border-color:var(--rose)}
 .prod-link{color:#b3155b;font-weight:700;text-decoration:underline}
 .prod-link:hover{color:#8a0f47}
+/* Links inside product text (description / inclusion / manual / troubleshooting)
+   are now auto-linkified - make them clearly clickable. */
+.prod-pre a, .prod-ts-a a{color:#b3155b;font-weight:600;text-decoration:underline;word-break:break-word}
+.prod-pre a:hover, .prod-ts-a a:hover{color:#8a0f47}
 /* Lightbox: full-screen document viewer (iframe) */
 .lb{position:fixed;inset:0;background:rgba(28,12,22,.92);display:none;align-items:center;justify-content:center;z-index:200}
 .lb.show{display:flex}

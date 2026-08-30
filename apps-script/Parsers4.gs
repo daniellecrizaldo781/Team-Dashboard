@@ -166,21 +166,31 @@ function parseProducts(ss) {
     }
     return (c === null || c === undefined) ? '' : String(c);
   }
+  // Turn plain URLs in already-escaped text into clickable anchors.
+  // Text is already HTML-escaped (so & -> &amp;), which is valid inside href.
+  function linkify(escaped) {
+    return escaped.replace(/(https?:\/\/[^<>\s"']+)/g, function (u) {
+      return '<a href="' + u + '" target="_blank" rel="noopener">' + u + '</a>';
+    });
+  }
   // Render a cell to HTML preserving BOLD / ITALIC runs and line breaks, so the
   // dashboard shows the exact formatting from the sheet (e.g. the agent spiel
   // headings "Agent:", "Step 1 ..." are bold). Text is escaped; only <b>/<i>/<br>
-  // are emitted, so it is safe to inject as innerHTML.
+  // are emitted, so it is safe to inject as innerHTML. URLs become clickable.
   function richHtml(c) {
+    var html;
     if (c && typeof c === 'object' && Array.isArray(c.__rt) && c.__rt.length) {
-      return c.__rt.map(function (r) {
+      html = c.__rt.map(function (r) {
         var t = ('' + (r[0] || '')).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
         if (r[2]) t = '<i>' + t + '</i>';
         if (r[1]) t = '<b>' + t + '</b>';
         return t;
       }).join('');
+    } else {
+      var s = (c === null || c === undefined) ? '' : String(c);
+      html = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
     }
-    var s = (c === null || c === undefined) ? '' : String(c);
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+    return linkify(html);
   }
   // keep the cell text exactly as written (only map null -> '')
   function exact(c) {
