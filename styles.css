@@ -370,9 +370,6 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   .topnav.open .tn-nav{display:flex}
   .main{margin-left:0;padding:18px 16px 34px}
   .topbar{align-items:flex-start}
-  .prod-card{grid-template-columns:1fr}
-  .prod-media,.prod-info,.prod-ts-col{grid-column:1;position:static}
-  .prod-media img,.prod-photo-ph{width:100%;max-width:320px}
 }
 @media(max-width:640px){
   .tb-right{width:100%}
@@ -516,3 +513,10 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .prod-ts-item[open] summary::after{content:'\2212'}
 .prod-ts-item[open] summary{border-bottom:1px solid var(--line)}
 .prod-ts-a{display:block;color:var(--ink2);font-size:13.5px;line-height:1.5;padding:10px 14px;white-space:pre-wrap;word-break:break-word}
+/* Stack the product detail to one column on narrow screens. Placed AFTER the
+   base .prod-card rule so it wins the cascade (equal specificity, later wins). */
+@media(max-width:900px){
+  .prod-card{grid-template-columns:1fr}
+  .prod-media,.prod-info,.prod-ts-col{grid-column:1;position:static}
+  .prod-media img,.prod-photo-ph{width:100%;max-width:320px}
+}
