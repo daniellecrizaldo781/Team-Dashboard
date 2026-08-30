@@ -94,7 +94,7 @@ function renderOverview() {
     var datedC = allC.filter(function (r) { return r.ts; })
       .sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
     var undatedC = allC.filter(function (r) { return !r.ts; });
-    var latest = datedC.concat(undatedC).slice(0, 6);
+    var latest = datedC.concat(undatedC).slice(0, 3);
     function showList() {
       if (ovd) { ovd.hidden = true; ovd.innerHTML = ''; }
       ovc.hidden = false;
