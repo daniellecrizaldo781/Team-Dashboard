@@ -353,38 +353,17 @@ function openLb(src, isDoc) {
 
 function renderCascades() {
   var list = $('cascList');
-  var chips = $('cascChips');
   if (!list) return;
   var all = (DATA && DATA.cascades) || [];
 
-  // category chips (incl. All)
-  var cats = uniq(all.map(function (r) { return r.category; })).sort();
-  if (chips) {
-    var chipHtml = '<button class="chip' + (CASC_STATE.cat === 'ALL' ? ' active' : '') + '" data-cat="ALL">All</button>' +
-      cats.map(function (c) {
-        return '<button class="chip' + (CASC_STATE.cat === c ? ' active' : '') + '" data-cat="' + esc(c) + '">' + esc(c) + '</button>';
-      }).join('');
-    chips.innerHTML = chipHtml;
-    Array.prototype.forEach.call(chips.querySelectorAll('.chip'), function (b) {
-      b.onclick = function () { CASC_STATE.cat = b.getAttribute('data-cat'); CASC_STATE.detail = null; renderCascades(); };
-    });
-  }
+  // No chips / brand filter toggles - just show the latest uploaded cascades
+  // (newest first). A cascade with a timestamp sorts by date; rows without a
+  // timestamp keep their original (sheet) order, appended after the dated ones.
+  var dated = all.filter(function (r) { return r.ts; })
+    .sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
+  var undated = all.filter(function (r) { return !r.ts; });
+  var rows = dated.concat(undated);
 
-  // brand selector: All Brands / Oricle Hearing Aid / Other Brands
-  var brandSel = $('cascBrand');
-  if (brandSel) {
-    brandSel.value = CASC_STATE.brand;
-    brandSel.onchange = function () { CASC_STATE.brand = brandSel.value; CASC_STATE.detail = null; renderCascades(); };
-  }
-
-  var isOricle = function (b) { return !!b && /oricle/i.test(b); };
-
-  var rows = all.filter(function (r) {
-    if (CASC_STATE.cat !== 'ALL' && r.category !== CASC_STATE.cat) return false;
-    if (CASC_STATE.brand === 'ORICLE' && !isOricle(r.brand)) return false;
-    if (CASC_STATE.brand === 'OTHER' && isOricle(r.brand)) return false;
-    return true;
-  });
   if (!rows.length) { list.innerHTML = '<div class="empty"><b>No cascades yet</b>Add a row to the Cascades tab in the team sheet and it will appear here.</div>'; return; }
 
   // ----- detail view: full cascade on its own page -----
