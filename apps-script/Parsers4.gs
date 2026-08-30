@@ -214,6 +214,11 @@ function parseProducts(ss) {
     var name = exact(row[iName]);
     if (!name) continue;  // skip blank/trailing rows
     var ts = [];
+    // The spiel for an issue lives either IN the title cell (multi-line) or in
+    // the cell directly BELOW it (same column) - the sheet enters issue titles
+    // in the product row and their agent scripts one row down. Pull from below
+    // when the title cell holds only the short heading.
+    var rowBelow = (r + 1 < g.length) ? g[r + 1] : null;
     // col 7+ = handling/issue items (Return Handling, No Foaming Action, ...).
     // Use the header text as the title; if blank, derive it from the cell's
     // first line so every item still has a clickable collapsible heading.
@@ -225,7 +230,9 @@ function parseProducts(ss) {
         var firstLine = body.split('\n')[0].replace(/[:\-\u2013\u2014]\s*$/, '').trim();
         title = firstLine || ('Issue ' + (ts.length + 1));
       }
-      ts.push({ q: title, a: body });
+      var spiel = (body.indexOf('\n') >= 0) ? body : (rowBelow ? exact(rowBelow[c]) : '');
+      var answer = (spiel && spiel.trim()) ? spiel : body;
+      ts.push({ q: title, a: answer });
     }
     out.push({
       name: name,
