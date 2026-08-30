@@ -380,6 +380,11 @@ function expandSnapshot(raw) {
           o.cascadeImages = i < arr.length ? arr[i] : null;
           continue;
         }
+        if (cols[i] === 'troubleshooting') {
+          // array of {q, a} objects - final form, skip the string decoder.
+          o.troubleshooting = i < arr.length ? arr[i] : null;
+          continue;
+        }
         o[cols[i]] = i < arr.length ? dec(arr[i]) : null;
       }
       return o;
