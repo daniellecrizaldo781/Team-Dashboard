@@ -606,28 +606,14 @@ function manualPreviewHtml(manualHtml) {
       '<p class="prod-pre"><a class="prod-link" href="' + esc(hrefs[0]) + '" target="_blank" rel="noopener" ' +
       'onclick="openLb(' + JSON.stringify(pu) + ',true);return false;">Open full manual ↗</a></p>';
   }
-  // Non-Drive links: OneDrive -> real embed preview; others -> image-style card.
-  var odHtml = hrefs.map(function (u) {
-    if (/onedrive\.live\.com|1drv\.ms/i.test(u)) {
-      var c = u.match(/cid=([0-9a-f]+)/i);
-      var r = u.match(/resid=([^&]+)/i) || u.match(/id=([^&]+)/i);
-      if (c && r) {
-        var cid = c[1];
-        var resid = decodeURIComponent(r[1]);
-        var emb = 'https://onedrive.live.com/embed?cid=' + cid + '&resid=' + resid;
-        return '<iframe class="prod-manual-frame" src="' + esc(emb) + '" title="' + esc(label) +
-          '" loading="lazy"></iframe>' +
-          '<p class="prod-pre"><a class="prod-link" href="' + esc(u) + '" target="_blank" rel="noopener">Open in OneDrive ↗</a></p>';
-      }
-    }
-    return null;
-  }).filter(Boolean);
-  if (odHtml.length) return odHtml.join('');
+  // Non-Drive links: image-style clickable card (opens in new tab; OneDrive can't embed).
   return '<div class="prod-manual-links">' + hrefs.map(function (u) {
-    var host = (u.split('/')[2] || 'link');
+    var isOD = /onedrive\.live\.com|1drv\.ms/i.test(u);
+    var txt = isOD ? 'Open OneDrive Manual' : (label || 'Open Manual');
+    var host = isOD ? 'OneDrive' : (u.split('/')[2] || 'link');
     return '<a class="prod-manual-card" href="' + esc(u) + '" target="_blank" rel="noopener" title="' + esc(u) + '">' +
       '<span class="pmc-thumb">📄</span><span class="pmc-body"><span class="pmc-title">' +
-      esc(label || 'Open Manual') + ' ↗</span><span class="pmc-host">' + esc(host) + '</span></span></a>';
+      esc(txt) + ' ↗</span><span class="pmc-host">' + esc(host) + '</span></span></a>';
   }).join('') + '</div>';
 }
 
