@@ -74,18 +74,20 @@ function summarizeNotes(notes) {
     'Channel is ALWAYS "Aircall". Never add extra lines, headers, or commentary.';
 
   var url = 'https://generativelanguage.googleapis.com/v1beta/models/' +
-    GEMINI_MODEL + ':generateContent?key=' + apiKey;
-  var body = {
-    systemInstruction: { parts: [{ text: system }] },
-    contents: [{ role: 'user', parts: [{ text: notes }] }],
-    generationConfig: { temperature: 0.2, maxOutputTokens: 400 }
-  };
+    GEMINI_MODEL + ':generateContent';
   var opts = {
     method: 'post',
     contentType: 'application/json',
     payload: JSON.stringify(body),
     muteHttpExceptions: true
   };
+  // Support both a static API key (AIza...) via ?key= and an OAuth/access
+  // token (AQ.... / ya29....) via the Authorization: Bearer header.
+  if (/^AIza/i.test(apiKey)) {
+    url += '?key=' + apiKey;
+  } else {
+    opts.headers = { Authorization: 'Bearer ' + apiKey };
+  }
   var resp = UrlFetchApp.fetch(url, opts);
   var data = JSON.parse(resp.getContentText());
   var content = '';
