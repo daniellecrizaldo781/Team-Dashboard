@@ -13,6 +13,7 @@ var PAGE_META = {
   leave:        ['Leave Requests', 'File and view leave requests'],
   products:      ['Products', 'Product guides, inclusions and handling'],
   resources:     ['Resources', 'Quick links, guides and contacts for the team'],
+  notes:         ['Note Helper', 'Turn rough agent notes into a clean internal note'],
 };
 
 /** Single dispatcher - every page re-renders from current filter state. */

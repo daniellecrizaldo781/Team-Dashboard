@@ -16,6 +16,15 @@ window.DATA_SOURCE_NOTE = 'Auto-updates hourly';
 window.DASHBOARD_CONFIG = window.DASHBOARD_CONFIG || {};
 window.DASHBOARD_CONFIG.leaveWebAppUrl = 'https://script.google.com/macros/s/AKfycbxBF0FZwUavwneXqr9w4iDZXHGm2y0cZowJt8T7YVEfq8BlL1-h-F_EZ00YMHkJ17Emgw/exec';
 
+/* Internal Note Helper (Option B) AI endpoint.
+ * Leave empty ('') to use offline best-effort formatting (the page still works
+ * and formats notes into the || template without AI).
+ * To enable real AI summaries, deploy apps-script/NotesSummarize.gs as a web
+ * app (Execute as: Me, Access: Anyone) and paste its /exec URL here. It calls
+ * the LLM server-side using a key stored in Script Properties (never exposed
+ * to the browser). Channel is forced to 'Aircall' in the backend. */
+window.DASHBOARD_CONFIG.notesWebAppUrl = '';
+
 /* Per-agent passcode gate for the Leave Request tab (Option B).
  * Each agent types their 4-digit PIN; the Agent field then locks to their name.
  * NOTE: this is a lightweight gate, NOT real security - the map is public in the

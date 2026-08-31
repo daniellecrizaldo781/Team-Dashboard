@@ -23,6 +23,7 @@
     <button class="nav-btn" data-page="roster"><span>&#128197;</span>Team Schedule</button>
     <button class="nav-btn" data-page="products"><span>&#128230;</span>Products</button>
     <button class="nav-btn" data-page="resources"><span>&#128218;</span>Resources</button>
+    <button class="nav-btn" data-page="notes"><span>&#9998;</span>Note Helper</button>
     <button class="nav-btn" data-page="cascades"><span>&#128279;</span>Cascades &amp; Handling</button>
   </nav>
   <button class="navtoggle" id="navToggle" aria-label="Menu">&#9776;</button>
@@ -268,6 +269,28 @@
     </div>
   </section>
 
+  <!-- NOTE HELPER -->
+  <section class="page" id="pageNotes" hidden>
+    <div class="card">
+      <div class="card-head"><h3>Internal Note Helper</h3></div>
+      <p class="notes-hint">Paste the agent's rough notes below. We'll turn them into a clean, paste-ready internal note (Channel is always Aircall).</p>
+      <label class="notes-label" for="notesInput">Agent's raw notes</label>
+      <textarea id="notesInput" class="notes-input" placeholder="e.g. customer Jane Doe (jane@email.com) called, her device keeps cutting out on calls, we walked her through a reset and re-paired it, working fine now"></textarea>
+      <div class="notes-actions">
+        <button class="btn-primary" id="notesSummarize">Summarize</button>
+        <button class="btn-ghost" id="notesClear">Clear</button>
+      </div>
+      <div class="notes-status" id="notesStatus"></div>
+      <div class="notes-output-wrap" id="notesOutputWrap" hidden>
+        <div class="notes-output-head">
+          <span>Paste-ready note</span>
+          <button class="btn-copy" id="notesCopy">Copy</button>
+        </div>
+        <pre class="notes-output" id="notesOutput"></pre>
+      </div>
+    </div>
+  </section>
+
   <footer class="foot">Created by Danielle Ann Mari Crizaldo &mdash; Call Team Lead</footer>
 </main>
 
@@ -282,6 +305,7 @@
 <script src="app-charts.js?v=105"></script>
 <script src="app-render.js?v=105"></script>
 <script src="app-render2.js?v=105"></script>
+<script src="app-notes.js?v=105"></script>
 <script src="app-init.js?v=105"></script>
 </body>
 </html>
