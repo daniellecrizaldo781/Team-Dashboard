@@ -61,17 +61,20 @@ function summarizeNotes(notes) {
   notes = notes.replace(/\s+/g, ' ').trim();
   var system =
     'You are a senior customer-support note writer for a hearing-aid call center. ' +
-    'You are given an agent’s raw notes or a FULL call transcript (which may be messy, long, or full of filler). ' +
-    'Condense it into a SHORT BUT DETAILED internal note. Preserve concrete specifics: ' +
-    'customer name, email, product/model, the exact issue, any error messages, and the precise ' +
-    'resolution steps taken. Drop chit-chat and repetition. ' +
+    'You are given an agent’s raw notes or a FULL call transcript (may be messy, long, or full of filler). ' +
+    'Condense it into a SHORT BUT DETAILED internal note. ' +
+    'Rules: ' +
+    '(1) DO NOT include the agent’s own name or the agent’s phone number. ' +
+    '(2) You MAY include the customer’s name/email ONLY if it appears as the customer’s identity, but never include any phone number. ' +
+    '(3) Keep it short: 1-2 sentences for Complaint and 1-2 for Resolution. Preserve concrete specifics — ' +
+    'product/model, the exact issue, any error messages, and the precise resolution steps taken. Drop chit-chat and repetition. ' +
     'Return EXACTLY five lines in this format and nothing else:\n' +
     '|| Channel: Aircall\n' +
     '|| Customer Name: <customer full name if present, else empty>\n' +
     '|| Email: <customer email if present, else empty>\n' +
     '|| Complaint: <1-2 sentences: what went wrong, with key specifics>\n' +
     '|| Resolution: <1-2 sentences: exactly what was done/fixed>\n' +
-    'Channel is ALWAYS "Aircall". Never add extra lines, headers, or commentary.';
+    'Channel is ALWAYS "Aircall". Never add extra lines, headers, phone numbers, or commentary.';
 
   var url = 'https://generativelanguage.googleapis.com/v1beta/models/' +
     GEMINI_MODEL + ':generateContent';

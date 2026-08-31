@@ -23,7 +23,7 @@ window.DASHBOARD_CONFIG.leaveWebAppUrl = 'https://script.google.com/macros/s/AKf
  * app (Execute as: Me, Access: Anyone) and paste its /exec URL here. It calls
  * the LLM server-side using a key stored in Script Properties (never exposed
  * to the browser). Channel is forced to 'Aircall' in the backend. */
-window.DASHBOARD_CONFIG.notesWebAppUrl = 'https://script.google.com/macros/s/AKfycbw9K_wrxK-nrwyuOC-A6ktMXqX3rTfJrm9tuk3p0OkYr-EghKljU7qBmXguyMFpvhRw/exec'; /* Notes AI summarizer (Gemini) */
+window.DASHBOARD_CONFIG.notesWebAppUrl = 'https://script.google.com/macros/s/AKfycbytG_FD-6JLtaAR-mEIb-fBXP4o1W-1yZH1dRC_zuAi0oramsmTb_cWpGSyrtDj3us6/exec'; /* Notes AI summarizer (Gemini) */
 
 /* Per-agent passcode gate for the Leave Request tab (Option B).
  * Each agent types their 4-digit PIN; the Agent field then locks to their name.
