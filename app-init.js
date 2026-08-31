@@ -590,8 +590,8 @@ function manualPreviewHtml(manualHtml) {
   var raw = (typeof manualHtml === 'string') ? manualHtml : (manualHtml ? String(manualHtml) : '');
   if (!raw) return '';
   var hrefs = [];
-  var re = /href=["']([^"']+)["']/gi, m;
-  while ((m = re.exec(raw))) hrefs.push(m[1]);
+  var re = /(?:href=["'])?(https?:\/\/[^\s"'<>]+)/gi, m;
+  while ((m = re.exec(raw))) { if (hrefs.indexOf(m[1]) < 0) hrefs.push(m[1]); }
   var label = raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() || 'Instruction Manual';
   if (!hrefs.length) return '<p class="prod-pre">' + raw + '</p>';
   var driveIds = [];
