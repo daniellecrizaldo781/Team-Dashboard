@@ -247,30 +247,6 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   color:var(--ink2);text-transform:uppercase;letter-spacing:.03em}
 
 /* ---------- internal note helper ---------- */
-.notes-hint{margin:2px 0 16px;color:var(--ink2);font-size:13px;line-height:1.5}
-.notes-label{display:block;font-size:12px;font-weight:700;color:var(--ink2);
-  text-transform:uppercase;letter-spacing:.03em;margin-bottom:6px}
-.notes-input{width:100%;min-height:130px;resize:vertical;padding:13px 14px;border:1px solid var(--line);
-  border-radius:12px;font:inherit;font-size:14px;line-height:1.5;color:var(--ink);background:#fff;
-  box-shadow:var(--sh);transition:.15s}
-.notes-input:focus{outline:none;border-color:var(--rose);box-shadow:0 0 0 3px rgba(224,69,123,.14)}
-.notes-actions{display:flex;gap:10px;margin-top:14px}
-.btn-primary{background:linear-gradient(135deg,var(--rose),var(--rose-d));color:#fff;border:none;
-  border-radius:10px;padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer;
-  box-shadow:0 6px 16px rgba(224,69,123,.25);transition:.15s}
-.btn-primary:hover{filter:brightness(1.03);transform:translateY(-1px)}
-.btn-copy{background:var(--blush);color:var(--rose-d);border:none;border-radius:8px;
-  padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer}
-.btn-copy:hover{filter:brightness(.97)}
-.notes-status{margin-top:12px;font-size:13px;font-weight:600;min-height:18px;color:var(--ink2)}
-.notes-status.ok{color:#1f9d63}
-.notes-status.err{color:#d23a5e}
-.notes-output-wrap{margin-top:16px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;box-shadow:var(--sh)}
-.notes-output-head{display:flex;align-items:center;justify-content:space-between;
-  padding:9px 14px;background:var(--blush);font-size:12px;font-weight:700;color:var(--rose-d);
-  text-transform:uppercase;letter-spacing:.03em}
-.notes-output{margin:0;padding:16px 18px;font-family:'SFMono-Regular',ui-monospace,Menlo,Consolas,monospace;
-  font-size:14px;line-height:1.7;color:var(--ink);white-space:pre-wrap;word-break:break-word}
 .formgrid label.wide{grid-column:1/-1}
 .formgrid .opt{text-transform:none;font-weight:500;color:var(--ink3)}
 .formgrid select,.formgrid input{width:100%;padding:10px 12px;border:1px solid var(--line);
