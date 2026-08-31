@@ -595,10 +595,21 @@ function manualPreviewHtml(manualHtml) {
   var label = raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() || 'Instruction Manual';
   if (!hrefs.length) return '<p class="prod-pre">' + raw + '</p>';
   var driveIds = [];
+  var oneDrive = [];
   hrefs.forEach(function (u) {
+    if (/onedrive\.live\.com|1drv\.ms/i.test(u)) { oneDrive.push(u); return; }
     var dm = u.match(/drive\.google\.com\/file\/d\/([^\/?]+)/);
     if (dm) driveIds.push(dm[1]);
   });
+  // OneDrive can't embed -> render as an image-style clickable card.
+  if (oneDrive.length) {
+    return '<div class="prod-manual-links">' + oneDrive.map(function (u) {
+      return '<a class="prod-manual-card" href="' + esc(u) + '" target="_blank" rel="noopener" title="' + esc(u) + '">' +
+        '<span class="pmc-thumb">📄</span><span class="pmc-body"><span class="pmc-title">Open OneDrive Manual ↗</span>' +
+        '<span class="pmc-host">OneDrive</span></span></a>';
+    }).join('') + (driveIds.length ? '' : '') + '</div>';
+  }
+  // Google Drive -> inline /preview iframe (appears as an image) + open-full CTA.
   if (driveIds.length) {
     var pu = 'https://drive.google.com/file/d/' + driveIds[0] + '/preview';
     return '<iframe class="prod-manual-frame" src="' + esc(pu) + '" title="' + esc(label) +
@@ -606,14 +617,12 @@ function manualPreviewHtml(manualHtml) {
       '<p class="prod-pre"><a class="prod-link" href="' + esc(hrefs[0]) + '" target="_blank" rel="noopener" ' +
       'onclick="openLb(' + JSON.stringify(pu) + ',true);return false;">Open full manual ↗</a></p>';
   }
-  // Non-Drive links: image-style clickable card (opens in new tab; OneDrive can't embed).
+  // Other links: image-style clickable card.
   return '<div class="prod-manual-links">' + hrefs.map(function (u) {
-    var isOD = /onedrive\.live\.com|1drv\.ms/i.test(u);
-    var txt = isOD ? 'Open OneDrive Manual' : (label || 'Open Manual');
-    var host = isOD ? 'OneDrive' : (u.split('/')[2] || 'link');
+    var host = (u.split('/')[2] || 'link');
     return '<a class="prod-manual-card" href="' + esc(u) + '" target="_blank" rel="noopener" title="' + esc(u) + '">' +
       '<span class="pmc-thumb">📄</span><span class="pmc-body"><span class="pmc-title">' +
-      esc(txt) + ' ↗</span><span class="pmc-host">' + esc(host) + '</span></span></a>';
+      esc(label || 'Open Manual') + ' ↗</span><span class="pmc-host">' + esc(host) + '</span></span></a>';
   }).join('') + '</div>';
 }
 
