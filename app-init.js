@@ -582,21 +582,38 @@ function renderCascades() {
 //   (embedded base64), email, hotline, troubleshooting:[{q,a}]
 var PRODUCTS = (DATA && DATA.products) || [];
 
-// Strip Google Drive document URLs from manual text — those are already shown
-// as "Click here to view document" image buttons, so we don't repeat them.
-// Other bare URLs (Sheets, etc.) become clickable links; existing <a> (OneDrive)
-// are left untouched.
-function stripDriveDocLinks(manualHtml) {
+// Friendly display name for a manual link when no "Label:" precedes it.
+function friendlyName(url) {
+  if (/onedrive\.live\.com|1drv\.ms/i.test(url)) return 'Instruction Manual';
+  if (/drive\.google\.com\/file/i.test(url)) return 'Document';
+  if (/docs\.google\.com\/spreadsheets/i.test(url)) return 'Spreadsheet';
+  if (/docs\.google\.com/i.test(url)) return 'Document';
+  try { return new URL(url).hostname.replace(/^www\./, ''); } catch (e) { return 'Link'; }
+}
+
+// Render manual links with friendly names: a "Label:" before a link uses that
+// label as the clickable text; otherwise the link text becomes a friendly name
+// (Instruction Manual / Document / Spreadsheet / host). All links stay clickable
+// (OneDrive opens new tab; the Drive manual is also shown as an image button).
+function nameManualLinks(manualHtml) {
   var raw = (typeof manualHtml === 'string') ? manualHtml : (manualHtml ? String(manualHtml) : '');
   if (!raw) return '';
-  // 1) Remove full <a ...>Drive...</a> anchors (already shown as image buttons).
-  raw = raw.replace(/<a\s+([^>]*?)href=(["'])([^"']*(?:drive\.google\.com\/(?:file\/d\/|open\?)|docs\.google\.com)[^"']*)\2[^>]*>([\s\S]*?)<\/a>/gi, '');
-  // 2) Remove bare Drive URLs (text, not links) — also already shown as images.
-  raw = raw.replace(/(https?:\/\/(?:drive\.google\.com\/(?:file\/d\/|open\?)|docs\.google\.com)[^\s"'<>]+)/gi, '');
-  // 3) Turn remaining bare URLs (Sheets/other) into clickable links.
-  raw = raw.replace(/(^|[^"'>])(https?:\/\/[^\s"'<>]+)/gi, function (full, pre, url) {
-    return pre + '<a class="prod-link" href="' + url + '" target="_blank" rel="noopener">' + url + '</a>';
-  });
+  // 1) "Label:" immediately before an <a> -> use the Label as the link text.
+  raw = raw.replace(/([A-Za-z0-9][A-Za-z0-9 &]*?):\s*(?:<br\s*\/?>)*\s*<\/b>\s*<b>?\s*(<a\s+[^>]*href=(["'])([^"']+)\3[^>]*>)([^<]*)(<\/a>)/gi,
+    function (full, label, openTag, q, url, inner, closeTag) {
+      return openTag + esc(label.trim()) + closeTag;
+    });
+  // 2) Bare-URL <a> (text is the URL) -> friendly name.
+  raw = raw.replace(/(<a\s+[^>]*href=(["'])([^"']+)\2[^>]*>)([^<]*)(<\/a>)/gi,
+    function (full, openTag, q, url, inner, closeTag) {
+      if (inner && inner.trim() && !/^https?:\/\//i.test(inner.trim())) return full;
+      return openTag + esc(friendlyName(url)) + closeTag;
+    });
+  // 3) Bare URLs (no <a>) -> clickable friendly link.
+  raw = raw.replace(/(^|[^"'>])(https?:\/\/[^\s"'<>]+)/gi,
+    function (full, pre, url) {
+      return pre + '<a class="prod-link" href="' + url + '" target="_blank" rel="noopener">' + esc(friendlyName(url)) + '</a>';
+    });
   return raw;
 }
 
@@ -623,7 +640,7 @@ function renderProducts() {
             '<h3 class="prod-name">' + esc(p.name) + '</h3>' +
             (p.description ? '<section class="prod-sec"><h4>Product Description</h4><p class="prod-pre">' + p.description + '</p></section>' : '') +
             (p.inclusion ? '<section class="prod-sec"><h4>Package Inclusion</h4><p class="prod-pre">' + p.inclusion + '</p></section>' : '') +
-            (p.manual ? '<section class="prod-sec"><h4>Instruction Manual</h4><p class="prod-pre">' + stripDriveDocLinks(p.manual) + '</p>' +
+            (p.manual ? '<section class="prod-sec"><h4>Instruction Manual</h4><p class="prod-pre">' + nameManualLinks(p.manual) + '</p>' +
               (p.manualPhotos && p.manualPhotos.length
                 ? '<div class="prod-photos">' + p.manualPhotos.map(function (ph) {
                     var url = ph.url || '';
