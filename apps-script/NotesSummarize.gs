@@ -24,9 +24,9 @@
 
 var NOTES_PROP_KEY = 'LLM_API_KEY';
 
-// Default model: Gemini 2.0 Flash (free tier, strong at strict formatting).
-// Change to 'gemini-1.5-flash' if you prefer.
-var GEMINI_MODEL = 'gemini-2.0-flash';
+// Default model: Gemini 3.6 Flash (free tier, current as of 2026).
+// Change to 'gemini-2.5-flash' if 3.6 is unavailable in your region.
+var GEMINI_MODEL = 'gemini-3.6-flash';
 
 function doGet(e) {
   return ContentService.createTextOutput('Note Helper API. POST action=summarizeNotes.')
