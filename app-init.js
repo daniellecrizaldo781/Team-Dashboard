@@ -582,6 +582,23 @@ function renderCascades() {
 //   (embedded base64), email, hotline, troubleshooting:[{q,a}]
 var PRODUCTS = (DATA && DATA.products) || [];
 
+// Strip Google Drive document links from manual text — those are already shown
+// as "Click here to view document" image buttons, so we don't repeat them as bare
+// links. OneDrive / Sheets / other links stay clickable.
+function stripDriveDocLinks(manualHtml) {
+  var raw = (typeof manualHtml === 'string') ? manualHtml : (manualHtml ? String(manualHtml) : '');
+  if (!raw) return '';
+  return raw.replace(/<a\s+([^>]*?)href=(["'])([^"']*(?:drive\.google\.com\/(?:file\/d\/|open\?)|docs\.google\.com)[^"']*)\2([^>]*)>([\s\S]*?)<\/a>/gi,
+    function (full, pre, q, url, post, inner) {
+      var txt = inner.replace(/<[^>]+>/g, '').trim();
+      // Only drop if the anchor looked like a Drive doc link
+      if (/drive\.google\.com\/(?:file\/d\/|open\?)|docs\.google\.com/i.test(url)) {
+        return txt ? '<span class="prod-link-suppressed">' + txt + '</span>' : '';
+      }
+      return full;
+    });
+}
+
 function renderProducts() {
   var grid = $('prodGrid'), detail = $('prodDetail'), searchWrap = $('prodSearchWrap');
   if (!grid) return;
@@ -605,7 +622,7 @@ function renderProducts() {
             '<h3 class="prod-name">' + esc(p.name) + '</h3>' +
             (p.description ? '<section class="prod-sec"><h4>Product Description</h4><p class="prod-pre">' + p.description + '</p></section>' : '') +
             (p.inclusion ? '<section class="prod-sec"><h4>Package Inclusion</h4><p class="prod-pre">' + p.inclusion + '</p></section>' : '') +
-            (p.manual ? '<section class="prod-sec"><h4>Instruction Manual</h4><p class="prod-pre">' + p.manual + '</p>' +
+            (p.manual ? '<section class="prod-sec"><h4>Instruction Manual</h4><p class="prod-pre">' + stripDriveDocLinks(p.manual) + '</p>' +
               (p.manualPhotos && p.manualPhotos.length
                 ? '<div class="prod-photos">' + p.manualPhotos.map(function (ph) {
                     var url = ph.url || '';
