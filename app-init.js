@@ -582,25 +582,37 @@ function renderCascades() {
 //   (embedded base64), email, hotline, troubleshooting:[{q,a}]
 var PRODUCTS = (DATA && DATA.products) || [];
 
-// Convert a product's `manual` HTML (a Drive link) into an inline preview so
-// the document appears as an image rather than a bare text link. Reuses the
-// Drive /preview iframe (openLb doc mode). Falls back to the raw link.
+// Convert a product's `manual` HTML into a visible manual block.
+// - Google Drive link -> inline /preview iframe (appears as an image) + open-full CTA.
+// - OneDrive/other link -> pink "Open Manual" CTA card (opens in new tab; can't embed).
+// - Plain text (no link) -> shown as-is.
 function manualPreviewHtml(manualHtml) {
-  var raw = manualHtml || '';
-  var m = raw.match(/href=["']([^"']+)["']/i);
-  var url = m ? m[1] : '';
-  var label = raw.replace(/<[^>]+>/g, '').trim() || 'Instruction Manual';
-  if (!url) return '<p class="prod-pre">' + raw + '</p>';
-  var dm = url.match(/drive\.google\.com\/file\/d\/([^\/?]+)/);
-  if (dm) {
-    var previewUrl = 'https://drive.google.com/file/d/' + dm[1] + '/preview';
-    return '<iframe class="prod-manual-frame" src="' + esc(previewUrl) + '" title="' + esc(label) +
+  var raw = (typeof manualHtml === 'string') ? manualHtml : (manualHtml ? String(manualHtml) : '');
+  if (!raw) return '';
+  var hrefs = [];
+  var re = /href=["']([^"']+)["']/gi, m;
+  while ((m = re.exec(raw))) hrefs.push(m[1]);
+  var label = raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() || 'Instruction Manual';
+  if (!hrefs.length) return '<p class="prod-pre">' + raw + '</p>';
+  var driveIds = [];
+  hrefs.forEach(function (u) {
+    var dm = u.match(/drive\.google\.com\/file\/d\/([^\/?]+)/);
+    if (dm) driveIds.push(dm[1]);
+  });
+  if (driveIds.length) {
+    var pu = 'https://drive.google.com/file/d/' + driveIds[0] + '/preview';
+    return '<iframe class="prod-manual-frame" src="' + esc(pu) + '" title="' + esc(label) +
       '" loading="lazy"></iframe>' +
-      '<p class="prod-pre"><a class="prod-link" href="' + esc(url) + '" target="_blank" rel="noopener" ' +
-      'onclick="openLb(' + JSON.stringify(previewUrl) + ',true);return false;">Open full manual ↗</a></p>';
+      '<p class="prod-pre"><a class="prod-link" href="' + esc(hrefs[0]) + '" target="_blank" rel="noopener" ' +
+      'onclick="openLb(' + JSON.stringify(pu) + ',true);return false;">Open full manual ↗</a></p>';
   }
-  return '<p class="prod-pre"><a class="prod-link" href="' + esc(url) + '" target="_blank" rel="noopener">' +
-    esc(label) + '</a></p>';
+  // OneDrive / other: clickable pink CTA cards (open in new tab).
+  return '<div class="prod-manual-links">' + hrefs.map(function (u) {
+    var isOD = /onedrive\.live\.com|1drv\.ms/i.test(u);
+    var txt = isOD ? 'Open OneDrive Manual ↗' : (label || 'Open Manual ↗');
+    return '<a class="prod-photo-cta" style="display:block;text-decoration:none;margin-bottom:8px" ' +
+      'href="' + esc(u) + '" target="_blank" rel="noopener">' + esc(txt) + '</a>';
+  }).join('') + '</div>';
 }
 
 function renderProducts() {
