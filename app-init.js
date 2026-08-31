@@ -582,50 +582,6 @@ function renderCascades() {
 //   (embedded base64), email, hotline, troubleshooting:[{q,a}]
 var PRODUCTS = (DATA && DATA.products) || [];
 
-// Convert a product's `manual` HTML into a visible manual block.
-// - Google Drive link -> inline /preview iframe (appears as an image) + open-full CTA.
-// - OneDrive/other link -> pink "Open Manual" CTA card (opens in new tab; can't embed).
-// - Plain text (no link) -> shown as-is.
-function manualPreviewHtml(manualHtml) {
-  var raw = (typeof manualHtml === 'string') ? manualHtml : (manualHtml ? String(manualHtml) : '');
-  if (!raw) return '';
-  var hrefs = [];
-  var re = /(?:href=["'])?(https?:\/\/[^\s"'<>]+)/gi, m;
-  while ((m = re.exec(raw))) { if (hrefs.indexOf(m[1]) < 0) hrefs.push(m[1]); }
-  var label = raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() || 'Instruction Manual';
-  if (!hrefs.length) return '<p class="prod-pre">' + raw + '</p>';
-  var driveIds = [];
-  var oneDrive = [];
-  hrefs.forEach(function (u) {
-    if (/onedrive\.live\.com|1drv\.ms/i.test(u)) { oneDrive.push(u); return; }
-    var dm = u.match(/drive\.google\.com\/file\/d\/([^\/?]+)/);
-    if (dm) driveIds.push(dm[1]);
-  });
-  // OneDrive can't embed -> render as an image-style clickable card.
-  if (oneDrive.length) {
-    return '<div class="prod-manual-links">' + oneDrive.map(function (u) {
-      return '<a class="prod-manual-card" href="' + esc(u) + '" target="_blank" rel="noopener" title="' + esc(u) + '">' +
-        '<span class="pmc-thumb">📄</span><span class="pmc-body"><span class="pmc-title">Open OneDrive Manual ↗</span>' +
-        '<span class="pmc-host">OneDrive</span></span></a>';
-    }).join('') + (driveIds.length ? '' : '') + '</div>';
-  }
-  // Google Drive -> inline /preview iframe (appears as an image) + open-full CTA.
-  if (driveIds.length) {
-    var pu = 'https://drive.google.com/file/d/' + driveIds[0] + '/preview';
-    return '<iframe class="prod-manual-frame" src="' + esc(pu) + '" title="' + esc(label) +
-      '" loading="lazy"></iframe>' +
-      '<p class="prod-pre"><a class="prod-link" href="' + esc(hrefs[0]) + '" target="_blank" rel="noopener" ' +
-      'onclick="openLb(' + JSON.stringify(pu) + ',true);return false;">Open full manual ↗</a></p>';
-  }
-  // Other links: image-style clickable card.
-  return '<div class="prod-manual-links">' + hrefs.map(function (u) {
-    var host = (u.split('/')[2] || 'link');
-    return '<a class="prod-manual-card" href="' + esc(u) + '" target="_blank" rel="noopener" title="' + esc(u) + '">' +
-      '<span class="pmc-thumb">📄</span><span class="pmc-body"><span class="pmc-title">' +
-      esc(label || 'Open Manual') + ' ↗</span><span class="pmc-host">' + esc(host) + '</span></span></a>';
-  }).join('') + '</div>';
-}
-
 function renderProducts() {
   var grid = $('prodGrid'), detail = $('prodDetail'), searchWrap = $('prodSearchWrap');
   if (!grid) return;
@@ -649,7 +605,7 @@ function renderProducts() {
             '<h3 class="prod-name">' + esc(p.name) + '</h3>' +
             (p.description ? '<section class="prod-sec"><h4>Product Description</h4><p class="prod-pre">' + p.description + '</p></section>' : '') +
             (p.inclusion ? '<section class="prod-sec"><h4>Package Inclusion</h4><p class="prod-pre">' + p.inclusion + '</p></section>' : '') +
-            (p.manual ? '<section class="prod-sec"><h4>Instruction Manual</h4>' + manualPreviewHtml(p.manual) +
+            (p.manual ? '<section class="prod-sec"><h4>Instruction Manual</h4><p class="prod-pre">' + p.manual + '</p>' +
               (p.manualPhotos && p.manualPhotos.length
                 ? '<div class="prod-photos">' + p.manualPhotos.map(function (ph) {
                     var url = ph.url || '';
