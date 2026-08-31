@@ -582,6 +582,27 @@ function renderCascades() {
 //   (embedded base64), email, hotline, troubleshooting:[{q,a}]
 var PRODUCTS = (DATA && DATA.products) || [];
 
+// Convert a product's `manual` HTML (a Drive link) into an inline preview so
+// the document appears as an image rather than a bare text link. Reuses the
+// Drive /preview iframe (openLb doc mode). Falls back to the raw link.
+function manualPreviewHtml(manualHtml) {
+  var raw = manualHtml || '';
+  var m = raw.match(/href=["']([^"']+)["']/i);
+  var url = m ? m[1] : '';
+  var label = raw.replace(/<[^>]+>/g, '').trim() || 'Instruction Manual';
+  if (!url) return '<p class="prod-pre">' + raw + '</p>';
+  var dm = url.match(/drive\.google\.com\/file\/d\/([^\/?]+)/);
+  if (dm) {
+    var previewUrl = 'https://drive.google.com/file/d/' + dm[1] + '/preview';
+    return '<iframe class="prod-manual-frame" src="' + esc(previewUrl) + '" title="' + esc(label) +
+      '" loading="lazy"></iframe>' +
+      '<p class="prod-pre"><a class="prod-link" href="' + esc(url) + '" target="_blank" rel="noopener" ' +
+      'onclick="openLb(' + JSON.stringify(previewUrl) + ',true);return false;">Open full manual ↗</a></p>';
+  }
+  return '<p class="prod-pre"><a class="prod-link" href="' + esc(url) + '" target="_blank" rel="noopener">' +
+    esc(label) + '</a></p>';
+}
+
 function renderProducts() {
   var grid = $('prodGrid'), detail = $('prodDetail'), searchWrap = $('prodSearchWrap');
   if (!grid) return;
@@ -605,7 +626,7 @@ function renderProducts() {
             '<h3 class="prod-name">' + esc(p.name) + '</h3>' +
             (p.description ? '<section class="prod-sec"><h4>Product Description</h4><p class="prod-pre">' + p.description + '</p></section>' : '') +
             (p.inclusion ? '<section class="prod-sec"><h4>Package Inclusion</h4><p class="prod-pre">' + p.inclusion + '</p></section>' : '') +
-            (p.manual ? '<section class="prod-sec"><h4>Instruction Manual</h4><p class="prod-pre">' + p.manual + '</p>' +
+            (p.manual ? '<section class="prod-sec"><h4>Instruction Manual</h4>' + manualPreviewHtml(p.manual) +
               (p.manualPhotos && p.manualPhotos.length
                 ? '<div class="prod-photos">' + p.manualPhotos.map(function (ph) {
                     var url = ph.url || '';

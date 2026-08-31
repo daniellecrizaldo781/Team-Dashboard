@@ -532,6 +532,10 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 /* Pink "Click here to view document" button under each manual photo (manuals only). */
 .prod-photo-cta{width:100%;border:0;border-top:1px solid var(--rose);background:linear-gradient(160deg,#ffd6e7,#ffb3d1);color:#b3155b;font-weight:800;
   font-size:13.5px;line-height:1.3;padding:11px 10px;cursor:pointer;text-align:center}
+/* Inline Drive manual preview — appears as a document image card. */
+.prod-manual-frame{width:100%;max-width:420px;aspect-ratio:3/4;min-height:420px;border:1px solid var(--line);
+  border-radius:12px;box-shadow:var(--sh);background:#fff;display:block;margin:4px 0 6px}
+@media(max-width:600px){.prod-manual-frame{max-width:100%;min-height:360px}}
 .prod-photo-cta:hover{background:linear-gradient(160deg,#ffc6de,#ff9ec4)}
 /* Product search bar */
 .prod-search{display:flex;gap:10px;align-items:center;margin:6px 0 18px}
