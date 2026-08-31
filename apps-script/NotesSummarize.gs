@@ -47,15 +47,19 @@ function summarizeNotes(notes) {
     return '|| Channel: Aircall\n|| Customer Name: \n|| Email: \n|| Complaint: ' + notes.replace(/\s+/g, ' ').trim() + '\n|| Resolution: ';
   }
 
+  notes = notes.replace(/\s+/g, ' ').trim();
   var system =
-    'You are an internal customer-support note formatter for a hearing-aid call center. ' +
-    'Given an agent’s rough notes, extract and rewrite them into a concise internal note. ' +
+    'You are a senior customer-support note writer for a hearing-aid call center. ' +
+    'You are given an agent’s raw notes or a FULL call transcript (which may be messy, long, or full of filler). ' +
+    'Condense it into a SHORT BUT DETAILED internal note. Preserve concrete specifics: ' +
+    'customer name, email, product/model, the exact issue, any error messages, and the precise ' +
+    'resolution steps taken. Drop chit-chat and repetition. ' +
     'Return EXACTLY five lines in this format and nothing else:\n' +
     '|| Channel: Aircall\n' +
     '|| Customer Name: <customer full name if present, else empty>\n' +
     '|| Email: <customer email if present, else empty>\n' +
-    '|| Complaint: <one concise sentence: the customer issue>\n' +
-    '|| Resolution: <one concise sentence: what was done/fixed>\n' +
+    '|| Complaint: <1-2 sentences: what went wrong, with key specifics>\n' +
+    '|| Resolution: <1-2 sentences: exactly what was done/fixed>\n' +
     'Channel is ALWAYS "Aircall". Never add extra lines, headers, or commentary.';
 
   var url = 'https://api.openai.com/v1/chat/completions';
@@ -66,7 +70,7 @@ function summarizeNotes(notes) {
       { role: 'user', content: notes }
     ],
     temperature: 0.2,
-    max_tokens: 200
+    max_tokens: 400
   };
   var opts = {
     method: 'post',
