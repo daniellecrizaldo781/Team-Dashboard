@@ -582,21 +582,22 @@ function renderCascades() {
 //   (embedded base64), email, hotline, troubleshooting:[{q,a}]
 var PRODUCTS = (DATA && DATA.products) || [];
 
-// Strip Google Drive document links from manual text — those are already shown
-// as "Click here to view document" image buttons, so we don't repeat them as bare
-// links. OneDrive / Sheets / other links stay clickable.
+// Strip Google Drive document URLs from manual text — those are already shown
+// as "Click here to view document" image buttons, so we don't repeat them.
+// Other bare URLs (Sheets, etc.) become clickable links; existing <a> (OneDrive)
+// are left untouched.
 function stripDriveDocLinks(manualHtml) {
   var raw = (typeof manualHtml === 'string') ? manualHtml : (manualHtml ? String(manualHtml) : '');
   if (!raw) return '';
-  return raw.replace(/<a\s+([^>]*?)href=(["'])([^"']*(?:drive\.google\.com\/(?:file\/d\/|open\?)|docs\.google\.com)[^"']*)\2([^>]*)>([\s\S]*?)<\/a>/gi,
-    function (full, pre, q, url, post, inner) {
-      var txt = inner.replace(/<[^>]+>/g, '').trim();
-      // Only drop if the anchor looked like a Drive doc link
-      if (/drive\.google\.com\/(?:file\/d\/|open\?)|docs\.google\.com/i.test(url)) {
-        return txt ? '<span class="prod-link-suppressed">' + txt + '</span>' : '';
-      }
-      return full;
-    });
+  // 1) Remove full <a ...>Drive...</a> anchors (already shown as image buttons).
+  raw = raw.replace(/<a\s+([^>]*?)href=(["'])([^"']*(?:drive\.google\.com\/(?:file\/d\/|open\?)|docs\.google\.com)[^"']*)\2[^>]*>([\s\S]*?)<\/a>/gi, '');
+  // 2) Remove bare Drive URLs (text, not links) — also already shown as images.
+  raw = raw.replace(/(https?:\/\/(?:drive\.google\.com\/(?:file\/d\/|open\?)|docs\.google\.com)[^\s"'<>]+)/gi, '');
+  // 3) Turn remaining bare URLs (Sheets/other) into clickable links.
+  raw = raw.replace(/(^|[^"'>])(https?:\/\/[^\s"'<>]+)/gi, function (full, pre, url) {
+    return pre + '<a class="prod-link" href="' + url + '" target="_blank" rel="noopener">' + url + '</a>';
+  });
+  return raw;
 }
 
 function renderProducts() {
