@@ -54,9 +54,8 @@ function doPost(e) {
 function summarizeNotes(notes) {
   var apiKey = PropertiesService.getScriptProperties().getProperty(NOTES_PROP_KEY) || '';
   if (!apiKey) {
-    // Graceful fallback if no key is set yet.
-    return '|| Channel: Aircall\n|| Customer Name: \n|| Email: \n|| Complaint: ' +
-      notes.replace(/\s+/g, ' ').trim() + '\n|| Resolution: ';
+    // No key configured -> say so clearly instead of silently echoing raw notes.
+    throw new Error('LLM_API_KEY is not set in Script Properties. Add your Gemini key (AIza...).');
   }
 
   notes = notes.replace(/\s+/g, ' ').trim();
