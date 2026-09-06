@@ -603,7 +603,7 @@ function nameManualLinks(manualHtml) {
   raw.replace(labelRe, function (full, label, q, url) { labels[url] = label.trim(); return full; });
 
   // 1) Drive links -> photo thumbnail + "Click here to view document" (lightbox, in-page)
-  raw = raw.replace(/<a\s+([^>]*?)href=(["'])(https?:\/\/(?:drive\.google\.com\/(?:file\/d\/|open\?)|docs\.google\.com\/[\w-]+\/[\w-]+))[^"']*\2([^>]*)>[\s\S]*?<\/a>/gi,
+  raw = raw.replace(/<a\s+([^>]*?)href=(["'])(https?:\/\/(?:drive\.google\.com\/(?:file\/d\/|open\?)|drive\.google\.com\/uc\?export=view&id=[^"']*))[^"']*\2([^>]*)>[\s\S]*?<\/a>/gi,
     function (full, pre, q, baseUrl) {
       var preview = drivePreviewUrl(baseUrl);
       return '<div class="prod-photo-manual">' +
@@ -612,7 +612,7 @@ function nameManualLinks(manualHtml) {
         '</div>';
     });
   // 2) Bare Drive /view URLs (no anchor) -> same photo thumbnail
-  raw = raw.replace(/(?:^|[^"'>])(https?:\/\/(?:drive\.google\.com\/(?:file\/d\/|open\?)|docs\.google\.com\/[\w-]+\/[\w-]+)[^"'\s<>]*)/gi,
+  raw = raw.replace(/(?:^|[^"'>])(https?:\/\/(?:drive\.google\.com\/(?:file\/d\/|open\?)|drive\.google\.com\/uc\?export=view&id=[^"'\s<>]+)[^"'\s<>]*)/gi,
     function (full, pre, baseUrl) {
       var preview = drivePreviewUrl(baseUrl);
       return (pre || '') + '<div class="prod-photo-manual">' +
@@ -637,7 +637,8 @@ function nameManualLinks(manualHtml) {
   return raw;
 }
 
-// Convert a Drive /view or uc export link into a /preview URL usable as an <img>/<iframe>.
+// Convert a Drive file/d/ or uc?export=view&id= link into a /preview URL
+// usable as an <img>/<iframe> in the lightbox.
 function drivePreviewUrl(url) {
   if (!url) return '';
   url = url.replace(/&amp;/g, '&');
