@@ -591,62 +591,55 @@ function friendlyName(url) {
   try { return new URL(url).hostname.replace(/^www\./, ''); } catch (e) { return 'Link'; }
 }
 
-// Render manual links: Drive links appear as clickable photo thumbnails that
-// expand IN the dashboard lightbox (no new tab); OneDrive/Sheets/other stay as
-// named clickable links. "Label:" before a link is used as the caption.
+// Render manual links with friendly names: a "Label:" before a link uses that
+// label as the clickable text; otherwise the link text becomes a friendly name
+// (Instruction Manual / Document / Spreadsheet / host). All links stay clickable
+// (OneDrive opens new tab; the Drive manual is also shown as an image button).
 function nameManualLinks(manualHtml) {
   var raw = (typeof manualHtml === 'string') ? manualHtml : (manualHtml ? String(manualHtml) : '');
   if (!raw) return '';
-  var labelRe = /([A-Za-z0-9][A-Za-z0-9 &]*?):\s*(?:<br\s*\/?>)*\s*<\/b>\s*<b>?\s*<a\s+[^>]*href=(["'])([^"']+)\1[^>]*>/gi;
-  // Build a label map keyed by url for named non-Drive links.
-  var labels = {};
-  raw.replace(labelRe, function (full, label, q, url) { labels[url] = label.trim(); return full; });
-
-  // 1) Drive links -> photo thumbnail + "Click here to view document" (lightbox, in-page)
-  raw = raw.replace(/<a\s+([^>]*?)href=(["'])(https?:\/\/(?:drive\.google\.com\/(?:file\/d\/[^"'\s]+|open\?)|drive\.google\.com\/uc\?export=view&id=[^"']*))[^"']*\2([^>]*)>[\s\S]*?<\/a>/gi,
-    function (full, pre, q, baseUrl) {
-      var preview = drivePreviewUrl(baseUrl);
-      return '<div class="prod-photo-manual">' +
-        '<img src="' + esc(preview) + '" alt="manual document" loading="lazy" class="prod-manual-pic">' +
-        '<button type="button" class="prod-photo-cta" data-url="' + esc(preview) + '" onclick="openLb(this.dataset.url,true)">Click here to view document</button>' +
-        '</div>';
+  // 1) "Label:" immediately before an <a> -> use the Label as the link text.
+  raw = raw.replace(/([A-Za-z0-9][A-Za-z0-9 &]*?):\s*(?:<br\s*\/?>)*\s*<\/b>\s*<b>?\s*(<a\s+[^>]*href=(["'])([^"']+)\3[^>]*>)([^<]*)(<\/a>)/gi,
+    function (full, label, openTag, q, url, inner, closeTag) {
+      return openTag + esc(label.trim()) + closeTag;
     });
-  // 2) Bare Drive /view URLs (no anchor) -> same photo thumbnail
-  raw = raw.replace(/(?:^|[^"'>])(https?:\/\/(?:drive\.google\.com\/(?:file\/d\/[^"'\s]+|open\?)|drive\.google\.com\/uc\?export=view&id=[^"'\s<>]+)[^"'\s<>]*)/gi,
-    function (full, pre, baseUrl) {
-      var preview = drivePreviewUrl(baseUrl);
-      return (pre || '') + '<div class="prod-photo-manual">' +
-        '<img src="' + esc(preview) + '" alt="manual document" loading="lazy" class="prod-manual-pic">' +
-        '<button type="button" class="prod-photo-cta" data-url="' + esc(preview) + '" onclick="openLb(this.dataset.url,true)">Click here to view document</button>' +
-        '</div>';
+  // 2) Bare-URL <a> (text is the URL) -> friendly name.
+  raw = raw.replace(/(<a\s+[^>]*href=(["'])([^"']+)\2[^>]*>)([^<]*)(<\/a>)/gi,
+    function (full, openTag, q, url, inner, closeTag) {
+      if (inner && inner.trim() && !/^https?:\/\//i.test(inner.trim())) return full;
+      return openTag + esc(friendlyName(url)) + closeTag;
     });
-
-  // 3) Remaining <a> (OneDrive/Sheets/other) -> friendly named link (new tab)
-  raw = raw.replace(/<a\s+([^>]*?)href=(["'])([^"']+)\2([^>]*)>([\s\S]*?)<\/a>/gi,
-    function (full, pre, q, url, post, inner) {
-      var t = inner.replace(/<[^>]+>/g, '').trim();
-      var name = labels[url] || t || friendlyName(url);
-      var cleanPre = pre.replace(/\s*target\s*=\s*["'][^"']*["']/gi, '').replace(/\s*rel\s*=\s*["'][^"']*["']/gi, '').replace(/\s*onclick\s*=\s*["'][^"']*["']/gi, '');
-      return '<a ' + cleanPre + 'href=' + q + url + q + post.replace(/\s*onclick\s*=\s*["'][^"']*["']/gi,'') + ' target="_blank" rel="noopener">' + esc(name) + '</a>';
-    });
-  // 4) Bare URLs (no anchor) -> named clickable link (new tab)
-  raw = raw.replace(/(?:^|[^"'>])(https?:\/\/[^\s"'<>]+)/gi,
+  // 3) Bare URLs (no <a>) -> clickable friendly link.
+  raw = raw.replace(/(^|[^"'>])(https?:\/\/[^\s"'<>]+)/gi,
     function (full, pre, url) {
-      return (pre || '') + '<a class="prod-link" href="' + url + '" target="_blank" rel="noopener">' + esc(friendlyName(url)) + '</a>';
+      return pre + '<a class="prod-link" href="' + url + '" target="_blank" rel="noopener">' + esc(friendlyName(url)) + '</a>';
     });
   return raw;
 }
 
-// Convert a Drive file/d/ or uc?export=view&id= link into a /preview URL
-// usable as an <img>/<iframe> in the lightbox.
+// Convert a Drive file/d/ or uc export link into a /preview URL usable as an
+// <img>/<iframe> inside the dashboard lightbox.
 function drivePreviewUrl(url) {
   if (!url) return '';
   url = url.replace(/&amp;/g, '&');
-  var id = '';
   var m = url.match(/drive\.google\.com\/file\/d\/([^/?]+)/) || url.match(/[?&]id=([^&]+)/) || url.match(/drive\.google\.com\/uc\?export=view&id=([^&]+)/);
-  if (m) id = m[1];
-  if (id) return 'https://drive.google.com/file/d/' + id + '/preview';
-  return url.replace(/\/view(?:$|\?)/, '/preview').replace(/uc\?export=view&id=/, function () { return ''; });
+  if (m) return 'https://drive.google.com/file/d/' + m[1] + '/preview';
+  return url.replace(/\/view(?:$|\?)/, '/preview');
+}
+
+// Turn any Drive <a href=".../view">(url)</a> inside an HTML fragment into a
+// clickable photo thumbnail that expands IN the dashboard lightbox (no new tab).
+// Non-Drive anchors (OneDrive/Sheets/etc.) are left untouched.
+function driveLinksAsPhotos(html) {
+  if (!html) return '';
+  return html.replace(/<a\s+([^>]*?)href=(["'])(https?:\/\/(?:drive\.google\.com\/(?:file\/d\/[^"'\s]+|open\?)|drive\.google\.com\/uc\?export=view&id=[^"'\s]+))[^s"']*\2([^>]*)>[\s\S]*?<\/a>/gi,
+    function (full, pre, q, baseUrl) {
+      var preview = drivePreviewUrl(baseUrl);
+      return '<div class="prod-photo-manual">' +
+        '<img src="' + esc(preview) + '" alt="document" loading="lazy" class="prod-manual-pic">' +
+        '<button type="button" class="prod-photo-cta" data-url="' + esc(preview) + '" onclick="openLb(this.dataset.url,true)">Click here to view document</button>' +
+        '</div>';
+    });
 }
 
 function renderProducts() {
@@ -687,7 +680,7 @@ function renderProducts() {
           '</div>' +
           (p.troubleshooting && p.troubleshooting.length ? '<div class="prod-ts-col"><section class="prod-sec"><h4>Trouble Shooting &amp; Handling</h4><div class="prod-ts">' +
             p.troubleshooting.map(function (t) {
-              return '<details class="prod-ts-item"><summary>' + esc(t.q) + '</summary><span class="prod-ts-a">' + (t.aHtml || esc(t.a)) + '</span></details>';
+              return '<details class="prod-ts-item"><summary>' + esc(t.q) + '</summary><span class="prod-ts-a">' + driveLinksAsPhotos(t.aHtml || esc(t.a)) + '</span></details>';
             }).join('') + '</div></section></div>' : '') +
         '</article>';
       var back = $('prodBack');
