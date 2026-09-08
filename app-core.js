@@ -274,7 +274,15 @@ function buildRanking(weekOverride) {
         : null,
       scoreWeek: offRows.length ? offRows[offRows.length - 1].week : null,
       rating: offRows.length ? sheetRating(a, offRows[offRows.length - 1].week) : null,
-      qa: qa.length ? avg(qa.map(function (r) { return r.score; })) : null,
+      // QA reflects the scorecard's weekly Quality % (= QA Score / QA Max), the
+      // same figure shown on the Google "weekly scorecard" tab. Do NOT use the
+      // per-ticket qaScores average here: a pass/fail ticket eval reads ~1.0 for
+      // almost every agent and would falsely print 100% for agents whose weekly
+      // Quality % is actually below 100% (e.g. 22/40 = 55%). Fall back to the
+      // qaScores average only when no scorecard Quality % exists.
+      var _qaWk = offRows.length ? scorecardComponents(a, offRows[offRows.length - 1].week) : null;
+      qa: (_qaWk && _qaWk['Quality %'] != null ? _qaWk['Quality %'] : null)
+            || (qa.length ? avg(qa.map(function (r) { return r.score; })) : null),
       evals: qa.length,
       prod: pr.length ? avg(uniq(pr.map(function (r) { return r.week + '|' + r.productivityPct; }))
               .map(function (k) { var v = parseFloat(k.split('|')[1]); return isNaN(v) ? null : v; })) : null,
