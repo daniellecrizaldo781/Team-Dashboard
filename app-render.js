@@ -337,7 +337,7 @@ function renderQa() {
       html += '<tr>' +
         '<td>' + fmtDate(x.date) + '</td>' +
         '<td>' + esc(x.day || '—') + '</td>' +
-        '<td>' + scorePill(x.score, 0) + '</td>' +
+        '<td>' + scorePill(x.score, 1) + '</td>';
         '<td>' + (x.link ? '<a href="' + esc(x.link) + '" target="_blank" rel="noopener" style="color:#C93B72">View</a>' : '—') + '</td>' +
         '<td>' + esc(x.notes || '—') + '</td>' +
       '</tr>';

@@ -37,7 +37,12 @@ function ymd(s) { if (!s) return null; var p = String(s).split('-'); return new 
 
 function pct(v, d) {
   if (v === null || v === undefined || isNaN(v)) return '\u2014';
-  return (v * 100).toFixed(d === undefined ? 1 : d) + '%';
+  var dp = d === undefined ? 1 : d;
+  var s = (v * 100).toFixed(dp);
+  // Drop trailing ".0" so a whole-number percentage (e.g. 100%) shows as "100%",
+  // not "100.0%" / "100.00%". Non-whole values (e.g. 99.5%) stay intact.
+  if (/\.0+$/.test(s)) s = s.replace(/\.0+$/, '');
+  return s + '%';
 }
 function n0(v) { return (v === null || v === undefined || isNaN(v)) ? '\u2014' : Math.round(v).toLocaleString(); }
 function n1(v) { return (v === null || v === undefined || isNaN(v)) ? '\u2014' : (Math.round(v * 10) / 10).toLocaleString(); }
