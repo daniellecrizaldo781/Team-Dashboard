@@ -283,10 +283,8 @@ function renderQa() {
   ranked.forEach(function (r, i) { r.rank = i + 1; });
 
   kpi('qaKpis', [
-    { label: 'Average QA Score', html: ranked.some(function (r) { return r.qa != null; })
-        ? pct(avg(ranked.map(function (r) { return r.qa; }).filter(function (v) { return v !== null; })))
-        : '—',
-      sub: 'team average', tone: ranked.some(function (r) { return r.qa != null; }) && avg(ranked.map(function (r) { return r.qa; }).filter(function (v) { return v !== null; })) >= 0.95 ? 'good' : 'warn' }
+    { label: 'Average QA Score', html: qa.length ? pct(avg(qa.map(function (r) { return r.score; }))) : '—',
+      sub: 'team average', tone: qa.length && avg(qa.map(function (r) { return r.score; })) >= 0.95 ? 'good' : 'warn' }
   ]);
 
   // podium
