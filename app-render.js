@@ -53,9 +53,11 @@ function renderOverview() {
 
   var items = [
     { label: 'Total Agents', value: n0(rank.length), sub: 'in current view' },
-    { label: 'Average QA Score', html: qa.length ? pct(avg(qa.map(function (r) { return r.score; }))) : '\u2014',
-      sub: qa.length ? n0(qa.length) + ' evaluations' : 'no QA records',
-      tone: qa.length && avg(qa.map(function (r) { return r.score; })) >= 0.95 ? 'good' : '' }
+    { label: 'Average QA Score', html: rank.some(function (r) { return r.qa != null; })
+        ? pct(avg(rank.map(function (r) { return r.qa; }).filter(function (v) { return v !== null; })))
+        : '\u2014',
+      sub: rank.length ? n0(rank.length) + ' agents' : 'no scorecards',
+      tone: rank.some(function (r) { return r.qa != null; }) && avg(rank.map(function (r) { return r.qa; }).filter(function (v) { return v !== null; })) >= 0.95 ? 'good' : '' }
   ];
   var prodVals = rank.map(function (r) { return r.prod; }).filter(function (v) { return v !== null; });
   items.push({ label: 'Average Productivity', html: prodVals.length ? pct(avg(prodVals)) : '\u2014',
@@ -281,8 +283,10 @@ function renderQa() {
   ranked.forEach(function (r, i) { r.rank = i + 1; });
 
   kpi('qaKpis', [
-    { label: 'Average QA Score', html: qa.length ? pct(avg(qa.map(function (r) { return r.score; }))) : '—',
-      sub: 'team average', tone: qa.length && avg(qa.map(function (r) { return r.score; })) >= 0.95 ? 'good' : 'warn' }
+    { label: 'Average QA Score', html: ranked.some(function (r) { return r.qa != null; })
+        ? pct(avg(ranked.map(function (r) { return r.qa; }).filter(function (v) { return v !== null; })))
+        : '—',
+      sub: 'team average', tone: ranked.some(function (r) { return r.qa != null; }) && avg(ranked.map(function (r) { return r.qa; }).filter(function (v) { return v !== null; })) >= 0.95 ? 'good' : 'warn' }
   ]);
 
   // podium
