@@ -298,14 +298,17 @@ var CASC_STATE = { cat: 'ALL', brand: 'ALL', detail: null };
 function renderRuns(runs, plain) {
   if (runs && runs.length) {
     return runs.map(function (r) {
-      var t = esc(r[0]);
+      // emojify + turn any image drivelinks inside the run into inline <img>,
+      // THEN escape. emojify runs before esc so glyphs survive; esc still
+      // neutralises any stray < > & in the raw text.
+      var t = inlineCascadeImages(emojify(esc(r[0])));
       if (r[1] && r[2]) return '<b><i>' + t + '</i></b>';
       if (r[1]) return '<b>' + t + '</b>';
       if (r[2]) return '<i>' + t + '</i>';
       return t;
     }).join('');
   }
-  return esc(plain || '');
+  return cascTextHtml(plain || '');
 }
 
 // Pull URLs out of a block of text (used for the Links/Image References area).
@@ -417,11 +420,11 @@ function cascadeDetailHtml(r) {
 
   return '<article class="casc-detail">' +
     '<div class="casc-head">' +
-      '<span class="pill n casc-cat">' + esc(r.category) + '</span>' +
-      (r.brand ? '<span class="casc-brand">' + esc(r.brand) + '</span>' : '') +
+      '<span class="pill n casc-cat">' + cascTextHtml(r.category) + '</span>' +
+      (r.brand ? '<span class="casc-brand">' + cascTextHtml(r.brand) + '</span>' : '') +
       '<span class="casc-date">' + esc(dateTxt) + '</span>' +
     '</div>' +
-    '<h3 class="casc-detail-title">' + esc(r.title || '(untitled)') + '</h3>' +
+    '<h3 class="casc-detail-title">' + cascTextHtml(r.title || '(untitled)') + '</h3>' +
     '<div class="casc-body">' + renderRuns(r.cascadeRuns, r.cascade) + '</div>' +
     refHtml +
   '</article>';

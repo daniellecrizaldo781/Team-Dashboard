@@ -106,8 +106,8 @@ function renderOverview() {
         var dateTxt = r.dateLabel || r.date || '';
         if (r.ts) { var d = new Date(r.ts); dateTxt = MON[d.getUTCMonth()] + ' ' + d.getUTCDate() + ', ' + d.getUTCFullYear(); }
         return '<button class="casc-row" data-cidx="' + idx + '">' +
-          '<span class="pill n casc-cat">' + esc(r.category) + '</span>' +
-          '<span class="casc-row-title">' + esc(r.title || '(untitled)') + '</span>' +
+          '<span class="pill n casc-cat">' + cascTextHtml(r.category) + '</span>' +
+          '<span class="casc-row-title">' + cascTextHtml(r.title || '(untitled)') + '</span>' +
           (dateTxt ? '<span class="casc-row-date">' + esc(dateTxt) + '</span>' : '') +
           '<span class="casc-row-arrow">&#8250;</span>' +
         '</button>';
