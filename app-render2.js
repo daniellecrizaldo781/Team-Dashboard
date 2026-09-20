@@ -399,11 +399,16 @@ function renderLeaves() {
     return 0;
   });
 
-  // default selected month = latest month that has (upcoming) leaves
+  // default selected month = current month (Manila) if it has leaves, else the
+  // latest month that has (upcoming) leaves. This way the page opens on the
+  // month the user is actually in, not a far-future month.
   var monthMap = {};
   lv.forEach(function (r) { var m = (r.dateManila || r.date || '').slice(0, 7); if (m) (monthMap[m] = monthMap[m] || []).push(r); });
   var mKeys = Object.keys(monthMap).sort();
-  if (!F.lvMonth || mKeys.indexOf(F.lvMonth) < 0) F.lvMonth = mKeys[mKeys.length - 1] || '';
+  var curM = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }).slice(0, 7);
+  if (!F.lvMonth || mKeys.indexOf(F.lvMonth) < 0) {
+    F.lvMonth = (mKeys.indexOf(curM) >= 0) ? curM : (mKeys[mKeys.length - 1] || '');
+  }
 
   // month selector (brings back the ability to pick a month)
   var mSel = $('lvMonth');
