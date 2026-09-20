@@ -403,6 +403,10 @@ function cascadeDetailHtml(r) {
       if (dataUri) {
         return '<img class="casc-inline-img" src="' + dataUri + '" alt="reference image" loading="lazy" onclick="openLb(this.src)">';
       }
+      if (isImage(u)) {
+        var _direct = toDirectImg(u);
+        return '<img class="casc-inline-img" src="' + esc(_direct) + '" alt="reference image" loading="lazy" data-href="' + esc(u) + '" onclick="openLb(this.src)" onerror="cascImgFallback(this)">';
+      }
       return '<a class="casc-open" href="' + u + '" target="_blank" rel="noopener">Click Here &#8599;</a>';
     });
     refParts.push('<div class="casc-ref-text">' + refText + '</div>');
@@ -526,6 +530,10 @@ function renderCascades() {
           var dataUri = embFor(u);
           if (dataUri) {
             return '<img class="casc-inline-img" src="' + dataUri + '" alt="reference image" loading="lazy" onclick="openLb(this.src)">';
+          }
+          if (isImage(u)) {
+            var _direct = toDirectImg(u);
+            return '<img class="casc-inline-img" src="' + esc(_direct) + '" alt="reference image" loading="lazy" data-href="' + esc(u) + '" onclick="openLb(this.src)" onerror="cascImgFallback(this)">';
           }
           return '<a class="casc-open" href="' + u + '" target="_blank" rel="noopener">Click Here &#8599;</a>';
         });
