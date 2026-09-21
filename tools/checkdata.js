@@ -70,9 +70,24 @@ Object.keys(MIN).forEach(k => (d[k] || []).forEach(r =>
   : bad('unexpected years: ' + [...years].sort().join(', '));
 
 console.log('\n=== no secrets ===');
-const SECRET = /script\.google\.com|AIza[0-9A-Za-z_\-]{20,}|ghp_[0-9A-Za-z]{20,}|"private_key"|BEGIN PRIVATE KEY/;
-SECRET.test(fs.readFileSync(path.join(ROOT, 'data.js'), 'utf8'))
-  ? bad('data.js contains something secret-looking')
+const SECRETS = [
+  { re: /script\.google\.com/,  what: 'a script.google.com URL (likely a pasted cascade/manual/leave link)' },
+  { re: /AIza[0-9A-Za-z_\-]{20,}/, what: 'an AIza&hellip; Google API key' },
+  { re: /ghp_[0-9A-Za-z]{20,}/,   what: 'a ghp_&hellip; GitHub token' },
+  { re: /"private_key"/,          what: 'a "private_key" field (service-account JSON)' },
+  { re: /BEGIN PRIVATE KEY/,      what: 'an inline PEM private key' }
+];
+const dataTxt = fs.readFileSync(path.join(ROOT, 'data.js'), 'utf8');
+let secretBad = null;
+SECRETS.forEach(function (s) {
+  if (s.re.test(dataTxt) && !secretBad) secretBad = s.what;
+});
+secretBad
+  ? bad('data.js: ' + secretBad + '\n' +
+      '       (this is a REAL value now sitting in one of the linked sheets - open\n' +
+      '        the OT-schedule/Leave or Products sheet, find the cell containing that\n' +
+      '        string, and delete or replace it, then the next hourly sync will publish\n' +
+      '        fine. Do NOT commit a data.js that still contains it.)')
   : ok('data.js clean');
 
 console.log('\n=== regression guard (never publish a data.js that lost rows vs last commit) ===');
