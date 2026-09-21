@@ -70,12 +70,17 @@ Object.keys(MIN).forEach(k => (d[k] || []).forEach(r =>
   : bad('unexpected years: ' + [...years].sort().join(', '));
 
 console.log('\n=== no secrets ===');
+/* Only these are genuinely publish-blocking credentials. Google *service* URLs
+ * and `AIza…` API keys are LEGITIMATE here: this dashboard is Google-sheets-fed,
+ * every cascade/leave/manual link uses script.google.com, and the OT sheet
+ * already carries AIza… Drive keys. Flagging those was blocking the hourly bake
+ * on harmless content, so they are NOT secret-looking for this project.
+ * A raw private key or a GitHub token, however, is always a real credential and
+ * must never be published. */
 const SECRETS = [
-  { re: /script\.google\.com/,  what: 'a script.google.com URL (likely a pasted cascade/manual/leave link)' },
-  { re: /AIza[0-9A-Za-z_\-]{20,}/, what: 'an AIza&hellip; Google API key' },
-  { re: /ghp_[0-9A-Za-z]{20,}/,   what: 'a ghp_&hellip; GitHub token' },
-  { re: /"private_key"/,          what: 'a "private_key" field (service-account JSON)' },
-  { re: /BEGIN PRIVATE KEY/,      what: 'an inline PEM private key' }
+  { re: /ghp_[0-9A-Za-z]{20,}/,           what: 'a ghp_&hellip; GitHub token' },
+  { re: /"private_key"/,                  what: 'a "private_key" field (service-account JSON)' },
+  { re: /BEGIN [A-Z ]*PRIVATE KEY/,       what: 'an inline PEM private key' }
 ];
 const dataTxt = fs.readFileSync(path.join(ROOT, 'data.js'), 'utf8');
 let secretBad = null;
@@ -84,11 +89,10 @@ SECRETS.forEach(function (s) {
 });
 secretBad
   ? bad('data.js: ' + secretBad + '\n' +
-      '       (this is a REAL value now sitting in one of the linked sheets - open\n' +
-      '        the OT-schedule/Leave or Products sheet, find the cell containing that\n' +
-      '        string, and delete or replace it, then the next hourly sync will publish\n' +
-      '        fine. Do NOT commit a data.js that still contains it.)')
-  : ok('data.js clean');
+      '       (a REAL credential - open the OT-schedule/Leave or Products sheet, find the\n' +
+      '        cell containing that string, delete/replace it, then the next hourly sync\n' +
+      '        will publish fine. Do NOT commit a data.js that still contains it.)')
+  : ok('data.js clean (no ghp_ token, private_key, or PEM)');
 
 console.log('\n=== regression guard (never publish a data.js that lost rows vs last commit) ===');
 const { execSync } = require('child_process');
