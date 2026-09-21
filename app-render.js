@@ -204,13 +204,29 @@ function renderProductivity() {
   // sort by actual productivity desc
   grid.sort(function (x, y) { return (y.weeklyActual || 0) - (x.weeklyActual || 0); });
 
+  // day -> date for the latest week in the current view, so each day header can
+  // carry the real date above the day name. Uses the same weekly grid as the sheet.
+  var dayDate = {};
+  (function () {
+    var wd = null;
+    dp.forEach(function (r) { if (r.week && (!wd || r.week > wd)) wd = r.week; });
+    var w = dp.filter(function (r) { return r.week === wd; });
+    w.forEach(function (r) { if (r.day && r.date) dayDate[r.day] = r.date; });
+  })();
+  function shortDate(iso) {
+    if (!iso) return '';
+    var p = String(iso).split('-');
+    if (p.length === 3) return (+p[1]) + '/' + (+p[2]);
+    return iso;
+  }
   var cols = [
     { key: 'agent', label: 'Name of Agent' },
     { key: 'weeklyTarget', label: 'Weekly Target', num: true, fmt: function (r) { return n0(r.weeklyTarget); } },
     { key: 'weeklyActual', label: 'Actual Productivity', num: true, fmt: function (r) { return n0(r.weeklyActual); } }
   ];
   dayKeys.forEach(function (d) {
-    cols.push({ key: d, label: d, num: true,
+    cols.push({ key: d, num: true, center: true,
+      labelHtml: '<span class="pr-day-date">' + esc(shortDate(dayDate[d])) + '</span>' + d,
       fmt: function (r) { var c = r.cells[dayKeys.indexOf(d)]; return c.off ? '<span class="pill off">OFF</span>' : c.v; } });
   });
   cols.push({ key: 'productivityPct', label: 'Productivity %', num: true,

@@ -200,6 +200,8 @@ thead th.sortable:hover{background:var(--dusty);color:#fff}
 tbody td{padding:9px 13px;border-top:1px solid var(--line);vertical-align:middle}
 tbody tr:hover{background:var(--blush)}
 td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+td.c,th.c{text-align:center}
+.pr-day-date{display:block;font-size:10px;font-weight:600;color:var(--ink3);letter-spacing:.02em;margin-bottom:2px}
 .rank{font-weight:800;color:var(--rose-d)}
 .pill{
   display:inline-block;padding:3px 10px;border-radius:999px;

@@ -254,13 +254,15 @@ function drawTable(mount) {
   var h = '<table><thead><tr>';
   cols.forEach(function (c) {
     var act = st.sort === c.key ? (st.dir === 'asc' ? ' \u25B2' : ' \u25BC') : '';
-    h += '<th class="sortable' + (c.num ? ' num' : '') + '" data-k="' + esc(c.key) + '">' + esc(c.label) + act + '</th>';
+    h += '<th class="sortable' + (c.num ? ' num' : '') + (c.center ? ' c' : '') + '" data-k="' + esc(c.key) + '">' +
+      (c.labelHtml ? c.labelHtml : esc(c.label)) + act + '</th>';
   });
   h += '</tr></thead><tbody>';
   view.forEach(function (r) {
     h += '<tr>';
     cols.forEach(function (c) {
-      h += '<td' + (c.num ? ' class="num"' : '') + '>' + (c.fmt ? c.fmt(r) : esc(r[c.key])) + '</td>';
+      var cls = (c.num ? ' num' : '') + (c.center ? ' c' : '');
+      h += '<td' + (cls ? ' class="' + cls.slice(1) + '"' : '') + '>' + (c.fmt ? c.fmt(r) : esc(r[c.key])) + '</td>';
     });
     h += '</tr>';
   });
