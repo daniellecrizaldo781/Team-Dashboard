@@ -145,6 +145,18 @@ select,input{font:inherit;color:var(--ink)}
 .card-flat .card-head{margin-bottom:8px}
 .card-flat h4{margin:0;font-size:14px;color:var(--ink)}
 .line-avg{font-size:12px;font-weight:600;color:var(--rose-d)}
+.cmp-range{font-size:12px;color:var(--ink);opacity:.75}
+.cmp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.cmp-line{background:var(--blush);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.cmp-line h5{margin:0 0 10px;font-size:13px;color:var(--ink)}
+.cmp-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
+.cmp-row:first-of-type{border-top:none}
+.cmp-row .lbl{font-size:12px;color:var(--ink);opacity:.8}
+.cmp-row .val{font-size:14px;font-weight:700;color:var(--ink)}
+.cmp-delta{font-size:12px;font-weight:700;margin-left:8px}
+.cmp-delta.up{color:#2e9e5b}
+.cmp-delta.down{color:#d6455d}
+.cmp-delta.flat{color:var(--ink);opacity:.5}
 
 /* ---------- top performer ---------- */
 .top-performer{margin-bottom:18px;min-width:0}

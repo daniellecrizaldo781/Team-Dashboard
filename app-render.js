@@ -315,13 +315,70 @@ function renderCalls() {
   ]);
 
   // split by hotline line (OHA vs ALL BRANDS) - same source as the Schedule page
-  var hl = agentHotlineMap();
-  var oha = cl.filter(function (r) { return (hl[r.agent] || 'ALL BRANDS') === 'OHA'; });
-  var nb  = cl.filter(function (r) { return (hl[r.agent] || 'ALL BRANDS') !== 'OHA'; });
+    var hl = agentHotlineMap();
+    var oha = cl.filter(function (r) { return (hl[r.agent] || 'ALL BRANDS') === 'OHA'; });
+    var nb  = cl.filter(function (r) { return (hl[r.agent] || 'ALL BRANDS') !== 'OHA'; });
 
-  renderCallTable('clOhaTable', 'clOhaAvg', oha, 'No OHA call statistics match the selected filters.');
-  renderCallTable('clNbTable', 'clNbAvg', nb, 'No All-Brands call statistics match the selected filters.');
-}
+    renderCallTable('clOhaTable', 'clOhaAvg', oha, 'No OHA call statistics match the selected filters.');
+    renderCallTable('clNbTable', 'clNbAvg', nb, 'No All-Brands call statistics match the selected filters.');
+
+    renderCallCompare(oha, nb);
+  }
+
+  /* ---------------- WEEK-OVER-WEEK COMPARISON (per line) ---------------- */
+  function renderCallCompare(oha, nb) {
+    var card = $('clCmpCard'), grid = $('clCmp'), range = $('clCmpRange');
+    if (!card || !grid) return;
+
+    // pick the two weeks to compare: selected week vs previous, or the two most recent
+    var allWeeks = uniq((DATA.weeklyCallStats || []).map(function (r) { return r.week; })).sort();
+    if (allWeeks.length < 2) { card.hidden = true; return; }
+    card.hidden = false;
+
+    var cur, prev;
+    if (F.week && F.week !== 'ALL' && allWeeks.indexOf(F.week) >= 0) {
+      cur = F.week;
+      var i = allWeeks.indexOf(cur);
+      prev = i > 0 ? allWeeks[i - 1] : null;
+    } else {
+      cur = allWeeks[allWeeks.length - 1];
+      prev = allWeeks[allWeeks.length - 2];
+    }
+    if (!prev) { card.hidden = true; return; }
+
+    if (range) range.textContent = fmtWeek(cur) + ' vs ' + fmtWeek(prev);
+
+    function lineAvg(rows, week) {
+      var w = rows.filter(function (r) { return r.week === week; });
+      return callLineAvg(w);
+    }
+
+    function deltaHtml(curV, prevV, higherIsBetter, isPct) {
+          if (curV === null || prevV === null) return '<span class="cmp-delta flat">\u2014</span>';
+          var d = curV - prevV;
+          if (Math.abs(d) < 1e-9) return '<span class="cmp-delta flat">\u25b6 0</span>';
+          var up = d > 0;
+          var good = higherIsBetter ? up : !up;
+          var arrow = up ? '\u25b2' : '\u25bc';
+          var cls = good ? 'up' : 'down';
+          var mag = isPct ? pct(Math.abs(d)) : secToAht(Math.abs(d));
+          return '<span class="cmp-delta ' + cls + '">' + arrow + ' ' + mag + '</span>';
+        }
+
+        function lineCard(title, rows) {
+          var a = lineAvg(rows, cur), b = lineAvg(rows, prev);
+          var pr = deltaHtml(a.pickupRate, b.pickupRate, true, true);   // higher pickup = better
+          var aht = deltaHtml(a.aht, b.aht, false, false);              // lower AHT = better
+          return '<div class="cmp-line"><h5>' + esc(title) + '</h5>' +
+            '<div class="cmp-row"><span class="lbl">Avg Pickup</span>' +
+              '<span><span class="val">' + (a.pickupRate !== null ? pct(a.pickupRate) : '\u2014') + '</span>' + pr + '</span></div>' +
+            '<div class="cmp-row"><span class="lbl">Avg AHT</span>' +
+              '<span><span class="val">' + (a.aht !== null ? secToAht(a.aht) : '\u2014') + '</span>' + aht + '</span></div>' +
+            '</div>';
+        }
+
+    grid.innerHTML = lineCard('OHA', oha) + lineCard('All Brands (Non-OHA)', nb);
+  }
 
 /* ---------------- QA SCORES (all agents, one page) ---------------- */
 function renderQa() {
