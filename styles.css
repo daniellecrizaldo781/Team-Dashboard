@@ -141,6 +141,10 @@ select,input{font:inherit;color:var(--ink)}
 }
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}
 .grid2>.card{margin-bottom:18px}
+.card-flat{box-shadow:none;background:var(--blush);border-color:var(--line)}
+.card-flat .card-head{margin-bottom:8px}
+.card-flat h4{margin:0;font-size:14px;color:var(--ink)}
+.line-avg{font-size:12px;font-weight:600;color:var(--rose-d)}
 
 /* ---------- top performer ---------- */
 .top-performer{margin-bottom:18px;min-width:0}

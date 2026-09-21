@@ -238,6 +238,47 @@ function renderProductivity() {
 }
 
 /* ---------------- WEEKLY CALL STATS ---------------- */
+function ahtToSec(h) {
+  if (!h) return null;
+  var p = String(h).split(':');
+  if (p.length < 2) return null;
+  var sec = (+p[0]) * 3600 + (+p[1]) * 60 + (+(p[2] || 0));
+  return isNaN(sec) ? null : sec;
+}
+function secToAht(s) {
+  if (s === null || isNaN(s)) return '\u2014';
+  s = Math.round(s);
+  var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  var mS = ('0' + m).slice(-2), sS = ('0' + sec).slice(-2);
+  return (h > 0 ? h + ':' : '') + mS + ':' + sS;
+}
+/** Per-line average pickup rate (weighted) + average AHT (mean of seconds). */
+function callLineAvg(rows) {
+  var att = sum(rows.map(function (r) { return r.attempts; }));
+  var pic = sum(rows.map(function (r) { return r.pickedUp; }));
+  var secs = rows.map(function (r) { return ahtToSec(r.aht); }).filter(function (s) { return s !== null; });
+  return {
+    pickupRate: att ? pic / att : null,
+    aht: secs.length ? sum(secs) / secs.length : null,
+    count: rows.length
+  };
+}
+function renderCallTable(mountId, avgId, rows, empty) {
+  var a = callLineAvg(rows);
+  var avg = '';
+  if (a.pickupRate !== null) avg += 'Avg Pickup ' + pct(a.pickupRate);
+  if (a.aht !== null) avg += (avg ? ' \u00b7 ' : '') + 'Avg AHT ' + secToAht(a.aht);
+  var el = $(avgId); if (el) el.textContent = avg;
+  makeTable(mountId, [
+    { key: 'week', label: 'Week', fmt: function (r) { return fmtWeek(r.week); }, sortVal: function (r) { return r.week; } },
+    { key: 'agent', label: 'Agent' },
+    { key: 'attempts', label: 'Attempts', num: true, fmt: function (r) { return n0(r.attempts); } },
+    { key: 'pickedUp', label: 'Picked Up', num: true, fmt: function (r) { return n0(r.pickedUp); } },
+    { key: 'notPickedUp', label: 'Not Picked', num: true, fmt: function (r) { return n0(r.notPickedUp); } },
+    { key: 'pickupRate', label: 'Pickup Rate', num: true, fmt: function (r) { return scorePill(r.pickupRate); }, sortVal: function (r) { return r.pickupRate; } },
+    { key: 'aht', label: 'AHT' }
+  ], rows, { sort: 'week', dir: 'desc', empty: empty });
+}
 function renderCalls() {
   var cl = slice(DATA.weeklyCallStats);
 
@@ -248,11 +289,15 @@ function renderCalls() {
       : 'The source sheet has no call-statistics blocks for ' + (DATA.dataYear || 2026) +
         ' yet. Fill in a \u201cWeekly Call Stats\u201d block (Ringing Attempts \u00b7 Picked Up \u00b7 AHT) ' +
         'under any week and it will appear here automatically after the next sync.';
-    kpi('clKpis', [{ label: 'Weekly Call Stats', html: '—', sub: 'nothing to show yet' }]);
-    chartEmpty('chClAgent');
-    makeTable('clTable', [{ key: 'agent', label: 'Agent' }], [], { empty: why });
+    kpi('clKpis', [{ label: 'Weekly Call Stats', html: '\u2014', sub: 'nothing to show yet' }]);
+    renderCallTable('clOhaTable', 'clOhaAvg', [], '');
+    renderCallTable('clNbTable', 'clNbAvg', [], '');
     return;
   }
+
+  // optional search-box filter (agent) applied before the line split
+  var sq = (($('clSearch') || {}).value || '').toLowerCase().trim();
+  if (sq) cl = cl.filter(function (r) { return (r.agent || '').toLowerCase().indexOf(sq) >= 0; });
 
   var attempts = sum(cl.map(function (r) { return r.attempts; }));
   var picked = sum(cl.map(function (r) { return r.pickedUp; }));
@@ -269,22 +314,13 @@ function renderCalls() {
     { label: 'Weeks Covered', value: n0(weeks.length), sub: 'in current view' }
   ]);
 
-  var byWk = groupBy(cl, function (r) { return r.week; });
-  var wk = byWk.keys.slice().sort();
+  // split by hotline line (OHA vs ALL BRANDS) - same source as the Schedule page
+  var hl = agentHotlineMap();
+  var oha = cl.filter(function (r) { return (hl[r.agent] || 'ALL BRANDS') === 'OHA'; });
+  var nb  = cl.filter(function (r) { return (hl[r.agent] || 'ALL BRANDS') !== 'OHA'; });
 
-  var byAg = groupBy(cl, function (r) { return r.agent; });
-  var ag = byAg.keys.slice().sort(function (a, b) {
-    return sum(byAg.map[b].map(function (r) { return r.pickedUp; })) - sum(byAg.map[a].map(function (r) { return r.pickedUp; }));
-  });
-  makeTable('clTable', [
-    { key: 'week', label: 'Week', fmt: function (r) { return fmtWeek(r.week); }, sortVal: function (r) { return r.week; } },
-    { key: 'agent', label: 'Agent' },
-    { key: 'attempts', label: 'Attempts', num: true, fmt: function (r) { return n0(r.attempts); } },
-    { key: 'pickedUp', label: 'Picked Up', num: true, fmt: function (r) { return n0(r.pickedUp); } },
-    { key: 'notPickedUp', label: 'Not Picked', num: true, fmt: function (r) { return n0(r.notPickedUp); } },
-    { key: 'pickupRate', label: 'Pickup Rate', num: true, fmt: function (r) { return scorePill(r.pickupRate); }, sortVal: function (r) { return r.pickupRate; } },
-    { key: 'aht', label: 'AHT' }
-  ], cl, { sort: 'week', dir: 'desc' });
+  renderCallTable('clOhaTable', 'clOhaAvg', oha, 'No OHA call statistics match the selected filters.');
+  renderCallTable('clNbTable', 'clNbAvg', nb, 'No All-Brands call statistics match the selected filters.');
 }
 
 /* ---------------- QA SCORES (all agents, one page) ---------------- */

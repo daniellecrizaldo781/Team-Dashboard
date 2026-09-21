@@ -119,7 +119,7 @@ function wire() {
     ['otWeek', 'scRankWeek'].forEach(function (id) { if ($(id)) $(id).value = ''; });
     ['prSearch', 'clSearch', 'scSearch', 'bkSearch']
       .forEach(function (id) { if ($(id)) $(id).value = ''; });
-    ['prTable', 'clTable', 'scTable', 'bkTable']
+    ['prTable', 'clOhaTable', 'clNbTable', 'scTable', 'bkTable']
       .forEach(function (id) { if ($(id) && $(id)._st) { $(id)._st.q = ''; $(id)._st.page = 1; } });
     render();
     toast('Filters reset.');
@@ -154,7 +154,7 @@ function wire() {
   });
 
   wireSearch('prSearch', 'prTable');
-  wireSearch('clSearch', 'clTable');
+  var clS = $('clSearch'); if (clS) clS.oninput = function(){ try { renderCalls(); } catch (e) { console.error('calls', e); } };
   wireSearch('scSearch', 'scTable');
   wireSearch('bkSearch', 'bkTable');
 
