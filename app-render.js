@@ -325,60 +325,64 @@ function renderCalls() {
     renderCallCompare(oha, nb);
   }
 
-  /* ---------------- WEEK-OVER-WEEK COMPARISON (per line) ---------------- */
-  function renderCallCompare(oha, nb) {
-    var card = $('clCmpCard'), grid = $('clCmp'), range = $('clCmpRange');
-    if (!card || !grid) return;
+  /* ---------------- WEEK-BY-WEEK COMPARISON (per line) ---------------- */
+    function renderCallCompare(oha, nb) {
+      var card = $('clCmpCard'), range = $('clCmpRange');
+      if (!card) return;
 
-    // pick the two weeks to compare: selected week vs previous, or the two most recent
-    var allWeeks = uniq((DATA.weeklyCallStats || []).map(function (r) { return r.week; })).sort();
-    if (allWeeks.length < 2) { card.hidden = true; return; }
-    card.hidden = false;
+      var allWeeks = uniq((DATA.weeklyCallStats || []).map(function (r) { return r.week; })).sort();
+      if (allWeeks.length < 2) { card.hidden = true; return; }
+      card.hidden = false;
 
-    var cur, prev;
-    if (F.week && F.week !== 'ALL' && allWeeks.indexOf(F.week) >= 0) {
-      cur = F.week;
-      var i = allWeeks.indexOf(cur);
-      prev = i > 0 ? allWeeks[i - 1] : null;
-    } else {
-      cur = allWeeks[allWeeks.length - 1];
-      prev = allWeeks[allWeeks.length - 2];
-    }
-    if (!prev) { card.hidden = true; return; }
+      if (range) range.textContent = 'Each week vs the previous week';
 
-    if (range) range.textContent = fmtWeek(cur) + ' vs ' + fmtWeek(prev);
+      function lineAvg(rows, week) {
+        return callLineAvg(rows.filter(function (r) { return r.week === week; }));
+      }
 
-    function lineAvg(rows, week) {
-      var w = rows.filter(function (r) { return r.week === week; });
-      return callLineAvg(w);
-    }
-
-    function deltaHtml(curV, prevV, higherIsBetter, isPct) {
-          if (curV === null || prevV === null) return '<span class="cmp-delta flat">\u2014</span>';
-          var d = curV - prevV;
-          if (Math.abs(d) < 1e-9) return '<span class="cmp-delta flat">\u25b6 0</span>';
-          var up = d > 0;
-          var good = higherIsBetter ? up : !up;
-          var arrow = up ? '\u25b2' : '\u25bc';
-          var cls = good ? 'up' : 'down';
-          var mag = isPct ? pct(Math.abs(d)) : secToAht(Math.abs(d));
-          return '<span class="cmp-delta ' + cls + '">' + arrow + ' ' + mag + '</span>';
+      // build one row per week: week label, avg pickup, avg AHT, and delta vs prev week
+      function buildRows(rows) {
+        var out = [];
+        for (var i = 0; i < allWeeks.length; i++) {
+          var wk = allWeeks[i];
+          var a = lineAvg(rows, wk);
+          var prev = i > 0 ? lineAvg(rows, allWeeks[i - 1]) : null;
+          out.push({
+            week: wk,
+            pickupRate: a.pickupRate,
+            aht: a.aht,
+            dPickup: prev ? (a.pickupRate !== null && prev.pickupRate !== null ? a.pickupRate - prev.pickupRate : null) : null,
+            dAht: prev ? (a.aht !== null && prev.aht !== null ? a.aht - prev.aht : null) : null
+          });
         }
+        return out;
+      }
 
-        function lineCard(title, rows) {
-          var a = lineAvg(rows, cur), b = lineAvg(rows, prev);
-          var pr = deltaHtml(a.pickupRate, b.pickupRate, true, true);   // higher pickup = better
-          var aht = deltaHtml(a.aht, b.aht, false, false);              // lower AHT = better
-          return '<div class="cmp-line"><h5>' + esc(title) + '</h5>' +
-            '<div class="cmp-row"><span class="lbl">Avg Pickup</span>' +
-              '<span><span class="val">' + (a.pickupRate !== null ? pct(a.pickupRate) : '\u2014') + '</span>' + pr + '</span></div>' +
-            '<div class="cmp-row"><span class="lbl">Avg AHT</span>' +
-              '<span><span class="val">' + (a.aht !== null ? secToAht(a.aht) : '\u2014') + '</span>' + aht + '</span></div>' +
-            '</div>';
-        }
+      function deltaHtml(d, higherIsBetter, isPct) {
+        if (d === null || d === undefined) return '<span class="cmp-delta flat">\u2014</span>';
+        if (Math.abs(d) < 1e-9) return '<span class="cmp-delta flat">\u25b6 0</span>';
+        var up = d > 0;
+        var good = higherIsBetter ? up : !up;
+        var arrow = up ? '\u25b2' : '\u25bc';
+        var cls = good ? 'up' : 'down';
+        var mag = isPct ? pct(Math.abs(d)) : secToAht(Math.abs(d));
+        return '<span class="cmp-delta ' + cls + '">' + arrow + ' ' + mag + '</span>';
+      }
 
-    grid.innerHTML = lineCard('OHA', oha) + lineCard('All Brands (Non-OHA)', nb);
-  }
+      function renderTable(mountId, rows) {
+        var data = buildRows(rows);
+        makeTable(mountId, [
+          { key: 'week', label: 'Week', fmt: function (r) { return fmtWeek(r.week); }, sortVal: function (r) { return r.week; } },
+          { key: 'pickupRate', label: 'Avg Pickup', num: true, fmt: function (r) { return r.pickupRate !== null ? pct(r.pickupRate) : '\u2014'; }, sortVal: function (r) { return r.pickupRate; } },
+          { key: 'dPickup', label: '\u0394 Pickup', fmt: function (r) { return deltaHtml(r.dPickup, true, true); } },
+          { key: 'aht', label: 'Avg AHT', fmt: function (r) { return r.aht !== null ? secToAht(r.aht) : '\u2014'; } },
+          { key: 'dAht', label: '\u0394 AHT', fmt: function (r) { return deltaHtml(r.dAht, false, false); } }
+        ], data, { sort: 'week', dir: 'desc' });
+      }
+
+      renderTable('clCmpOha', oha);
+            renderTable('clCmpNb', nb);
+    }
 
 /* ---------------- QA SCORES (all agents, one page) ---------------- */
 function renderQa() {
