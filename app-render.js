@@ -325,64 +325,69 @@ function renderCalls() {
     renderCallCompare(oha, nb);
   }
 
-  /* ---------------- WEEK-BY-WEEK COMPARISON (per line) ---------------- */
-    function renderCallCompare(oha, nb) {
-      var card = $('clCmpCard'), range = $('clCmpRange');
-      if (!card) return;
+  /* ---------------- WEEK COMPARISON (side-by-side, per line) ---------------- */
+      function renderCallCompare(oha, nb) {
+        var card = $('clCmpCard'), sel = $('clCmpWeek');
+        if (!card) return;
 
-      var allWeeks = uniq((DATA.weeklyCallStats || []).map(function (r) { return r.week; })).sort();
-      if (allWeeks.length < 2) { card.hidden = true; return; }
-      card.hidden = false;
+        var allWeeks = uniq((DATA.weeklyCallStats || []).map(function (r) { return r.week; })).sort();
+        if (allWeeks.length < 2) { card.hidden = true; return; }
+        card.hidden = false;
 
-      if (range) range.textContent = 'Each week vs the previous week';
-
-      function lineAvg(rows, week) {
-        return callLineAvg(rows.filter(function (r) { return r.week === week; }));
-      }
-
-      // build one row per week: week label, avg pickup, avg AHT, and delta vs prev week
-      function buildRows(rows) {
-        var out = [];
-        for (var i = 0; i < allWeeks.length; i++) {
-          var wk = allWeeks[i];
-          var a = lineAvg(rows, wk);
-          var prev = i > 0 ? lineAvg(rows, allWeeks[i - 1]) : null;
-          out.push({
-            week: wk,
-            pickupRate: a.pickupRate,
-            aht: a.aht,
-            dPickup: prev ? (a.pickupRate !== null && prev.pickupRate !== null ? a.pickupRate - prev.pickupRate : null) : null,
-            dAht: prev ? (a.aht !== null && prev.aht !== null ? a.aht - prev.aht : null) : null
-          });
+        // week selector: pick the "current" week; compare against the previous one
+        if (sel) {
+          sel.innerHTML = allWeeks.map(function (w) {
+            return '<option value="' + esc(w) + '">' + esc(fmtWeek(w)) + '</option>';
+          }).join('');
+          var def = F.week && F.week !== 'ALL' && allWeeks.indexOf(F.week) >= 0 ? F.week : allWeeks[allWeeks.length - 1];
+          sel.value = def;
+          sel.onchange = function () { renderCallCompare(oha, nb); };
         }
-        return out;
-      }
+        var cur = sel ? sel.value : allWeeks[allWeeks.length - 1];
+        var i = allWeeks.indexOf(cur);
+        var prev = i > 0 ? allWeeks[i - 1] : null;
+        if (!prev) { card.hidden = true; return; }
 
-      function deltaHtml(d, higherIsBetter, isPct) {
-        if (d === null || d === undefined) return '<span class="cmp-delta flat">\u2014</span>';
-        if (Math.abs(d) < 1e-9) return '<span class="cmp-delta flat">\u25b6 0</span>';
-        var up = d > 0;
-        var good = higherIsBetter ? up : !up;
-        var arrow = up ? '\u25b2' : '\u25bc';
-        var cls = good ? 'up' : 'down';
-        var mag = isPct ? pct(Math.abs(d)) : secToAht(Math.abs(d));
-        return '<span class="cmp-delta ' + cls + '">' + arrow + ' ' + mag + '</span>';
-      }
+        function lineAvg(rows, week) {
+          return callLineAvg(rows.filter(function (r) { return r.week === week; }));
+        }
 
-      function renderTable(mountId, rows) {
-        var data = buildRows(rows);
-        makeTable(mountId, [
-          { key: 'week', label: 'Week', fmt: function (r) { return fmtWeek(r.week); }, sortVal: function (r) { return r.week; } },
-          { key: 'pickupRate', label: 'Avg Pickup', num: true, fmt: function (r) { return r.pickupRate !== null ? pct(r.pickupRate) : '\u2014'; }, sortVal: function (r) { return r.pickupRate; } },
-          { key: 'dPickup', label: '\u0394 Pickup', fmt: function (r) { return deltaHtml(r.dPickup, true, true); } },
-          { key: 'aht', label: 'Avg AHT', fmt: function (r) { return r.aht !== null ? secToAht(r.aht) : '\u2014'; } },
-          { key: 'dAht', label: '\u0394 AHT', fmt: function (r) { return deltaHtml(r.dAht, false, false); } }
-        ], data, { sort: 'week', dir: 'desc' });
-      }
+        function deltaHtml(d, higherIsBetter, isPct) {
+          if (d === null || d === undefined) return '<span class="cmp-delta flat">\u2014</span>';
+          if (Math.abs(d) < 1e-9) return '<span class="cmp-delta flat">\u25b6 0</span>';
+          var up = d > 0;
+          var good = higherIsBetter ? up : !up;
+          var arrow = up ? '\u25b2' : '\u25bc';
+          var cls = good ? 'up' : 'down';
+          var mag = isPct ? pct(Math.abs(d)) : secToAht(Math.abs(d));
+          return '<span class="cmp-delta ' + cls + '">' + arrow + ' ' + mag + '</span>';
+        }
 
-      renderTable('clCmpOha', oha);
-            renderTable('clCmpNb', nb);
-    }
+        // side-by-side: two week columns + a change column
+        function renderSide(mountId, rows) {
+          var a = lineAvg(rows, cur), b = lineAvg(rows, prev);
+          var pr = deltaHtml(a.pickupRate !== null && b.pickupRate !== null ? a.pickupRate - b.pickupRate : null, true, true);
+          var aht = deltaHtml(a.aht !== null && b.aht !== null ? a.aht - b.aht : null, false, false);
+          var el = $(mountId);
+          if (!el) return;
+          el.innerHTML =
+            '<table class="cmp-side"><thead><tr>' +
+              '<th></th><th>' + esc(fmtWeek(cur)) + '</th><th>' + esc(fmtWeek(prev)) + '</th><th>Change</th>' +
+            '</tr></thead><tbody>' +
+              '<tr><td class="lbl">Avg Pickup</td>' +
+                '<td class="val">' + (a.pickupRate !== null ? pct(a.pickupRate) : '\u2014') + '</td>' +
+                '<td class="val">' + (b.pickupRate !== null ? pct(b.pickupRate) : '\u2014') + '</td>' +
+                '<td>' + pr + '</td></tr>' +
+              '<tr><td class="lbl">Avg AHT</td>' +
+                '<td class="val">' + (a.aht !== null ? secToAht(a.aht) : '\u2014') + '</td>' +
+                '<td class="val">' + (b.aht !== null ? secToAht(b.aht) : '\u2014') + '</td>' +
+                '<td>' + aht + '</td></tr>' +
+            '</tbody></table>';
+        }
+
+        renderSide('clCmpOha', oha);
+        renderSide('clCmpNb', nb);
+      }
 
 /* ---------------- QA SCORES (all agents, one page) ---------------- */
 function renderQa() {

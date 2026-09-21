@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Team Danielle Dashboard</title>
-<link rel="stylesheet" href="styles.css?v=175">
+<link rel="stylesheet" href="styles.css?v=176">
 </head>
 <body>
 
@@ -84,18 +84,20 @@
     <section class="page" id="pageCalls" hidden>
       <div class="kpis" id="clKpis"></div>
       <div class="card" id="clCmpCard">
-        <div class="card-head"><h3>Week-by-Week Comparison per Line</h3><span class="cmp-range" id="clCmpRange"></span></div>
-        <div class="grid2">
-          <div class="card card-flat">
-            <div class="card-head"><h4>OHA</h4></div>
-            <div class="tscroll" id="clCmpOha"></div>
+            <div class="card-head"><h3>Week Comparison</h3>
+              <select class="search" id="clCmpWeek"></select>
+            </div>
+            <div class="grid2">
+              <div class="card card-flat">
+                <div class="card-head"><h4>OHA</h4></div>
+                <div class="tscroll" id="clCmpOha"></div>
+              </div>
+              <div class="card card-flat">
+                <div class="card-head"><h4>All Brands (Non-OHA)</h4></div>
+                <div class="tscroll" id="clCmpNb"></div>
+              </div>
+            </div>
           </div>
-          <div class="card card-flat">
-            <div class="card-head"><h4>All Brands (Non-OHA)</h4></div>
-            <div class="tscroll" id="clCmpNb"></div>
-          </div>
-        </div>
-      </div>
       <div class="card">
         <div class="card-head"><h3>Weekly Call Statistics by Line</h3><input class="search" id="clSearch" placeholder="Search&hellip;"></div>
         <div class="grid2">
@@ -299,11 +301,11 @@
 
 <script src="chart.umd.min.js"></script>
 <script src="config.js?v=171"></script>
-<script src="data.js?v=175"></script>
+<script src="data.js?v=176"></script>
 <script src="app-core.js?v=171"></script>
 <script src="app-emoji.js?v=171"></script>
 <script src="app-charts.js?v=171"></script>
-<script src="app-render.js?v=175"></script>
+<script src="app-render.js?v=176"></script>
 <script src="app-render2.js?v=171"></script>
 <script src="app-init.js?v=173"></script>
 

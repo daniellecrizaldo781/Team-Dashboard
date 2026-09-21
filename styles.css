@@ -157,6 +157,11 @@ select,input{font:inherit;color:var(--ink)}
 .cmp-delta.up{color:#2e9e5b}
 .cmp-delta.down{color:#d6455d}
 .cmp-delta.flat{color:var(--ink);opacity:.5}
+.cmp-side{width:100%;border-collapse:collapse;font-size:13px}
+.cmp-side th{text-align:left;padding:7px 10px;font-size:12px;color:var(--ink);opacity:.8;border-bottom:1px solid var(--line)}
+.cmp-side td{padding:8px 10px;border-bottom:1px solid var(--line)}
+.cmp-side td.lbl{font-size:12px;color:var(--ink);opacity:.8;white-space:nowrap}
+.cmp-side td.val{font-weight:700;color:var(--ink);white-space:nowrap}
 
 /* ---------- top performer ---------- */
 .top-performer{margin-bottom:18px;min-width:0}
