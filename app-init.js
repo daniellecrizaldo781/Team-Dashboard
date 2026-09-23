@@ -73,22 +73,29 @@ function fillSelects() {
   F.agent = a.value;
 
   var weeks = allWeeks(DATA);
-  var keepW = F.week;
-  var now = thisWeekStart();
-  // "Current/Previous" are anchored to today, not to the furthest future roster week
-  var past = weeks.filter(function (x) { return x <= now; });
-  var cur = past[0] || weeks[0];
-  var prev = past[1];
-  var opts = ['<option value="ALL">All Weeks</option>'];
-  if (cur)  opts.push('<option value="' + esc(cur) + '">Current Week (' + fmtWeek(cur) + ')</option>');
-  if (prev) opts.push('<option value="' + esc(prev) + '">Previous Week (' + fmtWeek(prev) + ')</option>');
-  weeks.forEach(function (x) {
-    if (x === cur || x === prev) return;
-    opts.push('<option value="' + esc(x) + '">' + fmtWeek(x) + (x > now ? ' (upcoming)' : '') + '</option>');
-  });
-  w.innerHTML = opts.join('');
-  w.value = weeks.indexOf(keepW) >= 0 ? keepW : 'ALL';
-  F.week = w.value;
+    var keepW = F.week;
+    var now = thisWeekStart();
+    // "Current/Previous" are anchored to the most recent week that actually has
+    // performance data (scorecards/calls/QA/productivity) - NOT to a future
+    // schedule-only week, and NOT to today's calendar week (which has no scores yet).
+    var perfWeeks = uniq(
+      ['dailyProductivity', 'weeklyCallStats', 'qaScores', 'scorecards']
+        .reduce(function (acc, k) { return acc.concat((DATA[k] || []).map(function (r) { return r.week; })); }, [])
+    ).sort().reverse();
+    var cur = perfWeeks[0] || weeks[0];
+    var prev = perfWeeks[1];
+    var opts = ['<option value="ALL">All Weeks</option>'];
+    if (cur)  opts.push('<option value="' + esc(cur) + '">Current Week (' + fmtWeek(cur) + ')</option>');
+    if (prev) opts.push('<option value="' + esc(prev) + '">Previous Week (' + fmtWeek(prev) + ')</option>');
+    // past weeks newest -> oldest first, then future/upcoming weeks at the bottom
+    var past = weeks.filter(function (x) { return x <= now && x !== cur && x !== prev; });
+    var future = weeks.filter(function (x) { return x > now; });
+    past.forEach(function (x) { opts.push('<option value="' + esc(x) + '">' + fmtWeek(x) + '</option>'); });
+    future.forEach(function (x) { opts.push('<option value="' + esc(x) + '">' + fmtWeek(x) + ' (upcoming)</option>'); });
+    w.innerHTML = opts.join('');
+    // default to the current data week (not "All Weeks") so the dashboard opens on today's scores
+    w.value = (keepW !== 'ALL' && weeks.indexOf(keepW) >= 0) ? keepW : cur;
+    F.week = w.value;
 }
 
 function wire() {
