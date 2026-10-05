@@ -322,12 +322,15 @@ function renderOtBreak() {
   var weeks = uniq(otBase.map(function (r) { return r.week; })).sort();
   if (!weeks.length) weeks = uniq(otAll.map(function (r) { return r.week; })).sort();
   var sel = $('otWeek');
-  if (sel) {
-    sel.innerHTML = weeks.map(function (w) { return '<option value="' + esc(w) + '">' + esc(fmtWeek(w)) + '</option>'; }).join('');
-    if (F.otWeek && weeks.indexOf(F.otWeek) >= 0) sel.value = F.otWeek;
-    else { F.otWeek = weeks[0] || ''; sel.value = F.otWeek; }
-    sel.onchange = function () { F.otWeek = this.value; renderOtBreak(); };
-  }
+    if (sel) {
+      sel.innerHTML = weeks.map(function (w) { return '<option value="' + esc(w) + '">' + esc(fmtWeek(w)) + '</option>'; }).join('');
+      // default to the CURRENT week when it's in the data, else the LATEST week
+    // (today may be past the last scheduled week, so fall back to the newest one)
+    var def = (weeks.indexOf(now) >= 0) ? now : (weeks[weeks.length - 1] || '');
+      if (F.otWeek && weeks.indexOf(F.otWeek) >= 0) sel.value = F.otWeek;
+      else { F.otWeek = def; sel.value = def; }
+      sel.onchange = function () { F.otWeek = this.value; renderOtBreak(); };
+    }
   var ot = otBase.filter(function (r) { return r.week === (F.otWeek || weeks[0] || ''); });
 
   kpi('otKpis', [

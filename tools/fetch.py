@@ -18,6 +18,7 @@ Run locally:
 """
 import os
 import sys
+import http.client
 import urllib.error
 import urllib.request
 
@@ -35,17 +36,28 @@ def get(sheet_id, out):
         EXPORT.format(id=sheet_id),
         # without a normal UA Google sometimes serves an interstitial page
         headers={'User-Agent': 'Mozilla/5.0 (compatible; dashboard-refresh)'})
-    try:
-        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
-            body = r.read()
-    except urllib.error.HTTPError as e:
-        if e.code in (401, 403, 404):
-            die('cannot download sheet %s (HTTP %d).\n'
-                '  Open the sheet -> Share -> General access ->\n'
-                '  "Anyone with the link" -> Viewer, then re-run.' % (sheet_id, e.code))
-        die('download of %s failed: HTTP %d' % (sheet_id, e.code))
-    except urllib.error.URLError as e:
-        die('network error fetching %s: %s' % (sheet_id, e.reason))
+
+    # Google's export endpoint is occasionally flaky (connection drops mid-stream,
+    # e.g. http.client.IncompleteRead). Retry a few times with backoff before giving
+    # up, so a transient blip doesn't fail the whole hourly refresh.
+    import time
+    last_err = None
+    for attempt in range(1, 5):
+        try:
+            with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+                body = r.read()
+            break
+        except http.client.IncompleteRead as e:
+            last_err = 'IncompleteRead (%d bytes)' % (e.partial and len(e.partial) or 0)
+        except urllib.error.URLError as e:
+            last_err = 'network error: %s' % e.reason
+        except http.client.HTTPException as e:
+            last_err = 'HTTP error: %s' % e
+        if attempt < 4:
+            print('  retry %d/4 for %s (%s)' % (attempt, out, last_err))
+            time.sleep(2 * attempt)
+    else:
+        die('download of %s failed after 4 attempts: %s' % (out, last_err))
 
     # A sharing/consent page returns 200 with HTML, so check the real format.
     # Every .xlsx is a zip and starts with the bytes 'PK'.
