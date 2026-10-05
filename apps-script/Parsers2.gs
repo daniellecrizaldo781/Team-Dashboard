@@ -26,7 +26,16 @@ function parseScorecards(ss) {
     if (!a && names.length >= 3) { agentCols = names; continue; }
 
     var wk = joined.match(/week\s*:?\s*([A-Za-z]+\s*\d{1,2}\s*,?\s*\d{4})/i);
-    if (wk) { curLabel = S(wk[0]).slice(0, 60); curWeek = weekStart(toISO(wk[1])); }
+        if (wk) {
+          curLabel = S(wk[0]).slice(0, 60);
+          // The banner's START date is sometimes a Sunday (e.g. "September 27,2026 -
+          // October 4,2026" for the Sep 28-Oct 4 week), which weekStart() would map to
+          // the PREVIOUS week. Use the END date (the Sunday) instead - it always lands
+          // in the correct week regardless of whether the start is Mon or Sun.
+          var range = joined.match(/week\s*:?\s*([A-Za-z]+\s*\d{1,2}\s*,?\s*\d{4})\s*-\s*([A-Za-z]+\s*\d{1,2}\s*,?\s*\d{4})/i);
+          var endDate = range ? range[2] : wk[1];
+                    curWeek = weekStart(toISO(endDate));
+                  }
 
     if (!a || !agentCols.length) continue;
 

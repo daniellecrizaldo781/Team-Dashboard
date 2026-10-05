@@ -88,7 +88,7 @@ function parseWeeklyCallStats(ss) {
 
   ['Daily and Weekly Call Stats'].forEach(function (tab) {
     var g = grid(ss, tab);
-    var curWeek = '', curLabel = '';
+    var curWeek = '', curLabel = '', bannerWeek = '';
 
     for (var r = 0; r < g.length; r++) {
       var row = g[r], first = S(row[0]);
@@ -105,7 +105,18 @@ function parseWeeklyCallStats(ss) {
         continue;
       }
       var wk = joined.match(/week\s*:?\s*\(?\s*([A-Za-z]{3,}\s+\d{1,2})/i);
-      if (wk && /week\s*:/i.test(joined)) { curLabel = S(joined).slice(0, 60); }
+      if (wk && /week\s*:/i.test(joined)) {
+        curLabel = S(joined).slice(0, 60);
+        // Parse the banner's start date -> authoritative week for the call-stats
+        // block. The productivity header can be clobbered by an interleaved
+        // "Daily Email Support Productivity Record" block (a different week),
+        // so the banner is the reliable source for call-stats.
+        var bm = joined.match(/week\s*:?\s*\(?\s*([A-Za-z]{3,})\s+(\d{1,2}),?\s*(\d{4})/i);
+        if (bm) {
+          var bd = new Date(+bm[3], monthNum(bm[1]), +bm[2]);
+          if (!isNaN(bd)) bannerWeek = weekStart(iso(bd));
+        }
+      }
 
       // --- call-stats header ---------------------------------------------
       // Two historical shapes: 'NAME OF AGENT' + Ringing/Picked Up, or 'USERS'.
@@ -127,6 +138,9 @@ function parseWeeklyCallStats(ss) {
       }
       if (col.attempts === undefined && col.picked === undefined) continue;
 
+      // Use the banner week when present (authoritative), else the productivity week.
+      var weekForBlock = bannerWeek || curWeek;
+
       // agent rows follow, possibly after one blank spacer row
       var blanks = 0;
       for (var i = r + 1; i < g.length; i++) {
@@ -144,7 +158,7 @@ function parseWeeklyCallStats(ss) {
 
         out.push({
           agent: canonAgent(nm),
-          week: curWeek,
+          week: weekForBlock,
           weekLabel: curLabel,
           attempts: attempts,
           pickedUp: picked,

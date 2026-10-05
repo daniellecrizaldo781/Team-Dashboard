@@ -89,6 +89,13 @@ function toISO(v) {
   return isNaN(d) ? '' : iso(d);
 }
 
+/** Month name -> 0-based index (Jan=0). Returns -1 for unknown. */
+function monthNum(name) {
+  var m = { jan:0, feb:1, mar:2, apr:3, may:4, jun:5, jul:6, aug:7, sep:8, oct:9, nov:10, dec:11 };
+  var k = String(name).toLowerCase().slice(0, 3);
+  return m[k] === undefined ? -1 : m[k];
+}
+
 /** Monday of the week containing an ISO date. */
 function weekStart(isoStr) {
   if (!isoStr) return '';
