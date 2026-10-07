@@ -306,10 +306,13 @@ function parseProducts(ss) {
     }
 
     /* ============ PRODUCT UPDATES ============
-     * Reads the 'PRODUCT UPDATE' tab of the products sheet: one row per product,
-     * product name in column A, update notice text in the column headed "Update"
-     * (or column B). Returns a map { productName: updateText } so the bake can
-     * merge notices onto the matching product by name.
+     * Reads the 'PRODUCT UPDATE' tab of the products sheet. The tab is laid out as
+     * one block per product:
+     *   row N:   <Product Name>
+     *   row N+1: Update | Update Date | Status
+     *   row N+2: <update text> | <date> | <status>
+     * Returns a map { productName: updateText } so the bake can merge notices onto
+     * the matching product by name.
      */
     function parseProductUpdates(ss) {
       var g = grid(ss, 'PRODUCT UPDATE');
@@ -321,20 +324,19 @@ function parseProducts(ss) {
         }
         return (c === null || c === undefined) ? '' : String(c);
       }
-      // find the "Update" column header (fallback: column B = index 1)
-      var head = g[0].map(cellText).map(function (h) { return ('' + h).toLowerCase().replace(/\s+/g, ' ').trim(); });
-      var iUpdate = -1;
-      for (var i = 0; i < head.length; i++) {
-        if (head[i].indexOf('update') >= 0) { iUpdate = i; break; }
-      }
-      if (iUpdate < 0) iUpdate = 1;  // fallback to column B
       var out = {};
-      for (var r = 1; r < g.length; r++) {
-        var name = cellText(g[r][0]).trim();
-        var upd = cellText(g[r][iUpdate]).trim();
-        if (!name) continue;
-        if (/^product\s*name$/i.test(name)) continue;  // skip stray header row
-        if (upd) out[name] = upd;
+      var curProduct = '';
+      for (var r = 0; r < g.length; r++) {
+        var a = cellText(g[r][0]).trim();
+        var b = cellText(g[r][1]).trim();
+        var c = cellText(g[r][2]).trim();
+        if (!a) continue;
+        // header row: "Update | Update Date | Status" -> the NEXT non-empty row is data
+        if (/^update$/i.test(a) && /date/i.test(b)) { continue; }
+        // a product-name row has col A = name and cols B/C empty
+        if (!b && !c && !/^update$/i.test(a)) { curProduct = a; continue; }
+        // data row: col A = update text (with a date/status alongside)
+        if (curProduct && (b || c)) { out[curProduct] = a; }
       }
       return out;
     }
