@@ -821,19 +821,35 @@ function applyProductFilter() {
             }).join('');
 
   Array.prototype.forEach.call(grid.querySelectorAll('.prod-square'), function (btn) {
-    btn.onclick = function () {
-      var id = btn.getAttribute('data-id');
-      var d = $('prodDetail');
-      if (!d) return;
-      d.dataset.id = id;
-      d.hidden = false;
-      grid.hidden = true;
-      if (searchWrap) searchWrap.hidden = true;
-      renderProducts();
-      window.scrollTo(0, 0);
-    };
-  });
-}
+      btn.onclick = function () {
+        var id = btn.getAttribute('data-id');
+        var d = $('prodDetail');
+        if (!d) return;
+        d.dataset.id = id;
+        d.hidden = false;
+        grid.hidden = true;
+        if (searchWrap) searchWrap.hidden = true;
+        renderProducts();
+        window.scrollTo(0, 0);
+      };
+    });
+  }
+
+  // Open a product's detail view from the Overview "Product Updates" card:
+  // switch to the Products page and show that product (with its update section).
+  function openProductFromOverview(p) {
+    if (!p) return;
+    var idx = (PRODUCTS || []).indexOf(p);
+    if (idx < 0) idx = (PRODUCTS || []).findIndex(function (x) { return x.name === p.name; });
+    if (idx < 0) return;
+    if (typeof setPage === 'function') setPage('products');
+    var d = $('prodDetail'), grid = $('prodGrid'), sw = $('prodSearchWrap');
+    if (d) { d.dataset.id = String(idx); d.hidden = false; }
+    if (grid) grid.hidden = true;
+    if (sw) sw.hidden = true;
+    renderProducts();
+        window.scrollTo(0, 0);
+      }
 
 /* Snapshot mode: the data cannot change while the page is open, so there is
  * nothing to poll for. Refresh Data re-reads and re-renders on demand. */
