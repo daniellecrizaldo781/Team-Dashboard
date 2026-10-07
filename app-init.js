@@ -700,7 +700,7 @@ function renderProducts() {
           '</div>' +
           '<div class="prod-info">' +
                       '<h3 class="prod-name">' + esc(p.name) + '</h3>' +
-                      (p.description ? '<section class="prod-sec"><h4>Product Description</h4><details class="prod-desc" open><summary>Show / hide description</summary><p class="prod-pre">' + p.description + '</p></details></section>' : '') +
+                      (p.description ? '<section class="prod-sec"><h4>Product Description</h4><details class="prod-desc"><summary>Show / hide description</summary><p class="prod-pre">' + p.description + '</p></details></section>' : '') +
             (p.inclusion ? '<section class="prod-sec"><h4>Package Inclusion</h4><p class="prod-pre">' + p.inclusion + '</p></section>' : '') +
             (p.manual ? '<section class="prod-sec"><h4>Instruction Manual</h4><p class="prod-pre">' + nameManualLinks(p.manual) + '</p>' +
               (p.manualPhotos && p.manualPhotos.length

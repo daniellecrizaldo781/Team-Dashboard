@@ -543,9 +543,10 @@ td.c,th.c{text-align:center}
 .prod-update-status.st-neutral{background:#5a5a6e;color:#fff;border:1px solid #5a5a6e}
 .prod-update-date{font-size:12px;color:var(--rose-d);font-weight:600}
 .prod-update-full{font-size:14px;color:var(--ink);line-height:1.65;white-space:pre-line;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
-.prod-desc summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--rose-d);font-weight:600;margin-bottom:8px;user-select:none}
+.prod-desc summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--rose-d);background:var(--blush);border:1.5px solid var(--rose);border-radius:10px;padding:6px 14px;font-weight:700;margin-bottom:8px;user-select:none;transition:.15s}
+.prod-desc summary:hover{background:#ffd3e8;box-shadow:0 4px 12px rgba(224,69,123,.18)}
 .prod-desc summary::-webkit-details-marker{display:none}
-.prod-desc summary::before{content:'▸';transition:transform .15s;font-size:12px}
+.prod-desc summary::before{content:'▸';transition:transform .15s;font-size:13px;color:var(--rose)}
 .prod-desc[open] summary::before{transform:rotate(90deg)}
 .prod-desc[open] summary{margin-bottom:8px}
 /* "Updated" badge + notice on each product square */
