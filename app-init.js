@@ -711,10 +711,11 @@ function renderProducts() {
   }
 
   // grid view
-  detail.hidden = true;
-  grid.hidden = false;
-  if (searchWrap) searchWrap.hidden = false;
-  if (!PRODUCTS.length) {
+    detail.hidden = true;
+    grid.hidden = false;
+    if (searchWrap) searchWrap.hidden = false;
+    renderProductUpdates();
+        if (!PRODUCTS.length) {
     if (searchWrap) searchWrap.innerHTML = '';
     grid.innerHTML = '<div class="empty"><b>No products yet</b>Add a row to the Products sheet and it will appear here.</div>';
     return;
@@ -731,6 +732,41 @@ function renderProducts() {
   applyProductFilter();
 }
 
+// Render the "Product Updates" banner above the grid: lists every product that
+// has an update notice, each clickable to open that product's detail view.
+function renderProductUpdates() {
+  var wrap = $('prodUpdates');
+  if (!wrap) return;
+  var updated = (PRODUCTS || []).filter(function (p) { return p.update && String(p.update).trim(); });
+  if (!updated.length) { wrap.hidden = true; wrap.innerHTML = ''; return; }
+  wrap.hidden = false;
+  wrap.innerHTML =
+    '<div class="prod-updates-head"><span class="prod-updates-ico">&#128227;</span>' +
+    '<h4>Product Updates</h4><span class="prod-updates-count">' + updated.length + '</span></div>' +
+    '<div class="prod-updates-list">' +
+    updated.map(function (p) {
+      var idx = PRODUCTS.indexOf(p);
+      return '<button type="button" class="prod-update-item" data-id="' + idx + '">' +
+        '<span class="prod-update-name">' + esc(p.name) + '</span>' +
+        '<span class="prod-update-text">' + esc(String(p.update).slice(0, 90)) + (String(p.update).length > 90 ? '&hellip;' : '') + '</span>' +
+        '</button>';
+    }).join('') +
+    '</div>';
+  Array.prototype.forEach.call(wrap.querySelectorAll('.prod-update-item'), function (btn) {
+    btn.onclick = function () {
+      var id = btn.getAttribute('data-id');
+      var d = $('prodDetail');
+      if (!d) return;
+      d.dataset.id = id;
+      d.hidden = false;
+      var grid = $('prodGrid'); if (grid) grid.hidden = true;
+      var sw = $('prodSearchWrap'); if (sw) sw.hidden = true;
+      renderProducts();
+      window.scrollTo(0, 0);
+    };
+  });
+}
+
 // Re-render only the product squares for the current query. Leaves the search
 // input element in place so it never loses focus while typing.
 function applyProductFilter() {
@@ -745,15 +781,18 @@ function applyProductFilter() {
     return;
   }
   grid.innerHTML = list.map(function (p, i) {
-    var realIdx = PRODUCTS.indexOf(p);
-    var imgSrc = p.imageData || p.image || '';
-    return '<button class="prod-square" data-id="' + realIdx + '">' +
-      (imgSrc
-        ? '<img class="prod-square-img" src="' + esc(imgSrc) + '" alt="' + esc(p.name) + '" loading="lazy">'
-        : '<span class="prod-square-ph">&#128247;</span>') +
-      '<span class="prod-square-name">' + esc(p.name) + '</span>' +
-    '</button>';
-  }).join('');
+      var realIdx = PRODUCTS.indexOf(p);
+      var imgSrc = p.imageData || p.image || '';
+      var hasUpdate = p.update && String(p.update).trim();
+      return '<button class="prod-square' + (hasUpdate ? ' has-update' : '') + '" data-id="' + realIdx + '">' +
+        (hasUpdate ? '<span class="prod-square-badge">&#128227; Updated</span>' : '') +
+        (imgSrc
+          ? '<img class="prod-square-img" src="' + esc(imgSrc) + '" alt="' + esc(p.name) + '" loading="lazy">'
+          : '<span class="prod-square-ph">&#128247;</span>') +
+        '<span class="prod-square-name">' + esc(p.name) + '</span>' +
+        (hasUpdate ? '<span class="prod-square-update">' + esc(String(p.update).slice(0, 40)) + (String(p.update).length > 40 ? '&hellip;' : '') + '</span>' : '') +
+              '</button>';
+            }).join('');
 
   Array.prototype.forEach.call(grid.querySelectorAll('.prod-square'), function (btn) {
     btn.onclick = function () {

@@ -42,8 +42,19 @@ const out = {
   breakSchedule: parseBreaks(SCHED),
   leaveRequests: parseLeave(SCHED),
   cascades: parseCascades(CASC),
-  products: parseProducts(PROD)
-};
+    products: parseProducts(PROD)
+  };
+  // Merge product update notices (from the 'PRODUCT UPDATE' tab) onto the matching
+  // product by name, so the dashboard's Product Updates section + per-square badges
+  // reflect the notices the team maintains in that tab.
+  (function mergeProductUpdates() {
+    const updates = parseProductUpdates(PROD);
+    const keys = Object.keys(updates || {});
+    if (!keys.length) return;
+    (out.products || []).forEach(p => {
+          if (updates[p.name]) p.update = updates[p.name];
+        });
+  })();
 // Embed cascade reference images as base64 data-URIs so they always render on
 // the dashboard (Google Drive blocks cross-origin browser hotlinks by referrer;
 // a server-side curl download with no referrer succeeds). One image per cell URL.

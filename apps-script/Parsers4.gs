@@ -156,7 +156,10 @@ function parseCascades(ss) {
  * formatting (line breaks in the manual, etc.) is kept verbatim.
  * =========================================================== */
 function parseProducts(ss) {
-  var g = grid(ss, 'Sheet1');
+  // Products live in the 'PRODUCT INFO' tab (newer sheet layout). Fall back to
+  // 'Sheet1' for older copies of the sheet.
+  var g = grid(ss, 'PRODUCT INFO');
+  if (!g || g.length < 2) g = grid(ss, 'Sheet1');
   if (!g || g.length < 2) return [];
 
   function cellText(c) {
@@ -250,8 +253,9 @@ function parseProducts(ss) {
   var iManual = col('instruction manual');
   var iImg    = col('product image');
   var iEmail  = col('email support');
-  var iHot    = col('hotline');
-  var FIXED = 7;  // name,desc,inclusion,manual,image,email,hotline are fixed; col 7+ are handling items
+    var iHot    = col('hotline');
+    var iUpdate = col('update');   // optional "Product Update" column -> badge + updates section
+      var FIXED = 7;  // name,desc,inclusion,manual,image,email,hotline are fixed; col 7+ are handling items
 
   var out = [];
   for (var r = hRow + 1; r < g.length; r++) {
@@ -293,9 +297,44 @@ function parseProducts(ss) {
       manualPhotos: iManual >= 0 ? extractDriveLinks(row[iManual]) : [],
       image: iImg >= 0 ? exact(row[iImg]) : '',       // Drive link (embedded at bake)
       email: iEmail >= 0 ? exact(row[iEmail]) : '',
-      hotline: iHot >= 0 ? exact(row[iHot]) : '',
-      troubleshooting: ts                            // [{q,a,aHtml}, ...]
+            hotline: iHot >= 0 ? exact(row[iHot]) : '',
+            update: iUpdate >= 0 ? exact(row[iUpdate]) : '',   // product update notice (badge + updates section)
+                        troubleshooting: ts                            // [{q,a,aHtml}, ...]
     });
-  }
-  return out;
-}
+      }
+      return out;
+    }
+
+    /* ============ PRODUCT UPDATES ============
+     * Reads the 'PRODUCT UPDATE' tab of the products sheet: one row per product,
+     * product name in column A, update notice text in the column headed "Update"
+     * (or column B). Returns a map { productName: updateText } so the bake can
+     * merge notices onto the matching product by name.
+     */
+    function parseProductUpdates(ss) {
+      var g = grid(ss, 'PRODUCT UPDATE');
+      if (!g || g.length < 2) return {};
+      function cellText(c) {
+        if (c && typeof c === 'object') {
+          if (Array.isArray(c.__rt) && c.__rt.length) return c.__rt.map(function (r) { return (r[0] || ''); }).join('');
+          if (typeof c.__d === 'string') return c.__d;
+        }
+        return (c === null || c === undefined) ? '' : String(c);
+      }
+      // find the "Update" column header (fallback: column B = index 1)
+      var head = g[0].map(cellText).map(function (h) { return ('' + h).toLowerCase().replace(/\s+/g, ' ').trim(); });
+      var iUpdate = -1;
+      for (var i = 0; i < head.length; i++) {
+        if (head[i].indexOf('update') >= 0) { iUpdate = i; break; }
+      }
+      if (iUpdate < 0) iUpdate = 1;  // fallback to column B
+      var out = {};
+      for (var r = 1; r < g.length; r++) {
+        var name = cellText(g[r][0]).trim();
+        var upd = cellText(g[r][iUpdate]).trim();
+        if (!name) continue;
+        if (/^product\s*name$/i.test(name)) continue;  // skip stray header row
+        if (upd) out[name] = upd;
+      }
+      return out;
+    }
