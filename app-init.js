@@ -700,7 +700,7 @@ function renderProducts() {
           '</div>' +
           '<div class="prod-info">' +
                       '<h3 class="prod-name">' + esc(p.name) + '</h3>' +
-                      (p.description ? '<section class="prod-sec"><h4>Product Description</h4><p class="prod-pre">' + p.description + '</p></section>' : '') +
+                      (p.description ? '<section class="prod-sec"><h4>Product Description</h4><details class="prod-desc" open><summary>Show / hide description</summary><p class="prod-pre">' + p.description + '</p></details></section>' : '') +
             (p.inclusion ? '<section class="prod-sec"><h4>Package Inclusion</h4><p class="prod-pre">' + p.inclusion + '</p></section>' : '') +
             (p.manual ? '<section class="prod-sec"><h4>Instruction Manual</h4><p class="prod-pre">' + nameManualLinks(p.manual) + '</p>' +
               (p.manualPhotos && p.manualPhotos.length
@@ -715,17 +715,18 @@ function renderProducts() {
               (p.email ? 'Email: <a class="prod-link" href="mailto:' + esc(p.email) + '">' + esc(p.email) + '</a><br>' : '') +
               (p.hotline ? 'Hotline: <a class="prod-link" href="tel:' + esc(p.hotline.replace(/[^0-9+]/g, '')) + '">' + esc(p.hotline) + '</a>' : '') + '</p></section>' : '') +
           '</div>' +
-                    (p.update ? '<section class="prod-sec prod-update-sec"><h4>Product Update</h4>' +
-                      '<div class="prod-update-detail">' +
-                        (p.updateStatus ? '<span class="prod-update-status ' + esc(statusClass(p.updateStatus)) + '">' + esc(p.updateStatus) + '</span>' : '') +
-                        (p.updateDate ? '<span class="prod-update-date">' + esc(fmtUpdateDate(p.updateDate)) + '</span>' : '') +
-                        '<p class="prod-pre prod-update-full">' + esc(p.update) + '</p>' +
-                      '</div></section>' : '') +
-                    (p.troubleshooting && p.troubleshooting.length ? '<div class="prod-ts-col"><section class="prod-sec"><h4>Trouble Shooting &amp; Handling</h4><div class="prod-ts">' +
-            p.troubleshooting.map(function (t) {
-              return '<details class="prod-ts-item"><summary>' + esc(t.q) + '</summary><span class="prod-ts-a">' + driveLinksAsPhotos(t.aHtml || esc(t.a)) + '</span></details>';
-            }).join('') + '</div></section></div>' : '') +
-        '</article>';
+                    (p.troubleshooting && p.troubleshooting.length ? '<div class="prod-ts-col">' +
+                      (p.update ? '<section class="prod-sec prod-update-sec"><h4>Product Update</h4>' +
+                        '<div class="prod-update-detail">' +
+                          (p.updateStatus ? '<span class="prod-update-status ' + esc(statusClass(p.updateStatus)) + '">' + esc(p.updateStatus) + '</span>' : '') +
+                          (p.updateDate ? '<span class="prod-update-date">' + esc(fmtUpdateDate(p.updateDate)) + '</span>' : '') +
+                          '<p class="prod-pre prod-update-full">' + esc(p.update) + '</p>' +
+                        '</div></section>' : '') +
+                      '<section class="prod-sec"><h4>Trouble Shooting &amp; Handling</h4><div class="prod-ts">' +
+                      p.troubleshooting.map(function (t) {
+                        return '<details class="prod-ts-item"><summary>' + esc(t.q) + '</summary><span class="prod-ts-a">' + driveLinksAsPhotos(t.aHtml || esc(t.a)) + '</span></details>';
+                      }).join('') + '</div></section></div>' : '') +
+                  '</article>';
       var back = $('prodBack');
       if (back) back.onclick = function () {
         detail.hidden = true; detail.dataset.id = '';
