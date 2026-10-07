@@ -11,6 +11,7 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;max-width:100%;overflow-x:hidden}
+html{--sans:'Segoe UI','Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',system-ui,sans-serif;--mono:'Cascadia Code',Consolas,'SF Mono',monospace;--ink:#3a2540;--ink2:#6b5b6b;--ink-d:#2a1830;--line:#e8dbe2;--rose:#e0457b;--rose-d:#b6305f;--rose-dd:#8f2348;--rose-l:#ff8ab4;--rose-xl:#ffd1e3;--rose-pale:#fff5fb;--blush:#fff0f6;--bg:#f7f2f6;--peach:#ffdc89;--aqua:#35b3a3;--aqua-d:#1c8377;--aqua-xl:#e2f7f3;--ink2:#6b5b6b;--gold:#b98f2e;--gold-d:#8f6a1a;--vdark:#230b18;--card-sh-shadow:0 14px 30px rgba(180,48,95,.12);--radius:20px;--line:#e8dbe2;--rose:#e0457b;--rose-d:#b6305f;--rose-dd:#8f2348;--rose-l:#ff8ab4;--rose-xl:#ffd1e3;--blush:#fff0f6;--bg:#f7f2f6;--casc-bg:#fff3f8;--casc-ink:#b6305f;--casc-d:#90264c;--casc-d2:#d8a2bd;--casc-line:#f1b7d3;--casc-avatar:#ffb3cd;--casc-sh-shadow:0 8px 22px rgba(180,48,95,.18);--green:#27ae60;--green-d:#1e8449;--amber:#e67e22;--amber-d:#ca6f1e;--red:#c0392b;--red-d:#a93226;--tab:'Segoe UI',system-ui,sans-serif;--headpad:26px 0 30px;--content-w:100%;--grid-min:260px;--nav-w:120px}
 body{
   background:var(--bg); color:var(--ink);
   font:15px/1.5 "Segoe UI",Inter,system-ui,-apple-system,sans-serif;

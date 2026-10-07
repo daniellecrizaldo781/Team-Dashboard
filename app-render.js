@@ -137,12 +137,39 @@ function renderOverview() {
       window.scrollTo(0, 0);
     }
     if (!latest.length) {
-      ovc.innerHTML = '<div class="empty">No cascades yet.</div>';
-    } else {
-      showList();
+          ovc.innerHTML = '<div class="empty">No cascades yet.</div>';
+        } else {
+          showList();
+        }
+      }
+
+      // ---- Product Updates (products with an update notice) ----
+      var ovp = $('ovProdUpdates');
+      if (ovp) {
+        var allP = (DATA && DATA.products) || [];
+        var updated = allP.filter(function (p) { return p.update && String(p.update).trim(); });
+        if (!updated.length) {
+          ovp.innerHTML = '<div class="empty">No product updates.</div>';
+        } else {
+          ovp.innerHTML = updated.map(function (p) {
+            var idx = allP.indexOf(p);
+            var st = statusClass(p.updateStatus);
+            return '<button class="casc-row prod-update-row" data-pidx="' + idx + '">' +
+              '<span class="pill n casc-cat">\uD83D\uDCE2 Update</span>' +
+              '<span class="casc-row-title">' + esc(p.name) + '</span>' +
+              (p.updateStatus ? '<span class="prod-update-status ' + esc(st) + '">' + esc(p.updateStatus) + '</span>' : '') +
+              '<span class="casc-row-arrow">&#8250;</span>' +
+            '</button>';
+          }).join('');
+          Array.prototype.forEach.call(ovp.querySelectorAll('.prod-update-row'), function (btn) {
+            btn.onclick = function () {
+              var i = parseInt(btn.getAttribute('data-pidx'), 10);
+              openProductFromOverview(allP[i]);
+            };
+          });
+        }
+      }
     }
-  }
-}
 
 /* ---------------- DAILY PRODUCTIVITY ---------------- */
 function renderProductivity() {
