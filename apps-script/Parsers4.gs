@@ -311,8 +311,8 @@ function parseProducts(ss) {
      *   row N:   <Product Name>
      *   row N+1: Update | Update Date | Status
      *   row N+2: <update text> | <date> | <status>
-     * Returns a map { productName: updateText } so the bake can merge notices onto
-     * the matching product by name.
+     * Returns a map { productName: { text, date, status } } so the bake can merge
+     * notices onto the matching product by name.
      */
     function parseProductUpdates(ss) {
       var g = grid(ss, 'PRODUCT UPDATE');
@@ -335,8 +335,10 @@ function parseProducts(ss) {
         if (/^update$/i.test(a) && /date/i.test(b)) { continue; }
         // a product-name row has col A = name and cols B/C empty
         if (!b && !c && !/^update$/i.test(a)) { curProduct = a; continue; }
-        // data row: col A = update text (with a date/status alongside)
-        if (curProduct && (b || c)) { out[curProduct] = a; }
+        // data row: col A = update text, col B = date, col C = status
+        if (curProduct && (b || c)) {
+          out[curProduct] = { text: a, date: b, status: c };
+        }
       }
       return out;
     }

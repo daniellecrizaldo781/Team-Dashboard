@@ -600,6 +600,25 @@ function renderCascades() {
 //   (embedded base64), email, hotline, troubleshooting:[{q,a}]
 var PRODUCTS = (DATA && DATA.products) || [];
 
+// CSS class for a product-update status badge (active / new / current / etc.)
+function statusClass(s) {
+  var t = String(s || '').toLowerCase();
+  if (/active|current|new|live|available|in\s*stock/i.test(t)) return 'st-active';
+  if (/out\s*of\s*stock|discontinued|phased|retired|inactive|sold\s*out/i.test(t)) return 'st-out';
+  if (/coming|upcoming|soon|pending|draft/i.test(t)) return 'st-soon';
+  return 'st-neutral';
+}
+
+// Format an update date for display (e.g. "2027-10-06 00:00:00" -> "Oct 6, 2027").
+function fmtUpdateDate(d) {
+  var s = String(d || '').trim();
+  var m = s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (!m) return s;
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var mo = MON[(+m[2]) - 1] || m[2];
+  return mo + ' ' + (+m[3]) + ', ' + m[1];
+}
+
 // Friendly display name for a manual link when no "Label:" precedes it.
 function friendlyName(url) {
   if (/onedrive\.live\.com|1drv\.ms/i.test(url)) return 'Instruction Manual';
@@ -680,8 +699,14 @@ function renderProducts() {
               : '<div class="prod-photo-ph">Product photo<br>not available</div>') +
           '</div>' +
           '<div class="prod-info">' +
-            '<h3 class="prod-name">' + esc(p.name) + '</h3>' +
-            (p.description ? '<section class="prod-sec"><h4>Product Description</h4><p class="prod-pre">' + p.description + '</p></section>' : '') +
+                      '<h3 class="prod-name">' + esc(p.name) + '</h3>' +
+                      (p.update ? '<section class="prod-sec prod-update-sec"><h4>Product Update</h4>' +
+                        '<div class="prod-update-detail">' +
+                          (p.updateStatus ? '<span class="prod-update-status ' + esc(statusClass(p.updateStatus)) + '">' + esc(p.updateStatus) + '</span>' : '') +
+                          (p.updateDate ? '<span class="prod-update-date">' + esc(fmtUpdateDate(p.updateDate)) + '</span>' : '') +
+                          '<p class="prod-pre prod-update-full">' + esc(p.update) + '</p>' +
+                        '</div></section>' : '') +
+                      (p.description ? '<section class="prod-sec"><h4>Product Description</h4><p class="prod-pre">' + p.description + '</p></section>' : '') +
             (p.inclusion ? '<section class="prod-sec"><h4>Package Inclusion</h4><p class="prod-pre">' + p.inclusion + '</p></section>' : '') +
             (p.manual ? '<section class="prod-sec"><h4>Instruction Manual</h4><p class="prod-pre">' + nameManualLinks(p.manual) + '</p>' +
               (p.manualPhotos && p.manualPhotos.length

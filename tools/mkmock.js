@@ -52,7 +52,11 @@ const out = {
     const keys = Object.keys(updates || {});
     if (!keys.length) return;
     (out.products || []).forEach(p => {
-          if (updates[p.name]) p.update = updates[p.name];
+          if (updates[p.name]) {
+            p.update = updates[p.name].text;
+            p.updateDate = updates[p.name].date;
+            p.updateStatus = updates[p.name].status;
+          }
         });
   })();
 // Embed cascade reference images as base64 data-URIs so they always render on
