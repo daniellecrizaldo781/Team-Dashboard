@@ -386,7 +386,10 @@ function renderOtBreak() {
 var STATUS_CLASS = { Approved: 'ok', Pending: 'warn', Declined: 'bad' };
 
 function renderLeaves() {
-  var lv = slice(DATA.leaveRequests);
+  // ignore the global week/agent filters — leave requests are browsed by their
+  // own month selector, not the call-week filter (which would strip every leave
+  // whose .week doesn't match the currently-selected week).
+  var lv = slice(DATA.leaveRequests, { ignoreWeek: true, ignoreAgent: true });
   // hide leaves whose date has already passed (Manila time) to avoid clutter
   var todayMNL = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
   lv = lv.filter(function (r) {

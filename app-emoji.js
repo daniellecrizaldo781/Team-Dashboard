@@ -63,7 +63,18 @@ function inlineCascadeImages(escapedHtml) {
   });
 }
 
-/* Convenience: escape + emojify + inline-images, for plain cascade text. */
+/* Convenience: escape + emojify + inline-images, for plain cascade text.
+   When a cascade has no structured runs, the plain text is a single block
+   with bullets (\u2022) used as section/item markers \mdashes but no real
+   newlines. Insert a newline before each bullet so white-space:pre-wrap
+   in .casc-body stacks them as separate lines instead of a wall of text. */
 function cascTextHtml(s) {
-  return inlineCascadeImages(emojify(esc(s)));
+  if (!s) return '';
+  var raw = emojify(String(s));      // turn :shortcode: into real glyphs
+  // put each bullet item on its own line
+  raw = raw.replace(/\s*\u2022\s*/g, '\n\u2022 ');
+  // put a break before a capitalized emoji header segment that follows
+  // a period+space, so sections starting with an emoji glyph stack too
+  // (e.g. "...support.  \n:one: ORICLE..." after emojify -> "...support.\n\u2022 ...")
+  return inlineCascadeImages(esc(raw));
 }
