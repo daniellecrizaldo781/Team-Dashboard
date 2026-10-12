@@ -162,15 +162,6 @@ select,input{font:inherit;color:var(--ink)}
 .cmp-avg .cmp-label{min-width:110px;font-size:12px;color:var(--ink);opacity:.8}
 .cmp-avg .cmp-cur{color:var(--ink);font-weight:700}
 .cmp-avg .cmp-prev{color:var(--ink2);font-weight:600}
-.cmp-agents{margin-top:12px;font-size:13px}
-.cmp-agents .cmp-agents-head{font-size:12px;color:var(--ink);opacity:.8;font-weight:700;margin-bottom:6px}
-.cmp-agents table{width:100%;border-collapse:collapse;font-size:13px}
-.cmp-agents th{text-align:left;padding:6px 10px;font-size:11.5px;color:var(--ink);opacity:.8;border-bottom:1px solid var(--line)}
-.cmp-agents td{padding:6px 10px;border-bottom:1px solid var(--line)}
-.cmp-agents td.lbl{color:var(--ink);opacity:.85;font-weight:600}
-.cmp-agents td.lbl.agent{color:var(--ink);opacity:.85;white-space:nowrap}
-.cmp-agents td.val{font-weight:700;color:var(--ink);white-space:nowrap}
-
 
 /* ---------- top performer ---------- */
 .top-performer{margin-bottom:18px;min-width:0}
