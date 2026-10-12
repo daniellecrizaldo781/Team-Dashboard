@@ -390,30 +390,67 @@ function renderCalls() {
           return '<span class="cmp-delta ' + cls + '">' + arrow + ' ' + mag + '</span>';
         }
 
-        // side-by-side: two week columns + a change column
-        function renderSide(mountId, rows) {
+        // side-by-side: two week averages + change column, then per-agent full stats
+        function renderSide(mountId, rows, label) {
           var a = lineAvg(rows, cur), b = lineAvg(rows, prev);
           var pr = deltaHtml(a.pickupRate !== null && b.pickupRate !== null ? a.pickupRate - b.pickupRate : null, true, true);
           var aht = deltaHtml(a.aht !== null && b.aht !== null ? a.aht - b.aht : null, false, false);
           var el = $(mountId);
           if (!el) return;
+
+          // averages table (current vs previous week)
           el.innerHTML =
-            '<table class="cmp-side"><thead><tr>' +
-              '<th></th><th>' + esc(fmtWeek(cur)) + '</th><th>' + esc(fmtWeek(prev)) + '</th><th>Change</th>' +
-            '</tr></thead><tbody>' +
-              '<tr><td class="lbl">Avg Pickup</td>' +
-                '<td class="val">' + (a.pickupRate !== null ? pct(a.pickupRate) : '\u2014') + '</td>' +
-                '<td class="val">' + (b.pickupRate !== null ? pct(b.pickupRate) : '\u2014') + '</td>' +
-                '<td>' + pr + '</td></tr>' +
-              '<tr><td class="lbl">Avg AHT</td>' +
-                '<td class="val">' + (a.aht !== null ? secToAht(a.aht) : '\u2014') + '</td>' +
-                '<td class="val">' + (b.aht !== null ? secToAht(b.aht) : '\u2014') + '</td>' +
-                '<td>' + aht + '</td></tr>' +
-            '</tbody></table>';
+            '<div class="cmp-avg"><span class="cmp-label">' + label + ' — Avg Pickup</span>' +
+              (a.pickupRate !== null ? '<span class="cmp-cur">' + pct(a.pickupRate) + '</span>' : '') +
+              (b.pickupRate !== null ? '<span class="cmp-prev">' + pct(b.pickupRate) + '</span>' : '') +
+              '<span class="cmp-delta">' + pr + '</span></div>' +
+            '<div class="cmp-avg"><span class="cmp-label">Avg AHT</span>' +
+              (a.aht !== null ? '<span class="cmp-cur">' + secToAht(a.aht) + '</span>' : '') +
+              (b.aht !== null ? '<span class="cmp-prev">' + secToAht(b.aht) + '</span>' : '') +
+              '<span class="cmp-delta">' + aht + '</span></div>' +
+            perAgentTable(rows, cur, prev);
         }
 
-        renderSide('clCmpOha', oha);
-        renderSide('clCmpNb', nb);
+        // per-agent full stats for both weeks, side by side
+        function perAgentTable(rows, curWk, prevWk) {
+          var cr = dedupeByName(rows.filter(function (r) { return r.week === curWk; }));
+          var pr = dedupeByName(rows.filter(function (r) { return r.week === prevWk; }));
+          var names = [];
+          var seen = {};
+          cr.forEach(function (r) { if (!seen[r.agent]) { seen[r.agent] = true; names.push(r.agent); } });
+          pr.forEach(function (r) { if (!seen[r.agent]) { seen[r.agent] = true; names.push(r.agent); } });
+          if (!names.length) return '';
+          var h = '<div class="cmp-agents"><div class="cmp-agents-head">Per-agent stats</div><table><thead><tr>' +
+            '<th>Agent</th><th>' + esc(fmtWeek(curWk)) + '</th><th>' + esc(fmtWeek(prevWk)) + '</th>' +
+            '<th>Change</th></tr></thead><tbody>';
+          names.forEach(function (n) {
+            var c = findByName(cr, n), p = findByName(pr, n);
+            h += '<tr><td class="lbl agent">' + esc(n) + '</td>' +
+              '<td class="val">' + agentCell(c) + '</td>' +
+              '<td class="val">' + agentCell(p) + '</td>' +
+              '<td>' + deltaHtml(c && p && c.pickupRate !== null && p.pickupRate !== null ? c.pickupRate - p.pickupRate : null, true, true) + ' ' +
+                deltaHtml(c && p && c.aht !== null && p.aht !== null ? c.aht - p.aht : null, false, false) + '</td></tr>';
+          });
+          h += '</tbody></table></div>';
+          return h;
+        }
+        function agentCell(r) {
+          if (!r) return '\u2014';
+          var p = [n0(r.attempts) + ' att', n0(r.pickedUp) + ' /', n0(r.notPickedUp) + ' not', r.pickupRate !== null ? scorePill(r.pickupRate) : '\u2014', r.aht ? secToAht(r.aht) : '\u2014'];
+          return p.join(' ');
+        }
+        function findByName(arr, name) {
+          for (var i = 0; i < arr.length; i++) if (arr[i].agent === name) return arr[i];
+          return null;
+        }
+        function dedupeByName(rows) {
+          var seen = {}, out = [];
+          rows.forEach(function (r) { var k = (r.agent || '').trim(); if (!seen[k]) { seen[k] = true; out.push(r); } });
+          return out;
+        }
+
+        renderSide('clCmpOha', oha, 'OHA');
+        renderSide('clCmpNb', nb, 'All Brands');
       }
 
 /* ---------------- QA SCORES (all agents, one page) ---------------- */

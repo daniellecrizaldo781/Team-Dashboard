@@ -158,11 +158,19 @@ select,input{font:inherit;color:var(--ink)}
 .cmp-delta.up{color:#2e9e5b}
 .cmp-delta.down{color:#d6455d}
 .cmp-delta.flat{color:var(--ink);opacity:.5}
-.cmp-side{width:100%;border-collapse:collapse;font-size:13px}
-.cmp-side th{text-align:left;padding:7px 10px;font-size:12px;color:var(--ink);opacity:.8;border-bottom:1px solid var(--line)}
-.cmp-side td{padding:8px 10px;border-bottom:1px solid var(--line)}
-.cmp-side td.lbl{font-size:12px;color:var(--ink);opacity:.8;white-space:nowrap}
-.cmp-side td.val{font-weight:700;color:var(--ink);white-space:nowrap}
+.cmp-avg{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
+.cmp-avg .cmp-label{min-width:110px;font-size:12px;color:var(--ink);opacity:.8}
+.cmp-avg .cmp-cur{color:var(--ink);font-weight:700}
+.cmp-avg .cmp-prev{color:var(--ink2);font-weight:600}
+.cmp-agents{margin-top:12px;font-size:13px}
+.cmp-agents .cmp-agents-head{font-size:12px;color:var(--ink);opacity:.8;font-weight:700;margin-bottom:6px}
+.cmp-agents table{width:100%;border-collapse:collapse;font-size:13px}
+.cmp-agents th{text-align:left;padding:6px 10px;font-size:11.5px;color:var(--ink);opacity:.8;border-bottom:1px solid var(--line)}
+.cmp-agents td{padding:6px 10px;border-bottom:1px solid var(--line)}
+.cmp-agents td.lbl{color:var(--ink);opacity:.85;font-weight:600}
+.cmp-agents td.lbl.agent{color:var(--ink);opacity:.85;white-space:nowrap}
+.cmp-agents td.val{font-weight:700;color:var(--ink);white-space:nowrap}
+
 
 /* ---------- top performer ---------- */
 .top-performer{margin-bottom:18px;min-width:0}
@@ -477,7 +485,7 @@ td.c,th.c{text-align:center}
 .casc-cat{background:var(--blush);color:var(--rose-d);font-weight:700}
 .casc-brand{font-size:12.5px;color:var(--ink3)}
 .casc-date{margin-left:auto;font-size:12px;color:var(--mauve);font-weight:600}
-.casc-body{font-size:14px;line-height:1.7;color:var(--ink2);white-space:pre-wrap;word-break:break-word}
+.casc-body{font-size:14px;line-height:1.7;color:var(--ink2);white-space:pre-wrap;word-break:break-word;font-family:inherit,'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',monospace}
 .casc-body b{color:var(--ink);font-weight:700}
 .casc-body i{font-style:italic}
 /* images: clickable thumbnails that open full size in a lightbox */

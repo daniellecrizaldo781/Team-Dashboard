@@ -308,12 +308,12 @@ function renderRuns(runs, plain) {
       // emojify + turn any image drivelinks inside the run into inline <img>,
       // THEN escape. emojify runs before esc so glyphs survive; esc still
       // neutralises any stray < > & in the raw text.
-      var t = inlineCascadeImages(emojify(esc(r[0])));
+      var t = inlineCascadeImages(emojify(esc(r[0] || '')));
       if (r[1] && r[2]) return '<b><i>' + t + '</i></b>';
       if (r[1]) return '<b>' + t + '</b>';
       if (r[2]) return '<i>' + t + '</i>';
       return t;
-    }).join('');
+    }).join('\n');
   }
   return cascTextHtml(plain || '');
 }
