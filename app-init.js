@@ -328,6 +328,29 @@ function isImage(u) {
   return /\.(png|jpe?g|gif|webp|bmp|svg)(\?|$)/i.test(u) ||
     /drive\.google\.com|docs\.google\.com\/uc|lh3\.googleusercontent\.com|imgur\.com/i.test(u);
 }
+// Is this a video link? (YouTube, Drive video, or a direct video file.)
+function isVideo(u) {
+  u = (u || '').replace(/&amp;/g, '&');
+  return /youtu\.be\/|youtube\.com\/(watch|v|embed)/i.test(u) ||
+    /drive\.google\.com\/file\/d\/.*(view|preview)/i.test(u) ||
+    /docs\.google\.com\/document\/d\/[^/]+\/preview/i.test(u) ||
+    /\.(mp4|webm|mov|mkv|avi)(\?|$)/i.test(u);
+}
+// Convert a video URL into an iframe-embeddable URL for the lightbox.
+function toEmbedUrl(u) {
+  u = (u || '').replace(/&amp;/g, '&');
+  // YouTube watch URL -> embed
+  var m = u.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([\w-]+)/i);
+  if (m) return 'https://www.youtube.com/embed/' + m[1] + '?autoplay=1';
+  // Google Drive file -> preview player
+  m = u.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);
+  if (m) return 'https://drive.google.com/file/d/' + m[1] + '/preview';
+  // Drive document preview
+  m = u.match(/docs\.google\.com\/document\/d\/([^/?#]+)\/preview/i);
+  if (m) return 'https://docs.google.com/document/d/' + m[1] + '/preview';
+  // already an embed, or a direct video file
+  return u;
+}
 // Rewrite a URL to one that actually returns image bytes. Google Drive "view"
 // / "open" / "uc?export=view" links serve an HTML page (or a redirect), not the
 // image, so an <img> on them breaks. The file's raw bytes live on the lh3 host,
@@ -414,12 +437,18 @@ function cascadeDetailHtml(r) {
         var _direct = toDirectImg(u);
         return '<img class="casc-inline-img" src="' + esc(_direct) + '" alt="reference image" loading="lazy" data-href="' + esc(u) + '" onclick="openLb(this.src)" onerror="cascImgFallback(this)">';
       }
+      if (isVideo(u)) {
+        return '<span class="casc-vid" onclick="openLb(\'' + esc(toEmbedUrl(u)) + '\', true)"><span class="casc-vid-play">&#9654;</span>Video</span>';
+      }
       return '<a class="casc-open" href="' + u + '" target="_blank" rel="noopener">Click Here &#8599;</a>';
     });
     refParts.push('<div class="casc-ref-text">' + refText + '</div>');
   }
   if (links.length) {
     refParts.push(links.map(function (u) {
+      if (isVideo(u)) {
+        return '<span class="casc-vid" onclick="openLb(\'' + esc(toEmbedUrl(u)) + '\', true)"><span class="casc-vid-play">&#9654;</span>Video</span>';
+      }
       return '<a class="casc-open" href="' + esc(u) + '" target="_blank" rel="noopener">Click Here &#8599;</a>';
     }).join(' '));
   }
@@ -541,6 +570,9 @@ function renderCascades() {
           if (isImage(u)) {
             var _direct = toDirectImg(u);
             return '<img class="casc-inline-img" src="' + esc(_direct) + '" alt="reference image" loading="lazy" data-href="' + esc(u) + '" onclick="openLb(this.src)" onerror="cascImgFallback(this)">';
+          }
+          if (isVideo(u)) {
+            return '<span class="casc-vid" onclick="openLb(\'' + esc(toEmbedUrl(u)) + '\', true)"><span class="casc-vid-play">&#9654;</span>Video</span>';
           }
           return '<a class="casc-open" href="' + u + '" target="_blank" rel="noopener">Click Here &#8599;</a>';
         });

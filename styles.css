@@ -616,6 +616,10 @@ td.c,th.c{text-align:center}
 .lb img{max-width:94vw;max-height:92vh;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
 .lb iframe{width:96vw;height:94vh;border:0;border-radius:8px;background:#fff}
 .lb-close{position:fixed;top:16px;right:22px;color:#fff;font-size:34px;line-height:1;cursor:pointer;z-index:201;font-weight:700;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+/* Cascade video link: clickable play-button thumbnail that opens the lightbox iframe */
+.casc-vid{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--line);border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--ink2);background:rgba(var(--accent-rgb),.08);transition:.15s}
+.casc-vid:hover{border-color:var(--accent);background:rgba(var(--accent-rgb),.15);color:var(--ink)}
+.casc-vid-play{font-size:16px;line-height:1}
 /* Stack the product detail to one column on narrow screens. Placed AFTER the
    base .prod-card rule so it wins the cascade (equal specificity, later wins). */
 @media(max-width:900px){

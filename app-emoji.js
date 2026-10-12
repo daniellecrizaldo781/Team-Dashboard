@@ -50,7 +50,15 @@ function inlineCascadeImages(escapedHtml) {
   if (!escapedHtml) return escapedHtml;
   var URL_RE = /https?:\/\/[^<>\s"']+/g;
   return escapedHtml.replace(URL_RE, function (u) {
-    var isImg = /\.(png|jpe?g|gif|webp|bmp|svg)(\?|$)/i.test(u) ||
+  // video? -> clickable thumbnail that opens the lightbox iframe
+  if (isVideo(u)) {
+    var embed = toEmbedUrl(u);
+    return '<span class="casc-vid" onclick="openLb(\'' + esc(embed) + '\', true)">' +
+      '<span class="casc-vid-play">&#9654;</span>' +
+      '<span class="casc-vid-label">Video</span>' +
+      '</span>';
+  }
+  var isImg = /\.(png|jpe?g|gif|webp|bmp|svg)(\?|$)/i.test(u) ||
       /drive\.google\.com|docs\.google\.com\/uc|lh3\.googleusercontent\.com|imgur\.com/i.test(u);
     if (!isImg) return u;
     var direct = u.replace(/&amp;/g, '&');
