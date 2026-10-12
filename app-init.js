@@ -326,14 +326,14 @@ function extractUrls(t) {
 }
 function isImage(u) {
   return /\.(png|jpe?g|gif|webp|bmp|svg)(\?|$)/i.test(u) ||
-    /drive\.google\.com|docs\.google\.com\/uc|lh3\.googleusercontent\.com|imgur\.com/i.test(u);
+    /docs\.google\.com\/uc|lh3\.googleusercontent\.com|imgur\.com/i.test(u);
 }
-// Is this a video link? (YouTube, Drive video, or a direct video file.)
+// Is this a video / iframe-embeddable link? (YouTube, Drive file, or direct video.)
 function isVideo(u) {
   u = (u || '').replace(/&amp;/g, '&');
   return /youtu\.be\/|youtube\.com\/(watch|v|embed)/i.test(u) ||
-    /drive\.google\.com\/file\/d\/.*(view|preview)/i.test(u) ||
-    /docs\.google\.com\/document\/d\/[^/]+\/preview/i.test(u) ||
+    /drive\.google\.com\/file\/d\/[^]+?\/(view|preview)/i.test(u) ||
+    /\.google\.com\/document\/d\/[^]+?\/preview/i.test(u) ||
     /\.(mp4|webm|mov|mkv|avi)(\?|$)/i.test(u);
 }
 // Convert a video URL into an iframe-embeddable URL for the lightbox.
@@ -732,8 +732,8 @@ function renderProducts() {
           '</div>' +
           '<div class="prod-info">' +
                       '<h3 class="prod-name">' + esc(p.name) + '</h3>' +
-                      (p.description ? '<section class="prod-sec"><h4>Product Description</h4><details class="prod-desc"><summary>Show / hide description</summary><p class="prod-pre">' + p.description + '</p></details></section>' : '') +
-            (p.inclusion ? '<section class="prod-sec"><h4>Package Inclusion</h4><p class="prod-pre">' + p.inclusion + '</p></section>' : '') +
+                      (p.description ? '<section class="prod-sec"><h4>Product Description</h4><details class="prod-desc"><summary>Show / hide description</summary><p class="prod-pre">' + inlineCascadeImages(p.description) + '</p></details></section>' : '') +
+                                  (p.inclusion ? '<section class="prod-sec"><h4>Package Inclusion</h4><p class="prod-pre">' + inlineCascadeImages(p.inclusion) + '</p></section>' : '') +
             (p.manual ? '<section class="prod-sec"><h4>Instruction Manual</h4><p class="prod-pre">' + nameManualLinks(p.manual) + '</p>' +
               (p.manualPhotos && p.manualPhotos.length
                 ? '<div class="prod-photos">' + p.manualPhotos.map(function (ph) {
@@ -752,11 +752,11 @@ function renderProducts() {
                         '<div class="prod-update-detail">' +
                           (p.updateStatus ? '<span class="prod-update-status ' + esc(statusClass(p.updateStatus)) + '">' + esc(p.updateStatus) + '</span>' : '') +
                           (p.updateDate ? '<span class="prod-update-date">' + esc(fmtUpdateDate(p.updateDate)) + '</span>' : '') +
-                          '<p class="prod-pre prod-update-full">' + esc(p.update) + '</p>' +
+                          '<p class="prod-pre prod-update-full">' + inlineCascadeImages(esc(p.update)) + '</p>' +
                         '</div></section>' : '') +
                       '<section class="prod-sec"><h4>Trouble Shooting &amp; Handling</h4><div class="prod-ts">' +
                       p.troubleshooting.map(function (t) {
-                        return '<details class="prod-ts-item"><summary>' + esc(t.q) + '</summary><span class="prod-ts-a">' + driveLinksAsPhotos(t.aHtml || esc(t.a)) + '</span></details>';
+                        return '<details class="prod-ts-item"><summary>' + esc(t.q) + '</summary><span class="prod-ts-a">' + inlineCascadeImages(driveLinksAsPhotos(t.aHtml || esc(t.a))) + '</span></details>';
                       }).join('') + '</div></section></div>' : '') +
                   '</article>';
       var back = $('prodBack');
