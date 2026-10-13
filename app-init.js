@@ -732,7 +732,7 @@ function renderProducts() {
               : '') +
             (imgSrc
               ? '<img src="' + esc(imgSrc) + '" alt="' + esc(p.name) + '" loading="lazy" onclick="openLb(this.src)">'
-              : (!vidUrl ? '<div class="prod-photo-ph">Product photo<br>not available</div>' : '')) +
+              : '<div class="prod-photo-ph">Product photo<br>not available</div>') +
           '</div>' +
           '<div class="prod-info">' +
                       '<h3 class="prod-name">' + esc(p.name) + '</h3>' +
