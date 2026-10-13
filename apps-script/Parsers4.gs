@@ -286,6 +286,22 @@ function parseProducts(ss) {
       if (!answerCell || !exact(answerCell).trim()) answerCell = row[c];
       ts.push({ q: title, a: body, aHtml: richHtml(answerCell) });
     }
+    // The image cell may contain BOTH an image link and an unboxing video link,
+    // separated by labels like "IMAGE:" / "UNBOXING VIDEO:". Split them so the
+    // UI can render a video player and a separate product photo.
+    var imageCell = iImg >= 0 ? exact(row[iImg]) : '';
+    var videoUrl = '';
+    var imgUrl = '';
+    var parts = imageCell.split(/unboxing\s*video\s/i);
+    if (parts.length > 0) {
+      var m3 = parts[0].match(/(https?:\/\/drive\.google\.com\/file\/d\/[^/\s]+)/i);
+      if (m3) imgUrl = m3[1];
+    }
+    if (parts.length > 1) {
+      var m2 = parts[1].match(/(https?:\/\/drive\.google\.com\/file\/d\/[^/\s]+)/i);
+      if (m2) videoUrl = m2[1];
+    }
+    if (!imgUrl) imgUrl = imageCell;  // fallback: let bake-time embedding extract it
     out.push({
       name: name,
       description: iDesc >= 0 ? richHtml(row[iDesc]) : '',
@@ -295,7 +311,8 @@ function parseProducts(ss) {
       // manuals, e.g. X-All Air Pure Ionizer, Oricle Hearing Aid). Capture them so
       // the UI can show a scrollable photo strip + click-to-fullscreen viewer.
       manualPhotos: iManual >= 0 ? extractDriveLinks(row[iManual]) : [],
-      image: iImg >= 0 ? exact(row[iImg]) : '',       // Drive link (embedded at bake)
+      image: imgUrl,            // Drive image link (embedded at bake)
+      video: videoUrl,          // Drive video link (unboxing video) - optional
       email: iEmail >= 0 ? exact(row[iEmail]) : '',
             hotline: iHot >= 0 ? exact(row[iHot]) : '',
             update: iUpdate >= 0 ? exact(row[iUpdate]) : '',   // product update notice (badge + updates section)

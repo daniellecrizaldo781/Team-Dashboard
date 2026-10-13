@@ -37,7 +37,7 @@ const T = {
   leaveRequests:     ['agent','month','leaveType','reason','details','dateManila','datePST',
                      'date','week','status','statusNorm','requestedOn','approvedOn','notes'],
   cascades:         ['category','brand','title','date','month','dayNum','ts','dateLabel','cascade','linkRefs','cascadeRuns','cascadeImages'],
-  products:         ['name','description','inclusion','manual','manualPhotos','image','imageData','email','hotline','update','updateDate','updateStatus','troubleshooting']
+  products:         ['name','description','inclusion','manual','manualPhotos','image','imageData','video','email','hotline','update','updateDate','updateStatus','troubleshooting'],
 };
 
 Object.keys(T).forEach(k => (d[k] || []).forEach(row => T[k].forEach(c => count(row[c]))));

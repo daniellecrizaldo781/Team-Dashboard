@@ -722,13 +722,17 @@ function renderProducts() {
     var p = PRODUCTS[idx];
     if (p) {
       var imgSrc = p.imageData || p.image || '';
+      var vidUrl = p.video || '';
       detail.innerHTML =
         '<button class="casc-back" id="prodBack">&larr; Back to all products</button>' +
         '<article class="prod-card">' +
           '<div class="prod-media">' +
+            (vidUrl
+              ? '<div class="prod-video-wrap"><iframe src="' + esc(toEmbedUrl(vidUrl)) + '" class="prod-video" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>'
+              : '') +
             (imgSrc
               ? '<img src="' + esc(imgSrc) + '" alt="' + esc(p.name) + '" loading="lazy" onclick="openLb(this.src)">'
-              : '<div class="prod-photo-ph">Product photo<br>not available</div>') +
+              : (!vidUrl ? '<div class="prod-photo-ph">Product photo<br>not available</div>' : '')) +
           '</div>' +
           '<div class="prod-info">' +
                       '<h3 class="prod-name">' + esc(p.name) + '</h3>' +
