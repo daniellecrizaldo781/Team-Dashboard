@@ -23,6 +23,8 @@ function count(v) { if (typeof v === 'string' && v) freq.set(v, (freq.get(v) || 
 const T = {
   dailyProductivity: ['agent','date','week','day','tickets','off',
                       'weeklyTarget','weeklyActual','productivityPct','finalScore'],
+  dailyEmailProductivity: ['agent','date','week','day','tickets','off',
+                      'weeklyTarget','weeklyActual','productivityPct','finalScore'],
   weeklyCallStats:   ['agent','week','attempts','pickedUp','notPickedUp','pickupRate','aht'],
   // 'criteria' is a big per-call object the dashboard never renders - dropped
   qaScores:          ['agent','date','week','day','score','link','notes'],

@@ -31,6 +31,7 @@ const out = {
   ok: true, mode: 'data', warnings: [],
   lastUpdated: new Date().toISOString(),
   dailyProductivity: parseDailyProductivity(PERF),
+  dailyEmailProductivity: parseDailyEmailProductivity(PERF),
   weeklyCallStats: parseWeeklyCallStats(PERF),
   qaScores: parseQA(PERF),
   qaBreakdown: parseQaJacky(PERF),

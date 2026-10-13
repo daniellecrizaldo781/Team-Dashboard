@@ -172,43 +172,10 @@ function renderOverview() {
     }
 
 /* ---------------- DAILY PRODUCTIVITY ---------------- */
-function renderProductivity() {
-  var dp = slice(DATA.dailyProductivity);
-  var worked = dp.filter(function (r) { return !r.off && r.tickets !== null; });
-
-  // weekly summary rows (target/actual/% are per agent-week, not per day)
-  var wkKeys = {}, wkRows = [];
-  dp.forEach(function (r) {
-    var k = r.agent + '|' + r.week;
-    if (wkKeys[k]) return;
-    wkKeys[k] = 1;
-    wkRows.push({ agent: r.agent, week: r.week, target: r.weeklyTarget, actual: r.weeklyActual,
-                  prod: r.productivityPct, score: r.finalScore });
-  });
-
-  kpi('prKpis', [
-    { label: 'Avg Tickets / Day', value: n1(avg(worked.map(function (r) { return r.tickets; }))), sub: 'per agent per day' },
-    { label: 'Avg Productivity', html: wkRows.length ? pct(avg(wkRows.map(function (r) { return r.prod; }))) : '\u2014',
-      sub: 'actual vs target',
-      tone: wkRows.length && avg(wkRows.map(function (r) { return r.prod; })) >= 1 ? 'good' : 'warn' },
-    { label: 'Weekly Target', value: n0(sum(wkRows.map(function (r) { return r.target; }))), sub: 'combined target' },
-    { label: 'Weekly Actual', value: n0(sum(wkRows.map(function (r) { return r.actual; }))), sub: 'combined actual' },
-    { label: 'Avg Final Score', value: n1(avg(wkRows.map(function (r) { return r.score; }))), sub: 'out of 5' },
-    { label: 'Days Off', value: n0(dp.filter(function (r) { return r.off; }).length), sub: 'in current view' }
-  ]);
-
-  var byAg = groupBy(worked, function (r) { return r.agent; });
-  var ag = byAg.keys.slice().sort(function (a, b) {
-    return sum(byAg.map[b].map(function (r) { return r.tickets; })) - sum(byAg.map[a].map(function (r) { return r.tickets; }));
-  });
-  barChart('chPrAgent', ag, ag.map(function (a) { return sum(byAg.map[a].map(function (r) { return r.tickets; })); }),
-    { horizontal: true, label: 'Tickets' });
-
-  // weekly grid: one row per agent, columns = Name | Wk Target | Actual |
-  // Mon..Sun (ticket or OFF) | Productivity % | Final Score  - matching the sheet
+function buildProdGrid(dp) {
+  var dayKeys = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   var byAg = groupBy(dp, function (r) { return r.agent; });
   var agents = byAg.keys.slice().sort();
-  var dayKeys = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   var grid = agents.map(function (a) {
     var rows = byAg.map[a];
     var first = rows[0] || {};
@@ -228,18 +195,11 @@ function renderProductivity() {
       finalScore: first.finalScore
     };
   });
-  // sort by actual productivity desc
   grid.sort(function (x, y) { return (y.weeklyActual || 0) - (x.weeklyActual || 0); });
-
-  // day -> date for the latest week in the current view, so each day header can
-  // carry the real date above the day name. Uses the same weekly grid as the sheet.
-  var dayDate = {};
-  (function () {
-    var wd = null;
-    dp.forEach(function (r) { if (r.week && (!wd || r.week > wd)) wd = r.week; });
-    var w = dp.filter(function (r) { return r.week === wd; });
-    w.forEach(function (r) { if (r.day && r.date) dayDate[r.day] = r.date; });
-  })();
+  return grid;
+}
+function prodCols(dayDateFn) {
+  var dayKeys = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   function shortDate(iso) {
     if (!iso) return '';
     var p = String(iso).split('-');
@@ -253,15 +213,99 @@ function renderProductivity() {
   ];
   dayKeys.forEach(function (d) {
     cols.push({ key: d, num: true, center: true,
-      labelHtml: '<span class="pr-day-date">' + esc(shortDate(dayDate[d])) + '</span>' + d,
+      labelHtml: '<span class="pr-day-date">' + esc(shortDate(dayDateFn(d))) + '</span>' + d,
       fmt: function (r) { var c = r.cells[dayKeys.indexOf(d)]; return c.off ? '<span class="pill off">OFF</span>' : c.v; } });
   });
   cols.push({ key: 'productivityPct', label: 'Productivity %', num: true,
     fmt: function (r) { return r.productivityPct === null ? '—' : scorePill(r.productivityPct); }, sortVal: function (r) { return r.productivityPct; } });
   cols.push({ key: 'finalScore', label: 'Final Score', num: true, fmt: function (r) { return n1(r.finalScore); } });
+  return cols;
+}
+function renderProductivity() {
+  var dp = slice(DATA.dailyProductivity);
+  var worked = dp.filter(function (r) { return !r.off && r.tickets !== null; });
 
+  // weekly summary rows (target/actual/% are per agent-week, not per day)
+  var wkKeys = {}, wkRows = [];
+  dp.forEach(function (r) {
+    var k = r.agent + '|' + r.week;
+    if (wkKeys[k]) return;
+    wkKeys[k] = 1;
+    wkRows.push({ agent: r.agent, week: r.week, target: r.weeklyTarget, actual: r.weeklyActual,
+                  prod: r.productivityPct, score: r.finalScore });
+  });
+
+  kpi('prKpis', [
+    { label: 'Avg Tickets / Day', value: n1(avg(worked.map(function (r) { return r.tickets; }))), sub: 'per agent per day' },
+    { label: 'Avg Productivity', html: wkRows.length ? pct(avg(wkRows.map(function (r) { return r.prod; }))) : '—',
+      sub: 'actual vs target',
+      tone: wkRows.length && avg(wkRows.map(function (r) { return r.prod; })) >= 1 ? 'good' : 'warn' },
+    { label: 'Weekly Target', value: n0(sum(wkRows.map(function (r) { return r.target; }))), sub: 'combined target' },
+    { label: 'Weekly Actual', value: n0(sum(wkRows.map(function (r) { return r.actual; }))), sub: 'combined actual' },
+    { label: 'Avg Final Score', value: n1(avg(wkRows.map(function (r) { return r.score; }))), sub: 'out of 5' },
+    { label: 'Days Off', value: n0(dp.filter(function (r) { return r.off; }).length), sub: 'in current view' }
+  ]);
+
+  var byAg = groupBy(worked, function (r) { return r.agent; });
+  var ag = byAg.keys.slice().sort(function (a, b) {
+    return sum(byAg.map[b].map(function (r) { return r.tickets; })) - sum(byAg.map[a].map(function (r) { return r.tickets; }));
+  });
+  barChart('chPrAgent', ag, ag.map(function (a) { return sum(byAg.map[a].map(function (r) { return r.tickets; })); }),
+    { horizontal: true, label: 'Tickets' });
+
+  // day -> date for the latest week in the current view
+  var dayDate = {};
+  (function () {
+    var wd = null;
+    dp.forEach(function (r) { if (r.week && (!wd || r.week > wd)) wd = r.week; });
+    var w = dp.filter(function (r) { return r.week === wd; });
+    w.forEach(function (r) { if (r.day && r.date) dayDate[r.day] = r.date; });
+  })();
+
+  var grid = buildProdGrid(dp);
+  var cols = prodCols(function (d) { return dayDate[d]; });
   makeTable('prTable', cols, grid, { sort: 'weeklyActual', dir: 'desc', per: 25, pagerId: 'prPager',
     empty: 'No productivity records available for the selected filters.' });
+
+  // ---- Daily Email Support Productivity (same sheet, separate section) ----
+  var edp = slice(DATA.dailyEmailProductivity || []);
+  var eWorked = edp.filter(function (r) { return !r.off && r.tickets !== null; });
+  if (eWorked.length) {
+    var eWkKeys = {}, eWkRows = [];
+    edp.forEach(function (r) {
+      var k = r.agent + '|' + r.week;
+      if (eWkKeys[k]) return;
+      eWkKeys[k] = 1;
+      eWkRows.push({ agent: r.agent, week: r.week, target: r.weeklyTarget, actual: r.weeklyActual,
+                    prod: r.productivityPct, score: r.finalScore });
+    });
+    // add KPIs for email productivity
+    var extraKpis = [
+      { label: 'Avg Email Tickets / Day', value: n1(avg(eWorked.map(function (r) { return r.tickets; }))), sub: 'per agent per day' },
+      { label: 'Avg Email Productivity', html: eWkRows.length ? pct(avg(eWkRows.map(function (r) { return r.prod; }))) : '—',
+        sub: 'actual vs target',
+        tone: eWkRows.length && avg(eWkRows.map(function (r) { return r.prod; })) >= 1 ? 'good' : 'warn' },
+      { label: 'Email Weekly Target', value: n0(sum(eWkRows.map(function (r) { return r.target; }))), sub: 'combined target' },
+      { label: 'Email Weekly Actual', value: n0(sum(eWkRows.map(function (r) { return r.actual; }))), sub: 'combined actual' },
+      { label: 'Days Off (Email)', value: n0(edp.filter(function (r) { return r.off; }).length), sub: 'in current view' }
+    ];
+    kpi('prEmailKpis', extraKpis);
+
+    var eGrid = buildProdGrid(edp);
+    var eCols = prodCols(function (d) {
+      var wd2 = null;
+      edp.forEach(function (r) { if (r.week && (!wd2 || r.week > wd2)) wd2 = r.week; });
+      var w2 = edp.filter(function (r) { return r.week === wd2; });
+      var ed = {};
+      w2.forEach(function (r) { if (r.day && r.date) ed[r.day] = r.date; });
+      return ed[d];
+    });
+    makeTable('prEmailTable', eCols, eGrid, { sort: 'weeklyActual', dir: 'desc', per: 25, pagerId: 'prEmailPager',
+      empty: 'No email productivity records available for the selected filters.' });
+  } else {
+    var ek = $('prEmailKpis'); if (ek) ek.innerHTML = '';
+    var et = $('prEmailTable'); if (et) { et.innerHTML = '<div class="empty"><b>No email productivity data</b>No "Daily Email Support Productivity Record" sections found in the current view.</div>'; }
+  }
 }
 
 /* ---------------- WEEKLY CALL STATS ---------------- */

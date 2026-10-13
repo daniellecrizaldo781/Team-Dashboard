@@ -1,61 +1,67 @@
 /**
  * FILE 4 of 4  ->  Parsers3.gs
- * Two more block shapes inside 'Team Weekly and Monthly Stats':
+ * Two block shapes inside 'WEEKLY SCORECARD':
  *   - daily CALLS grid  : 'NAME OF AGENT' + 7 date cols, NO 'Weekly Target'
  *   - official scorecard: 'CSR NAME' + weighted components + OVERALL SCORE
  */
 
 /* ============ OFFICIAL WEEKLY SCORECARD (OVERALL SCORE) ============
- * Header shapes seen in the sheet:
- *   CSR NAME | Attendance & Reliability 30% | QA Spotcheck 40% | Productivity 30% | OVERALL SCORE
- *   CSR NAME | Attendance & Reliability 30% | Overall QA Spotcheck 40% | QA Jacky Spotcheck 30%
- *            | TL Spotcheck 10% | Productivity 30% | OVERALL SCORE
- *   CSR NAME | Week 1 | Week 2 | ... | Overall Score        (monthly roll-up)
- * This is the OFFICIAL score - rankings use it rather than a home-made formula.
+ * Parses the 'WEEKLY SCORECARD' tab for per-agent overall scores.
+ * Sheet has weekly blocks with WEEK: banner, agent header row, and
+ * TOTAL SCORE (out of 100) row. Week from banner end date.
+ * Emits { agent, week, title, overall, components } per agent per week.
  */
 function parseOfficialScorecard(ss) {
   var weekly = [], monthly = [];
-  var g = grid(ss, 'Team Weekly and Monthly Stats');
-  var curTitle = '', curWeek = '';
+  var g = grid(ss, "WEEKLY SCORECARD");
+  if (!g || !g.length) return { weekly: [], monthly: [] };
+
+  var curLabel = "", curWeek = "";
+  var agentCols = [];
 
   for (var r = 0; r < g.length; r++) {
     var a = S(g[r][0]);
+    var joined = g[r].map(S).join(" ");
 
-    if (/scorecard/i.test(a) && !S(g[r][1])) curTitle = a;
-
-    var wk = S(g[r].map(S).join(' ')).match(/week\s*\(\s*([A-Za-z]+\s+\d{1,2}\s*,?\s*\d{4})/i);
-    if (wk) curWeek = weekStart(toISO(wk[1]));
-
-    if (!/^csr name$/i.test(a)) continue;
-
-    var hdr = g[r], comps = [], overallCol = -1, isMonthly = false;
-    for (var c = 1; c < hdr.length; c++) {
-      var h = S(hdr[c]);
-      if (!h) continue;
-      if (/overall\s*score/i.test(h)) { overallCol = c; continue; }
-      if (/^week\s*\d/i.test(h)) isMonthly = true;
-      if (/scorecard\s*\(/i.test(h)) continue;
-      comps.push({ c: c, name: h });
+    var names = [];
+    for (var c = 1; c < g[r].length; c++) {
+      var v = S(g[r][c]);
+      if (v && /^[A-Za-z][A-Za-z .ñ]+$/.test(v) && v.split(" ").length <= 4 && !/week|ending/i.test(v)) {
+        if (!/\d/.test(v)) names.push({ c: c, agent: canonAgent(v) });
+      }
     }
-    if (overallCol < 0) continue;
+    if (!a && names.length >= 3) { agentCols = names; continue; }
 
-    for (var i = r + 1; i < g.length; i++) {
-      var nm = S(g[i][0]);
-      if (!nm) break;
-      if (notAgentRow(nm) || /scorecard/i.test(nm)) break;
-      var ov = num(g[i][overallCol]);
-      if (ov === null) continue;
+    var wk = joined.match(/week\s*:?\s*([A-Za-z]{3,}\s+\d{1,2}\s*,?\s*\d{4})\s*-\s*([A-Za-z]{3,}\s+\d{1,2}\s*,?\s*\d{4})/i);
+    if (wk && r > agentCols.length) {
+      curLabel = S(joined).slice(0, 60);
+      curWeek = weekStart(toISO(wk[2]));
+    } else if (!wk) {
+      wk = joined.match(/week\s*:?\s*([A-Za-z]{3,}\s+\d{1,2}\s*,?\s*\d{4})/i);
+      if (wk && r > agentCols.length) {
+        curLabel = S(joined).slice(0, 60);
+        curWeek = weekStart(toISO(wk[1]));
+      }
+    }
 
-      var parts = {};
-      comps.forEach(function (k) { var v = num(g[i][k.c]); if (v !== null) parts[k.name] = v; });
+    if (!/^(total score|overall %)$/i.test(a)) continue;
+    if (!agentCols.length) continue;
 
-      var rec = {
-        agent: canonAgent(nm), title: curTitle, overall: ov, components: parts
-      };
-      if (isMonthly) { rec.period = curTitle; monthly.push(rec); }
-      else { rec.week = curWeek; weekly.push(rec); }
-      r = i;
+    for (var i = 0; i < agentCols.length; i++) {
+      var col = agentCols[i];
+      var val = num(g[r][col.c]);
+      if (val === null) continue;
+      weekly.push({ agent: col.agent, week: curWeek, title: curLabel, overall: val, components: {} });
     }
   }
-  return { weekly: weekly, monthly: monthly };
+
+  var seen = {};
+  var deduped = [];
+  weekly.forEach(function (r) {
+    var k = r.agent + "|" + r.week;
+    if (seen[k]) return;
+    seen[k] = 1;
+    deduped.push(r);
+  });
+  return { weekly: deduped, monthly: monthly };
 }

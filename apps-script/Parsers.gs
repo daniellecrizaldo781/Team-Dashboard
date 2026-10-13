@@ -64,7 +64,70 @@ function parseDailyProductivity(ss) {
       }
     }
   });
-  return dedupe(out, function (x) { return x.agent + '|' + x.date; });
+  return dedupe(out, function (x) { return x.agent + '|' + x.date + '|' + x.source; });
+}
+
+/* ============ DAILY EMAIL SUPPORT PRODUCTIVITY ============
+ * Same sheet tab as Daily Productivity, but a distinct section labelled
+ * "Daily Email Support Productivity Record". Same column shape.
+ */
+function parseDailyEmailProductivity(ss) {
+  var out = [];
+  var g = grid(ss, 'Daily and Weekly Call Stats');
+  for (var r = 0; r < g.length; r++) {
+    var first = S(g[r][0]);
+    var joined = g[r].map(S).join(' ');
+    if (!/daily email support productivity record/i.test(joined)) continue;
+    // find the next header row with "Weekly Target"
+    var hdr = null, hdrRow = -1;
+    for (var k = r + 1; k < Math.min(r + 5, g.length); k++) {
+      if (/^(name of agent)$/i.test(S(g[k][0])) && g[k].some(function (h) { return /weekly target/i.test(S(h)); })) {
+        hdr = g[k]; hdrRow = k; break;
+      }
+    }
+    if (!hdr) continue;
+
+    var dateCols = [], pctCol = -1, scoreCol = -1, tgtCol = -1, actCol = -1;
+    for (var c = 1; c < hdr.length; c++) {
+      var h = S(hdr[c]);
+      if (isDate(hdr[c])) dateCols.push({ c: c, d: iso(hdr[c]) });
+      else if (/weekly target/i.test(h)) tgtCol = c;
+      else if (/weekly actual|actual\s*productivity/i.test(h)) actCol = c;
+      else if (/productivity\s*%|% ?productivity/i.test(h)) pctCol = c;
+      else if (/final\s*score/i.test(h)) scoreCol = c;
+    }
+    if (!dateCols.length) continue;
+
+    var start = hdrRow + 1;
+    if (start < g.length && /^(mon|monday)$/i.test(S(g[start][dateCols[0].c]))) start++;
+
+    for (var i = start; i < g.length; i++) {
+      var nm = S(g[i][0]);
+      if (!nm) break;
+      if (notAgentRow(nm)) break;
+      // stop at a new section header
+      if (/non oha|oha|scorecard|score per|daily|weekly/i.test(nm) && g[i].map(S).join(' ').indexOf('Name of Agent') < 0 && !g[i][1]) break;
+      var agent = canonAgent(nm);
+      var pct = num(g[i][pctCol]), fs = num(g[i][scoreCol]);
+      var tgt = num(g[i][tgtCol]), act = num(g[i][actCol]);
+      for (var k2 = 0; k2 < dateCols.length; k2++) {
+        var raw = g[i][dateCols[k2].c];
+        var rs = S(raw);
+        var isOff = /^off$/i.test(rs);
+        var v = isOff ? null : num(raw);
+        if (v === null && !isOff) continue;
+        out.push({
+          agent: agent, date: dateCols[k2].d, week: weekStart(dateCols[k2].d),
+          day: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][k2] || '',
+          tickets: v, off: isOff,
+          weeklyTarget: tgt, weeklyActual: act,
+          productivityPct: pct, finalScore: fs, source: 'Daily Email Support Productivity Record'
+        });
+      }
+    }
+    r = hdrRow; // skip past this block's data rows
+  }
+  return dedupe(out, function (x) { return x.agent + '|' + x.date + '|' + x.source; });
 }
 
 /** Later blocks win (the sheet is appended chronologically). */
