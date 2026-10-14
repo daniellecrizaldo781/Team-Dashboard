@@ -252,6 +252,7 @@ function parseProducts(ss) {
   var iIncl   = col('package inclusion');
   var iManual = col('instruction manual');
   var iImg    = col('product image');
+  var iVideo = col('unboxing video', 'video');   // optional dedicated video column
   var iEmail  = col('email support');
     var iHot    = col('hotline');
     var iUpdate = col('update');   // optional "Product Update" column -> badge + updates section
@@ -286,11 +287,19 @@ function parseProducts(ss) {
       if (!answerCell || !exact(answerCell).trim()) answerCell = row[c];
       ts.push({ q: title, a: body, aHtml: richHtml(answerCell) });
     }
-    // The image cell may contain BOTH an image link and an unboxing video link,
-    // separated by labels like "IMAGE:" / "UNBOXING VIDEO:". Split them so the
-    // UI can render a video player and a separate product photo.
-    var imageCell = iImg >= 0 ? exact(row[iImg]) : '';
+    // --- Video source ---
+    // Prefer a dedicated "Unboxing Video" / "Video" column when present
+    // (the sheet has separate columns). Fall back to splitting the image cell
+    // on "UNBOXING VIDEO:" for sheets that still inline it there.
     var videoUrl = '';
+    if (iVideo >= 0) {
+      var vCell = exact(row[iVideo]);
+      var mVid = vCell.match(/(https?:\/\/drive\.google\.com\/file\/d\/[^\/\s]+)/i);
+      if (mVid) videoUrl = mVid[1];
+      else videoUrl = vCell;  // may already be a clean URL
+    }
+
+    var imageCell = iImg >= 0 ? exact(row[iImg]) : '';
     var imgUrl = '';
     var parts = imageCell.split(/unboxing\s*video\s/i);
     if (parts.length > 0) {
