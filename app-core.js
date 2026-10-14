@@ -404,10 +404,8 @@ function expandSnapshot(raw) {
           continue;
         }
         if (cols[i] === 'video') {
-          // array of Drive video URL strings - final form, skip decoder (dec()
-          // would mistake the array for a shared-string reference and corrupt it).
-          var vArr = i < arr.length ? arr[i] : null;
-          o.video = vArr ? vArr.map(function (u) { return (typeof u === 'string') ? u : (Array.isArray(u) ? strings[u[0]] : u); }) : null;
+          // array of {url,label} objects - final form, skip decoder.
+          o.video = i < arr.length ? arr[i] : null;
           continue;
         }
         o[cols[i]] = i < arr.length ? dec(arr[i]) : null;

@@ -289,31 +289,59 @@ function parseProducts(ss) {
     }
     // --- Video sources ---
     // Extract ALL Google Drive video links from the Video column cell (a cell
-    // can contain multiple "Unboxing Video: <url>" entries, e.g. 3 videos).
-    // Also supports inline "UNBOXING VIDEO:" in the image cell for backward compat.
-    var videoUrls = [];
+    // can contain multiple "Label: <url>" entries, e.g. 3 videos). Each video
+    // link is paired with the label text that precedes it in the rich text.
+    var videos = [];
     if (iVideo >= 0) {
       var vCell = exact(row[iVideo]);
-      // Match all Drive file links in the video cell
       var vRe = /(https?:\/\/drive\.google\.com\/file\/d\/[^/\s]+)/gi;
-      var mVid;
-      while ((mVid = vRe.exec(vCell)) !== null) {
-        videoUrls.push(mVid[1]);
+      var urlMatches = vCell.match(vRe) || [];
+      if (urlMatches.length) {
+        // For each URL, get the text between the previous URL (and its suffix)
+        // and this URL. The label is the last non-empty, non-URL line in that text.
+        var lastEnd = 0;
+        vRe.lastIndex = 0;
+        var mVid;
+        while ((mVid = vRe.exec(vCell)) !== null) {
+          var textBetween = vCell.substring(lastEnd, mVid.index);
+          lastEnd = mVid.index + mVid[0].length;
+          var labelLines = textBetween.replace(/&amp;/g, '&').trim().split(/\r?\n/);
+          var label = '';
+          for (var li = labelLines.length - 1; li >= 0; li--) {
+            var l = labelLines[li].trim();
+            if (l && !/^https?:\/\//.test(l)) {
+              label = l.replace(/:\s*$/, '').trim();
+              break;
+            }
+          }
+          videos.push({ url: mVid[1], label: label });
+        }
       }
-      if (!videoUrls.length && vCell.trim()) videoUrls.push(vCell.trim());
+      if (!videos.length && vCell.trim()) videos.push({ url: vCell.trim(), label: '' });
     }
     var imageCell = iImg >= 0 ? exact(row[iImg]) : '';
     var imgUrl = '';
-    var parts = imageCell.split(/unboxing\s*video\s/i);
-    if (parts.length > 0) {
-      var m3 = parts[0].match(/(https?:\/\/drive\.google\.com\/file\/d\/[^/\s]+)/i);
+    var imgParts = imageCell.split(/unboxing\s*video\s/i);
+    if (imgParts.length > 0) {
+      var m3 = imgParts[0].match(/(https?:\/\/drive\.google\.com\/file\/d\/[^/\s]+)/i);
       if (m3) imgUrl = m3[1];
     }
-    if (parts.length > 1) {
+    if (imgParts.length > 1) {
+      // Legacy: inline "UNBOXING VIDEO: <url>" in the image cell
       var vRe2 = /(https?:\/\/drive\.google\.com\/file\/d\/[^/\s]+)/gi;
       var mVid2;
-      while ((mVid2 = vRe2.exec(parts[1])) !== null) {
-        videoUrls.push(mVid2[1]);
+      while ((mVid2 = vRe2.exec(imgParts[1])) !== null) {
+        var textBefore2 = imgParts[1].substring(0, mVid2.index);
+        var labelLines2 = textBefore2.replace(/&amp;/g, '&').trim().split(/\r?\n/);
+        var label2 = '';
+        for (var li2 = labelLines2.length - 1; li2 >= 0; li2--) {
+          var l2 = labelLines2[li2].trim();
+          if (l2 && !/^https?:\/\//.test(l2)) {
+            label2 = l2.replace(/:\s*$/, '').trim();
+            break;
+          }
+        }
+        videos.push({ url: mVid2[1], label: label2 });
       }
     }
     if (!imgUrl) imgUrl = imageCell;  // fallback: let bake-time embedding extract it
@@ -324,7 +352,7 @@ function parseProducts(ss) {
       manual: iManual >= 0 ? richHtml(row[iManual]) : '',
       manualPhotos: iManual >= 0 ? extractDriveLinks(row[iManual]) : [],
       image: imgUrl,
-      video: videoUrls,             // Array of Drive video links - optional (0 or more)
+      video: videos,             // Array of {url, label} for each Drive video link
       email: iEmail >= 0 ? exact(row[iEmail]) : '',
       hotline: iHot >= 0 ? exact(row[iHot]) : '',
       update: iUpdate >= 0 ? exact(row[iUpdate]) : '',

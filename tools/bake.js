@@ -38,6 +38,7 @@ const T = {
                      'date','week','status','statusNorm','requestedOn','approvedOn','notes'],
   cascades:         ['category','brand','title','date','month','dayNum','ts','dateLabel','cascade','linkRefs','cascadeRuns','cascadeImages'],
   products:         ['name','description','inclusion','manual','manualPhotos','image','imageData','video','email','hotline','update','updateDate','updateStatus','troubleshooting'],
+  // video is an array of {url,label} objects - pack as final-form (like manualPhotos)
 };
 
 Object.keys(T).forEach(k => (d[k] || []).forEach(row => T[k].forEach(c => count(row[c]))));

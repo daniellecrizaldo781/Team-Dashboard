@@ -724,11 +724,12 @@ function renderProducts() {
     var p = PRODUCTS[idx];
     if (p) {
       var imgSrc = p.imageData || p.image || '';
-      var videoUrls = Array.isArray(p.video) ? p.video.filter(function (u) { return u && u.trim(); }) : [];
-      var vidHtml = videoUrls.length
-        ? '<div class="prod-video-wrap">' + videoUrls.map(function (vu, i) {
-            var embed = esc(toEmbedUrl(vu));
+      var videos = Array.isArray(p.video) ? p.video.filter(function (v) { return v && v.url; }) : [];
+      var vidHtml = videos.length
+        ? '<div class="prod-video-wrap">' + videos.map(function (v) {
+            var embed = esc(toEmbedUrl(v.url));
             return '<div class="prod-video-item">' +
+              (v.label ? '<span class="prod-video-label">' + esc(v.label) + '</span>' : '') +
               '<iframe src="' + embed + '" class="prod-video" allow="autoplay; encrypted-media" allowfullscreen></iframe>' +
               '<button type="button" class="prod-video-expand" onclick="openLb(' + "'" + embed + "'" + ', true)" title="Expand video">&#9654;</button>' +
               '</div>';
@@ -738,10 +739,10 @@ function renderProducts() {
         '<button class="casc-back" id="prodBack">&larr; Back to all products</button>' +
         '<article class="prod-card">' +
           '<div class="prod-media">' +
-            vidHtml +
             (imgSrc
               ? '<img src="' + esc(imgSrc) + '" alt="' + esc(p.name) + '" loading="lazy" onclick="openLb(this.src)">'
               : '<div class="prod-photo-ph">Product photo<br>not available</div>') +
+            vidHtml +
           '</div>' +
           '<div class="prod-info">' +
                       '<h3 class="prod-name">' + esc(p.name) + '</h3>' +
@@ -860,7 +861,7 @@ function applyProductFilter() {
       var realIdx = PRODUCTS.indexOf(p);
       var imgSrc = p.imageData || p.image || '';
       var hasUpdate = p.update && String(p.update).trim();
-      var hasVideo = Array.isArray(p.video) && p.video.some(function (u) { return u && u.trim(); });
+      var hasVideo = Array.isArray(p.video) && p.video.some(function (v) { return v && v.url; });
       return '<button class="prod-square' + (hasUpdate ? ' has-update' : '') + (hasVideo ? ' has-video' : '') + '" data-id="' + realIdx + '">' +
         (hasUpdate ? '<span class="prod-square-badge">&#128227; Updated</span>' : '') +
         (hasVideo ? '<span class="prod-square-video-badge">&#9654;</span>' : '') +
