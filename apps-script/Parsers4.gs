@@ -256,7 +256,7 @@ function parseProducts(ss) {
   var iEmail  = col('email support');
     var iHot    = col('hotline');
     var iUpdate = col('update');   // optional "Product Update" column -> badge + updates section
-      var FIXED = 7;  // name,desc,inclusion,manual,image,email,hotline are fixed; col 7+ are handling items
+      var FIXED = iVideo >= 0 ? 8 : 7;  // name,desc,inclusion,manual,image,[video?],email,hotline are fixed; col FIXED+ are handling items
 
   var out = [];
   for (var r = hRow + 1; r < g.length; r++) {
