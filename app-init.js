@@ -342,7 +342,9 @@ function toEmbedUrl(u) {
   // YouTube watch URL -> embed
   var m = u.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([\w-]+)/i);
   if (m) return 'https://www.youtube.com/embed/' + m[1] + '?autoplay=1';
-  // Google Drive file -> preview player
+  // Google Drive file -> preview player (works without login when the file is
+  // shared "Anyone with the link can view". If login is still required, the file
+  // owner must change its Google Drive sharing permissions to public.)
   m = u.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);
   if (m) return 'https://drive.google.com/file/d/' + m[1] + '/preview';
   // Drive document preview
@@ -722,14 +724,21 @@ function renderProducts() {
     var p = PRODUCTS[idx];
     if (p) {
       var imgSrc = p.imageData || p.image || '';
-      var vidUrl = p.video || '';
+      var videoUrls = Array.isArray(p.video) ? p.video.filter(function (u) { return u && u.trim(); }) : [];
+      var vidHtml = videoUrls.length
+        ? '<div class="prod-video-wrap">' + videoUrls.map(function (vu, i) {
+            var embed = esc(toEmbedUrl(vu));
+            return '<div class="prod-video-item">' +
+              '<iframe src="' + embed + '" class="prod-video" allow="autoplay; encrypted-media" allowfullscreen></iframe>' +
+              '<button type="button" class="prod-video-expand" onclick="openLb(' + "'" + embed + "'" + ', true)" title="Expand video">&#9654;</button>' +
+              '</div>';
+          }).join('') + '</div>'
+        : '';
       detail.innerHTML =
         '<button class="casc-back" id="prodBack">&larr; Back to all products</button>' +
         '<article class="prod-card">' +
           '<div class="prod-media">' +
-            (vidUrl
-              ? '<div class="prod-video-wrap"><iframe src="' + esc(toEmbedUrl(vidUrl)) + '" class="prod-video" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>'
-              : '') +
+            vidHtml +
             (imgSrc
               ? '<img src="' + esc(imgSrc) + '" alt="' + esc(p.name) + '" loading="lazy" onclick="openLb(this.src)">'
               : '<div class="prod-photo-ph">Product photo<br>not available</div>') +
@@ -799,29 +808,23 @@ function renderProducts() {
 function renderProductUpdates() {
   var wrap = $('prodUpdates');
   if (!wrap) return;
-  // Include products that have video OR have an update — show the video player inline.
-  var hasVideoOrUpdate = (PRODUCTS || []).filter(function (p) {
-    var vid = (p.video || '').trim();
-    var upd = p.update && String(p.update).trim();
-    return vid || upd;
+  // Show ONLY products that have an actual update notice (not video). Videos
+  // are accessed in the full product detail view, not inline on this banner.
+  var withUpdate = (PRODUCTS || []).filter(function (p) {
+    return p.update && String(p.update).trim();
   });
-  if (!hasVideoOrUpdate.length) { wrap.hidden = true; wrap.innerHTML = ''; return; }
+  if (!withUpdate.length) { wrap.hidden = true; wrap.innerHTML = ''; return; }
   wrap.hidden = false;
   wrap.innerHTML =
     '<div class="prod-updates-head"><span class="prod-updates-ico">&#128227;</span>' +
-    '<h4>Product Updates &amp; Videos</h4><span class="prod-updates-count">' + hasVideoOrUpdate.length + '</span></div>' +
+    '<h4>Product Updates</h4><span class="prod-updates-count">' + withUpdate.length + '</span></div>' +
     '<div class="prod-updates-list">' +
-    hasVideoOrUpdate.map(function (p) {
+    withUpdate.map(function (p) {
       var idx = PRODUCTS.indexOf(p);
-      var vidUrl = (p.video || '').trim();
-      var vidHtml = vidUrl
-        ? '<div class="prod-update-video"><iframe src="' + esc(toEmbedUrl(vidUrl)) + '" class="prod-update-iframe" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>'
-        : '';
-      var updText = p.update ? '<span class="prod-update-text">' + esc(String(p.update).slice(0, 90)) + (String(p.update).length > 90 ? '&hellip;' : '') + '</span>' : '';
-      return '<div class="prod-update-item" data-id="' + idx + '>' +
+      return '<div class="prod-update-item" data-id="' + idx + '">' +
         '<span class="prod-update-name">' + esc(p.name) + '</span>' +
-        vidHtml +
-        updText +
+        '<span class="prod-update-text">' + esc(String(p.update).slice(0, 90)) + (String(p.update).length > 90 ? '&hellip;' : '') + '</span>' +
+        '<span class="casc-row-arrow">&#8250;</span>' +
         '</div>';
     }).join('') +
     '</div>';
@@ -857,7 +860,7 @@ function applyProductFilter() {
       var realIdx = PRODUCTS.indexOf(p);
       var imgSrc = p.imageData || p.image || '';
       var hasUpdate = p.update && String(p.update).trim();
-      var hasVideo = (p.video || '').trim();
+      var hasVideo = Array.isArray(p.video) && p.video.some(function (u) { return u && u.trim(); });
       return '<button class="prod-square' + (hasUpdate ? ' has-update' : '') + (hasVideo ? ' has-video' : '') + '" data-id="' + realIdx + '">' +
         (hasUpdate ? '<span class="prod-square-badge">&#128227; Updated</span>' : '') +
         (hasVideo ? '<span class="prod-square-video-badge">&#9654;</span>' : '') +

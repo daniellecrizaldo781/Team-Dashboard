@@ -403,6 +403,13 @@ function expandSnapshot(raw) {
           o.manualPhotos = i < arr.length ? arr[i] : null;
           continue;
         }
+        if (cols[i] === 'video') {
+          // array of Drive video URL strings - final form, skip decoder (dec()
+          // would mistake the array for a shared-string reference and corrupt it).
+          var vArr = i < arr.length ? arr[i] : null;
+          o.video = vArr ? vArr.map(function (u) { return (typeof u === 'string') ? u : (Array.isArray(u) ? strings[u[0]] : u); }) : null;
+          continue;
+        }
         o[cols[i]] = i < arr.length ? dec(arr[i]) : null;
       }
       return o;

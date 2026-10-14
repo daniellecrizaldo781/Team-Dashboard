@@ -287,18 +287,21 @@ function parseProducts(ss) {
       if (!answerCell || !exact(answerCell).trim()) answerCell = row[c];
       ts.push({ q: title, a: body, aHtml: richHtml(answerCell) });
     }
-    // --- Video source ---
-    // Prefer a dedicated "Unboxing Video" / "Video" column when present
-    // (the sheet has separate columns). Fall back to splitting the image cell
-    // on "UNBOXING VIDEO:" for sheets that still inline it there.
-    var videoUrl = '';
+    // --- Video sources ---
+    // Extract ALL Google Drive video links from the Video column cell (a cell
+    // can contain multiple "Unboxing Video: <url>" entries, e.g. 3 videos).
+    // Also supports inline "UNBOXING VIDEO:" in the image cell for backward compat.
+    var videoUrls = [];
     if (iVideo >= 0) {
       var vCell = exact(row[iVideo]);
-      var mVid = vCell.match(/(https?:\/\/drive\.google\.com\/file\/d\/[^\/\s]+)/i);
-      if (mVid) videoUrl = mVid[1];
-      else videoUrl = vCell;  // may already be a clean URL
+      // Match all Drive file links in the video cell
+      var vRe = /(https?:\/\/drive\.google\.com\/file\/d\/[^/\s]+)/gi;
+      var mVid;
+      while ((mVid = vRe.exec(vCell)) !== null) {
+        videoUrls.push(mVid[1]);
+      }
+      if (!videoUrls.length && vCell.trim()) videoUrls.push(vCell.trim());
     }
-
     var imageCell = iImg >= 0 ? exact(row[iImg]) : '';
     var imgUrl = '';
     var parts = imageCell.split(/unboxing\s*video\s/i);
@@ -307,8 +310,11 @@ function parseProducts(ss) {
       if (m3) imgUrl = m3[1];
     }
     if (parts.length > 1) {
-      var m2 = parts[1].match(/(https?:\/\/drive\.google\.com\/file\/d\/[^/\s]+)/i);
-      if (m2) videoUrl = m2[1];
+      var vRe2 = /(https?:\/\/drive\.google\.com\/file\/d\/[^/\s]+)/gi;
+      var mVid2;
+      while ((mVid2 = vRe2.exec(parts[1])) !== null) {
+        videoUrls.push(mVid2[1]);
+      }
     }
     if (!imgUrl) imgUrl = imageCell;  // fallback: let bake-time embedding extract it
     out.push({
@@ -316,20 +322,17 @@ function parseProducts(ss) {
       description: iDesc >= 0 ? richHtml(row[iDesc]) : '',
       inclusion: iIncl >= 0 ? richHtml(row[iIncl]) : '',
       manual: iManual >= 0 ? richHtml(row[iManual]) : '',
-      // Manual cells may embed one or more Google Drive DOCUMENT links (multi-page
-      // manuals, e.g. X-All Air Pure Ionizer, Oricle Hearing Aid). Capture them so
-      // the UI can show a scrollable photo strip + click-to-fullscreen viewer.
       manualPhotos: iManual >= 0 ? extractDriveLinks(row[iManual]) : [],
-      image: imgUrl,            // Drive image link (embedded at bake)
-      video: videoUrl,          // Drive video link (unboxing video) - optional
+      image: imgUrl,
+      video: videoUrls,             // Array of Drive video links - optional (0 or more)
       email: iEmail >= 0 ? exact(row[iEmail]) : '',
-            hotline: iHot >= 0 ? exact(row[iHot]) : '',
-            update: iUpdate >= 0 ? exact(row[iUpdate]) : '',   // product update notice (badge + updates section)
-                        troubleshooting: ts                            // [{q,a,aHtml}, ...]
+      hotline: iHot >= 0 ? exact(row[iHot]) : '',
+      update: iUpdate >= 0 ? exact(row[iUpdate]) : '',
+      troubleshooting: ts
     });
-      }
-      return out;
-    }
+  }
+  return out;
+}
 
     /* ============ PRODUCT UPDATES ============
      * Reads the 'PRODUCT UPDATE' tab of the products sheet. The tab is laid out as
