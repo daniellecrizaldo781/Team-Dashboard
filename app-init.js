@@ -799,19 +799,30 @@ function renderProducts() {
 function renderProductUpdates() {
   var wrap = $('prodUpdates');
   if (!wrap) return;
-  var updated = (PRODUCTS || []).filter(function (p) { return p.update && String(p.update).trim(); });
-  if (!updated.length) { wrap.hidden = true; wrap.innerHTML = ''; return; }
+  // Include products that have video OR have an update — show the video player inline.
+  var hasVideoOrUpdate = (PRODUCTS || []).filter(function (p) {
+    var vid = (p.video || '').trim();
+    var upd = p.update && String(p.update).trim();
+    return vid || upd;
+  });
+  if (!hasVideoOrUpdate.length) { wrap.hidden = true; wrap.innerHTML = ''; return; }
   wrap.hidden = false;
   wrap.innerHTML =
     '<div class="prod-updates-head"><span class="prod-updates-ico">&#128227;</span>' +
-    '<h4>Product Updates</h4><span class="prod-updates-count">' + updated.length + '</span></div>' +
+    '<h4>Product Updates &amp; Videos</h4><span class="prod-updates-count">' + hasVideoOrUpdate.length + '</span></div>' +
     '<div class="prod-updates-list">' +
-    updated.map(function (p) {
+    hasVideoOrUpdate.map(function (p) {
       var idx = PRODUCTS.indexOf(p);
-      return '<button type="button" class="prod-update-item" data-id="' + idx + '">' +
+      var vidUrl = (p.video || '').trim();
+      var vidHtml = vidUrl
+        ? '<div class="prod-update-video"><iframe src="' + esc(toEmbedUrl(vidUrl)) + '" class="prod-update-iframe" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>'
+        : '';
+      var updText = p.update ? '<span class="prod-update-text">' + esc(String(p.update).slice(0, 90)) + (String(p.update).length > 90 ? '&hellip;' : '') + '</span>' : '';
+      return '<div class="prod-update-item" data-id="' + idx + '>' +
         '<span class="prod-update-name">' + esc(p.name) + '</span>' +
-        '<span class="prod-update-text">' + esc(String(p.update).slice(0, 90)) + (String(p.update).length > 90 ? '&hellip;' : '') + '</span>' +
-        '</button>';
+        vidHtml +
+        updText +
+        '</div>';
     }).join('') +
     '</div>';
   Array.prototype.forEach.call(wrap.querySelectorAll('.prod-update-item'), function (btn) {
@@ -846,8 +857,10 @@ function applyProductFilter() {
       var realIdx = PRODUCTS.indexOf(p);
       var imgSrc = p.imageData || p.image || '';
       var hasUpdate = p.update && String(p.update).trim();
-      return '<button class="prod-square' + (hasUpdate ? ' has-update' : '') + '" data-id="' + realIdx + '">' +
+      var hasVideo = (p.video || '').trim();
+      return '<button class="prod-square' + (hasUpdate ? ' has-update' : '') + (hasVideo ? ' has-video' : '') + '" data-id="' + realIdx + '">' +
         (hasUpdate ? '<span class="prod-square-badge">&#128227; Updated</span>' : '') +
+        (hasVideo ? '<span class="prod-square-video-badge">&#9654;</span>' : '') +
         (imgSrc
           ? '<img class="prod-square-img" src="' + esc(imgSrc) + '" alt="' + esc(p.name) + '" loading="lazy">'
           : '<span class="prod-square-ph">&#128247;</span>') +
