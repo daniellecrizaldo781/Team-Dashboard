@@ -404,7 +404,7 @@ function expandSnapshot(raw) {
           continue;
         }
         if (cols[i] === 'video') {
-          // array of {url,label} objects - final form, skip decoder.
+          // array of {url,label,videoData?} objects - final form, skip decoder.
           o.video = i < arr.length ? arr[i] : null;
           continue;
         }

@@ -345,8 +345,9 @@ function toEmbedUrl(u) {
   // Google Drive file -> preview player (works without login when the file is
   // shared "Anyone with the link can view". If login is still required, the file
   // owner must change its Google Drive sharing permissions to public.)
+  // The ?usp=embed parameters reduce the sign-in prompt shown inside the iframe.
   m = u.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);
-  if (m) return 'https://drive.google.com/file/d/' + m[1] + '/preview';
+  if (m) return 'https://drive.google.com/file/d/' + m[1] + '/preview?usp=embed_facebook&authuser=0&dispua=1';
   // Drive document preview
   m = u.match(/docs\.google\.com\/document\/d\/([^/?#]+)\/preview/i);
   if (m) return 'https://docs.google.com/document/d/' + m[1] + '/preview';
@@ -380,6 +381,11 @@ function openLb(src, isDoc) {
   if (isDoc && fr) {
     i.style.display = 'none'; fr.style.display = 'block';
     fr.src = src; lb.classList.add('show');
+    // Request fullscreen on the lightbox for video embeds
+    var rfs = lb.requestFullscreen || lb.webkitRequestFullscreen || lb.mozRequestFullScreen || lb.msRequestFullscreen;
+    if (rfs && typeof rfs.call === 'function') {
+      try { rfs.call(lb); } catch (e) { /* fullscreen may require user activation */ }
+    }
   } else if (i) {
     if (fr) fr.style.display = 'none';
     i.style.display = 'block';
@@ -735,9 +741,9 @@ function renderProducts() {
             }
             var embed = esc(toEmbedUrl(v.url));
             return '<div class="prod-video-item">' +
-              (v.label ? '<span class="prod-video-label">' + esc(v.label) + '</span>' : '') +
-              '<iframe src="' + embed + '" class="prod-video" allow="autoplay; encrypted-media" allowfullscreen></iframe>' +
-              '<button type="button" class="prod-video-expand" onclick="openLb(' + "'" + embed + "'" + ', true)" title="Expand video">&#9654;</button>' +
+              (v.label ? '<span class="prod-video-label" onclick="openLb(\'' + embed + '\', true)">' + esc(v.label) + '</span>' : '') +
+              '<iframe src="' + embed + '" class="prod-video" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>' +
+              '<button type="button" class="prod-video-expand" onclick="openLb(\'' + embed + '\', true)" title="Expand video">&#9654;</button>' +
               '</div>';
           }).join('') + '</div>'
         : '';
