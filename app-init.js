@@ -347,7 +347,7 @@ function toEmbedUrl(u) {
   // owner must change its Google Drive sharing permissions to public.)
   // The ?usp=embed parameters reduce the sign-in prompt shown inside the iframe.
   m = u.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);
-  if (m) return 'https://drive.google.com/file/d/' + m[1] + '/preview?usp=embed_facebook&authuser=0&dispua=1';
+  if (m) return 'https://drive.google.com/file/d/' + m[1] + '/preview?usp=embed_facebook&authuser=0&dispua=1&autoplay=1';
   // Drive document preview
   m = u.match(/docs\.google\.com\/document\/d\/([^/?#]+)\/preview/i);
   if (m) return 'https://docs.google.com/document/d/' + m[1] + '/preview';
