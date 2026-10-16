@@ -724,9 +724,15 @@ function renderProducts() {
     var p = PRODUCTS[idx];
     if (p) {
       var imgSrc = p.imageData || p.image || '';
-      var videos = Array.isArray(p.video) ? p.video.filter(function (v) { return v && v.url; }) : [];
+      var videos = Array.isArray(p.video) ? p.video.filter(function (v) { return v && (v.url || v.videoData); }) : [];
       var vidHtml = videos.length
         ? '<div class="prod-video-wrap">' + videos.map(function (v) {
+            if (v.videoData) {
+              return '<div class="prod-video-item">' +
+                (v.label ? '<span class="prod-video-label">' + esc(v.label) + '</span>' : '') +
+                '<video src="' + esc(v.videoData) + '" class="prod-video" controls></video>' +
+                '</div>';
+            }
             var embed = esc(toEmbedUrl(v.url));
             return '<div class="prod-video-item">' +
               (v.label ? '<span class="prod-video-label">' + esc(v.label) + '</span>' : '') +

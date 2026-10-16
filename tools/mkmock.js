@@ -116,6 +116,41 @@ const out = {
   });
 })();
 
+// Embed product videos as base64 data URIs so they play WITHOUT Google sign-in.
+// Same server-side download trick as images (curl from lh3 serves public Drive
+// files as bytes; private files redirect to sign-in and are skipped gracefully).
+// If the Drive files are NOT publicly shared, videoUrl stays as the /file/d/ link
+// and the dashboard falls back to an iframe preview (which may require sign-in).
+(function embedProductVideos() {
+  const { execSync } = require('child_process');
+  const direct = u => {
+    u = (u || '').replace(/&amp;/g, '&');
+    const m = u.match(/drive\.google\.com\/file\/d\/([^\/?]+)/) || u.match(/drive\.google\.com\/open\?id=([^&]+)/) || u.match(/drive\.google\.com\/uc\?[^&]*id=([^&]+)/);
+    return m ? 'https://lh3.googleusercontent.com/d/' + m[1] : u;
+  };
+  (out.products || []).forEach(row => {
+    if (!Array.isArray(row.video) || !row.video.length) return;
+    row.video.forEach(v => {
+      if (!v || !v.url) return;
+      const u = direct(v.url);
+      if (!/lh3\.googleusercontent\.com|drive\.google\.com|\.(mp4|webm|mov|mkv|avi)/i.test(u)) return;
+      try {
+        const b64 = execSync('curl -sL --max-time 30 ' + JSON.stringify(u), { maxBuffer: 64 * 1024 * 1024 });
+        if (b64 && b64.length > 500) {
+          const sig = b64.slice(0, 12).toString('hex');
+          // Check for common video container signatures
+          const isMp4 = sig.startsWith('000000') && b64.slice(4, 8).toString() === 'ftyp';
+          const isWebm = sig.startsWith('1a45') || sig.startsWith('1a4d');
+          const isMov = sig.startsWith('000000') && b64.slice(4, 12).toString() === 'moovfree';
+          if (isMp4 || isWebm || isMov) {
+            v.videoData = 'data:video/mp4;base64,' + b64.toString('base64');
+          }
+        }
+      } catch (e) { /* leave videoUrl as link if download fails */ }
+    });
+  });
+})();
+
 // Manual photos are rendered directly from their Drive URLs in the browser
 // (Google serves public files as images to a real browser UA; see extractDriveLinks
 // in Parsers4.gs which sets src = uc?export=view and url = /preview viewer).
