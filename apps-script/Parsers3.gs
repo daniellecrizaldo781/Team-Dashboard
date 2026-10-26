@@ -33,12 +33,16 @@ function parseOfficialScorecard(ss) {
     if (!a && names.length >= 3) { agentCols = names; continue; }
 
     var wk = joined.match(/week\s*:?\s*([A-Za-z]{3,}\s+\d{1,2}\s*,?\s*\d{4})\s*-\s*([A-Za-z]{3,}\s+\d{1,2}\s*,?\s*\d{4})/i);
-    if (wk && r > agentCols.length) {
+    // A "Week Ending" row is a continuation label of the SAME block, not a new
+    // week. If its WEEK: text is stale (e.g. still the previous week after the
+    // user added a new block), honoring it would REWIND curWeek and attribute
+    // the whole new block to the old week (then dedupe silently drops it).
+    if (!/^week ending/i.test(a) && wk && r > agentCols.length) {
       curLabel = S(joined).slice(0, 60);
       curWeek = weekStart(toISO(wk[2]));
     } else if (!wk) {
       wk = joined.match(/week\s*:?\s*([A-Za-z]{3,}\s+\d{1,2}\s*,?\s*\d{4})/i);
-      if (wk && r > agentCols.length) {
+      if (!/^week ending/i.test(a) && wk && r > agentCols.length) {
         curLabel = S(joined).slice(0, 60);
         curWeek = weekStart(toISO(wk[1]));
       }

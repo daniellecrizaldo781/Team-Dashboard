@@ -65,8 +65,14 @@ function doGet(e) {
 
 /* ---------------- shared helpers ---------------- */
 
-function S(v) { return (v === null || v === undefined) ? '' : String(v).replace(/\s+/g, ' ').trim(); }
-
+function S(v) {
+  if (v === null || v === undefined) return '';
+  // rich-text cell ({__rt: [[text, bold, italic], ...]}) -> join its plain text
+  if (v && typeof v === 'object' && Array.isArray(v.__rt) && v.__rt.length) {
+    return v.__rt.map(function (r) { return (r[0] || ''); }).join('').replace(/\s+/g, ' ').trim();
+  }
+  return String(v).replace(/\s+/g, ' ').trim();
+}
 function isDate(v) {
   if (v && typeof v === 'object' && typeof v.__d === 'string') return true;  // togrid.py date shape
   return Object.prototype.toString.call(v) === '[object Date]' && !isNaN(v);
