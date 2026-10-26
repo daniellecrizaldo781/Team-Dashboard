@@ -39,14 +39,13 @@ def main():
     data = json.loads(m.group(1))
     st = data.get('status') or {}
     rows = st.get('rows') or []
-    print('  total status rows:', len(rows))
+    rows = [r for r in rows if (r.get('team_key') or '') == 'danielle']
+    print('  Team Danielle status rows:', len(rows))
 
     # Time in Status per Status: agent -> {status: hours}
     byAgent = {}
     # Daily Status Hours: agent -> {date: {status: hours}}
     daily = {}
-    # agent -> team label / team_key
-    teams = {}
     for r in rows:
         agent = r.get('agent') or ''
         status = r.get('status') or ''
@@ -54,7 +53,6 @@ def main():
         mins = float(r.get('min') or 0)
         if not agent or not status:
             continue
-        teams[agent] = {'key': r.get('team_key') or '', 'label': r.get('team') or ''}
         h = mins / 60.0
         a = byAgent.setdefault(agent, {})
         a[status] = a.get(status, 0.0) + h
@@ -64,7 +62,6 @@ def main():
     out = {
         'byAgent': byAgent,
         'daily': daily,
-        'teams': teams,
         'dates': sorted({d for a in daily.values() for d in a}),
         'statuses': sorted({s for a in byAgent.values() for s in a}),
         'generated': data.get('generated', ''),
