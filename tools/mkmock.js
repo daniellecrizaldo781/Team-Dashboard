@@ -26,10 +26,14 @@ var grid = (ss, tab) => (ss.__d[tab] || []);
 
 global.PropertiesService = { getScriptProperties: () => ({ getProperty: () => 'FAKE' }) };
 const PERF = { __d: qa }, SCHED = { __d: sc }, CASC = { __d: casc }, PROD = { __d: prod };
+// Agent status history (Team Danielle) - pre-aggregated from the Call EOD
+// dashboard's data.js by fetch_status.py. Optional: if missing, status stays {}.
+const status = fs.existsSync(J('status.json')) ? JSON.parse(fs.readFileSync(J('status.json'), 'utf8')) : {};
 const os = parseOfficialScorecard(PERF);
 const out = {
   ok: true, mode: 'data', warnings: [],
   lastUpdated: new Date().toISOString(),
+  status: status,
   dailyProductivity: parseDailyProductivity(PERF),
   dailyEmailProductivity: parseDailyEmailProductivity(PERF),
   weeklyCallStats: parseWeeklyCallStats(PERF),

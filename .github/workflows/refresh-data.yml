@@ -48,6 +48,10 @@ jobs:
         working-directory: tools
         run: python togrid.py
 
+      - name: Fetch Agent Status History (Team Danielle) from Call EOD dashboard
+        working-directory: tools
+        run: python fetch_status.py
+
       - name: Run the parsers
         working-directory: tools
         run: node mkmock.js

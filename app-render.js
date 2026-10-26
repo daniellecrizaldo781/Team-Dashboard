@@ -169,7 +169,126 @@ function renderOverview() {
           });
         }
       }
+
+      // ---- Agent Status History (Team Danielle) ----
+      renderOverviewStatus();
     }
+
+/* ---------------- AGENT STATUS HISTORY (Team Danielle) ---------------- */
+// Renders the two status tables on the Overview page from DATA.status
+// (pre-aggregated by tools/fetch_status.py from the Call EOD dashboard).
+var STATUS_ABBR = {
+  offline:'offline', available:'avail', in_call:'in_call', ringing:'ring',
+  after_call_work:'acw', doing_back_office:'back_off', back_office:'back_off',
+  other:'other', do_not_disturb:'dnd', on_a_break:'break', out_for_lunch:'lunch',
+  in_training:'train'
+};
+var STATUS_ORDER = ['offline','available','in_call','ringing','after_call_work',
+  'doing_back_office','other','do_not_disturb','on_a_break','out_for_lunch','in_training'];
+function fmtHrs(min) { return (min / 60).toFixed(2) + ' h'; }
+function renderOverviewStatus() {
+  var st = DATA.status || {};
+  var byAgent = st.byAgent || {};
+  var daily = st.daily || {};
+  var dates = st.dates || [];
+  var statuses = st.statuses || [];
+  var wkSel = $('ovStatusWeek');
+  var kpis = $('ovStatusKpis');
+  var perAgent = $('ovStatusPerAgent');
+  var legend = $('ovStatusLegend');
+  var dailySel = $('ovStatusDailySel');
+  var dailyTbl = $('ovStatusDaily');
+  if (!perAgent) return;
+
+  // week selector (from the dates present)
+  var weeks = uniq(dates.map(function (d) { return weekStart(d); })).sort().reverse();
+  if (wkSel) {
+    if (!F.ovStatusWeek || weeks.indexOf(F.ovStatusWeek) < 0) F.ovStatusWeek = weeks[0] || '';
+    wkSel.innerHTML = weeks.map(function (w) { return '<option value="' + esc(w) + '">' + esc(fmtWeek(w)) + '</option>'; }).join('');
+    wkSel.value = F.ovStatusWeek;
+    wkSel.onchange = function () { F.ovStatusWeek = this.value; renderOverviewStatus(); };
+  }
+  var scopeWeek = F.ovStatusWeek || '';
+
+  // filter daily to the selected week
+  var weekDates = scopeWeek ? dates.filter(function (d) { return weekStart(d) === scopeWeek; }) : dates;
+
+  // ---- Time in Status per Status (per agent) ----
+  var agents = Object.keys(byAgent).sort();
+  var allSt = statuses.slice().sort(function (x, y) {
+    var ix = STATUS_ORDER.indexOf(x), iy = STATUS_ORDER.indexOf(y);
+    return (ix < 0 ? 99 : ix) - (iy < 0 ? 99 : iy) || x.localeCompare(y);
+  });
+  var stCols = allSt.map(function (s) { return { t: STATUS_ABBR[s] || s, k: '_' + s, n: 1 }; });
+  var perRows = agents.map(function (a) {
+    var row = { a: esc(a), tot: fmtHrs(sum(Object.keys(byAgent[a]).map(function (k) { return byAgent[a][k]; }))) };
+    allSt.forEach(function (s) { row['_' + s] = byAgent[a][s] ? fmtHrs(byAgent[a][s]) : '0.00'; });
+    return row;
+  });
+  makeTable('ovStatusPerAgent',
+    [{ t: 'Agent', k: 'a' }, { t: 'Total Hrs', k: 'tot', n: 1 }].concat(stCols),
+    perRows.length ? perRows : [{ a: '<div class="empty">No status data.</div>', tot: '' }]);
+  if (legend) {
+    legend.innerHTML = '<b>Status key:</b> ' + allSt.map(function (s) {
+      return '<span class="lg"><b>' + (STATUS_ABBR[s] || s) + '</b> = ' + esc(s) + '</span>';
+    }).join(' &middot; ');
+  }
+
+  // ---- Daily Status Hours per Agent (per selected status) ----
+  if (dailySel && dailyTbl) {
+    if (typeof window.__ovStatusDailySel === 'undefined') window.__ovStatusDailySel = allSt[0] || '';
+    var cur = window.__ovStatusDailySel;
+    dailySel.innerHTML = allSt.map(function (s) {
+      return '<option value="' + esc(s) + '"' + (s === cur ? ' selected' : '') + '>' + esc(STATUS_ABBR[s] || s) + ' &mdash; ' + esc(s) + '</option>';
+    }).join('');
+    function renderDaily() {
+      var stSel = dailySel.value;
+      window.__ovStatusDailySel = stSel;
+      var byAD = {}; var dset = {};
+      weekDates.forEach(function (d) { dset[d] = 1; });
+      Object.keys(daily).forEach(function (a) {
+        Object.keys(daily[a]).forEach(function (d) {
+          if (!dset[d]) return;
+          var v = daily[a][d][stSel];
+          if (v === undefined) return;
+          var k = a + '|' + d;
+          byAD[k] = (byAD[k] || 0) + v;
+        });
+      });
+      var dateCols = weekDates.slice().sort();
+      var byA = {};
+      Object.keys(byAD).forEach(function (k) {
+        var p = k.split('|'); var a = p[0], d = p[1];
+        byA[a] = byA[a] || { agent: a, total: 0, byDate: {} };
+        byA[a].total += byAD[k];
+        byA[a].byDate[d] = (byA[a].byDate[d] || 0) + byAD[k];
+      });
+      var rows = Object.keys(byA).map(function (a) {
+        var o = byA[a];
+        var out = { ag: esc(a), tot: fmtHrs(o.total), _tot: o.total };
+        dateCols.forEach(function (d) { out['_' + d] = o.byDate[d] ? fmtHrs(o.byDate[d]) : ''; });
+        return out;
+      }).sort(function (x, y) { return y._tot - x._tot; });
+      var cols = [{ t: 'Agent', k: 'ag' }, { t: 'Total ' + esc(STATUS_ABBR[stSel] || stSel) + ' Hrs', k: 'tot', n: 1 }];
+      dateCols.forEach(function (d) { cols.push({ t: fmtDY(d), k: '_' + d }); });
+      makeTable('ovStatusDaily', cols,
+        rows.length ? rows : [{ ag: '<div class="empty">No ' + esc(stSel) + ' hours for this week.</div>', tot: '', _tot: 0 }]);
+    }
+    dailySel.onchange = renderDaily;
+    renderDaily();
+  }
+
+  // KPIs
+  if (kpis) {
+    var totalHrs = agents.reduce(function (s, a) { return s + sum(Object.keys(byAgent[a]).map(function (k) { return byAgent[a][k]; })); }, 0);
+    var bo = agents.reduce(function (s, a) { return s + (byAgent[a].doing_back_office || 0); }, 0);
+    kpi('ovStatusKpis', [
+      { label: 'Agents Tracked', value: n0(agents.length), sub: 'Team Danielle' },
+      { label: 'Total Status Hours', html: fmtHrs(totalHrs), sub: scopeWeek ? fmtWeek(scopeWeek) : 'all weeks' },
+      { label: 'Back-Office Hours', html: fmtHrs(bo), sub: 'doing_back_office', tone: bo > 0 ? 'warn' : '' }
+    ]);
+  }
+}
 
 /* ---------------- DAILY PRODUCTIVITY ---------------- */
 function buildProdGrid(dp) {
@@ -496,45 +615,62 @@ function renderQa() {
     { key: 'perfect', label: 'Perfect', num: true, fmt: function (r) { return n0(r.perfect); } }
   ], ranked, { sort: 'rank', dir: 'asc', empty: 'No QA records available for this agent.' });
 
-  // QA evaluations: pick one agent from the dropdown, show only their table
-  var wrap = $('qaByAgent');
-  var sel = $('qaAgentSel');
-  if (!wrap || !sel) return;
-  if (ranked.length) {
-    sel.innerHTML = ranked.map(function (r) {
-      return '<option value="' + esc(r.agent) + '">' + esc(r.agent) + ' (' + pct(r.score) + ')</option>';
-    }).join('');
-    if (F.qaAgent !== 'ALL' && ranked.filter(function (r) { return r.agent === F.qaAgent; }).length === 0) F.qaAgent = 'ALL';
-    sel.value = (F.qaAgent && F.qaAgent !== 'ALL') ? F.qaAgent : ranked[0].agent;
-    sel.onchange = function () { F.qaAgent = this.value; renderQa(); };
-  }
-  var chosen = (F.qaAgent && F.qaAgent !== 'ALL') ? F.qaAgent : (ranked[0] && ranked[0].agent);
-  var rows = chosen ? (byAg.map[chosen] || []).slice().sort(function (a, b) { return (b.date || '').localeCompare(a.date || ''); }) : [];
-  if (!rows.length) {
-    wrap.innerHTML = '<div class="empty"><b>No QA records</b>No QA evaluations for ' + esc(chosen || 'this agent') + '.</div>';
-  } else {
-    var avgSc = avg(rows.map(function (r) { return r.score; }));
-    var html = '<div class="qa-agent-block">';
-    html += '<div class="qa-agent-head"><span class="qa-agent-name">' + esc(chosen) + '</span>' +
-            '<span class="qa-agent-meta">' + n0(rows.length) + ' evaluation' + (rows.length > 1 ? 's' : '') +
-            ' &middot; avg ' + pct(avgSc) + '</span></div>';
-    html += '<div class="tscroll"><table class="qa-agent-table"><thead><tr>' +
-            '<th>Date</th><th>Day</th><th>Score</th><th>Ticket</th><th>Notes</th></tr></thead><tbody>';
-    rows.forEach(function (x) {
-      html += '<tr>' +
-        '<td>' + fmtDate(x.date) + '</td>' +
-        '<td>' + esc(x.day || '—') + '</td>' +
-        '<td>' + scorePill(x.score, 1) + '</td>';
-        '<td>' + (x.link ? '<a href="' + esc(x.link) + '" target="_blank" rel="noopener" style="color:#C93B72">View</a>' : '—') + '</td>' +
-        '<td>' + esc(x.notes || '—') + '</td>' +
-      '</tr>';
-    });
-    html += '</tbody></table></div></div>';
-    wrap.innerHTML = html;
+  // QA evaluations: list of agents (name + overall score), click to open lightbox
+    var list = $('qaAgentList');
+    if (list) {
+      if (!ranked.length) {
+        list.innerHTML = '<div class="empty"><b>No QA records</b>No QA evaluations available for the selected filters.</div>';
+      } else {
+        list.innerHTML = ranked.map(function (r) {
+          return '<button type="button" class="qa-agent-row" onclick="openQaAgent(\'' + esc(r.agent) + '\')">' +
+            '<span class="qa-agent-name">' + esc(r.agent) + '</span>' +
+            '<span class="qa-agent-score">' + scorePill(r.score) + '</span>' +
+            '<span class="qa-agent-evals">' + n0(r.evals) + ' eval' + (r.evals > 1 ? 's' : '') + '</span>' +
+            '<span class="qa-agent-arrow">&#9654;</span>' +
+            '</button>';
+        }).join('');
+      }
+    }
+
+    renderQaJacky();
   }
 
-  renderQaJacky();
-}
+  /* Open the QA lightbox for one agent: fullscreen list of their QA tickets + scores. */
+  function openQaAgent(agent) {
+    var lb = document.getElementById('lb');
+    var img = document.getElementById('lbImg');
+    var fr = document.getElementById('lbFrame');
+    var content = document.getElementById('lbContent');
+    if (!lb || !content) return;
+    if (img) img.style.display = 'none';
+    if (fr) fr.style.display = 'none';
+    content.style.display = 'block';
+    var rows = (DATA.qaScores || []).filter(function (r) { return r.agent === agent; })
+      .slice().sort(function (a, b) { return (b.date || '').localeCompare(a.date || ''); });
+    var avgSc = rows.length ? avg(rows.map(function (r) { return r.score; })) : null;
+    var html = '<div class="qa-lb-head">' +
+      '<span class="qa-lb-title">' + esc(agent) + '</span>' +
+      '<span class="qa-lb-meta">' + n0(rows.length) + ' evaluation' + (rows.length > 1 ? 's' : '') +
+      (avgSc !== null ? ' &middot; avg ' + pct(avgSc) : '') + '</span></div>';
+    if (!rows.length) {
+      html += '<div class="empty"><b>No QA records</b>No QA evaluations for ' + esc(agent) + '.</div>';
+    } else {
+      html += '<div class="tscroll"><table class="qa-agent-table"><thead><tr>' +
+        '<th>Date</th><th>Day</th><th>Score</th><th>Ticket</th><th>Notes</th></tr></thead><tbody>';
+      rows.forEach(function (x) {
+        html += '<tr>' +
+          '<td>' + fmtDate(x.date) + '</td>' +
+          '<td>' + esc(x.day || '—') + '</td>' +
+          '<td>' + scorePill(x.score, 1) + '</td>' +
+          '<td>' + (x.link ? '<a href="' + esc(x.link) + '" target="_blank" rel="noopener" style="color:#C93B72">View</a>' : '—') + '</td>' +
+          '<td>' + esc(x.notes || '—') + '</td>' +
+          '</tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+    content.innerHTML = html;
+        lb.classList.add('show');
+      }
 
 /* QA Jacky / TL breakdown - mirrors the sheet's QA JACKY SCORE 30% / QA TL SCORE 10% block. */
 function renderQaJacky() {

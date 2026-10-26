@@ -65,6 +65,20 @@ function fmtStamp(iso) {
   if (isNaN(d)) return '\u2014';
   return d.toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
+/** Monday-start week key for a YYYY-MM-DD date. */
+function weekStart(s) {
+  var d = ymd(s);
+  if (!d || isNaN(d)) return s || '';
+  var day = (d.getDay() + 6) % 7; // Mon=0
+  d.setDate(d.getDate() - day);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+/** Short day label for a YYYY-MM-DD date, e.g. 'Oct 19'. */
+function fmtDY(s) {
+  var d = ymd(s);
+  if (!d || isNaN(d)) return esc(s || '');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
 
 /* ---------------- filtering ---------------- */
 /** opts.ignoreAgent / opts.ignoreWeek let a view opt out of a filter. */
@@ -364,13 +378,14 @@ function expandSnapshot(raw) {
   }
 
   var out = {
-    lastUpdated: raw.lastUpdated,
-    dataYear: raw.dataYear,
-    mode: raw.mode,
-    warnings: raw.warnings || [],
-    officialScorecard: raw.officialScorecard || { weekly: [], monthly: [] },
-    leaveFormOptions: raw.leaveFormOptions || { leaveTypes: [], reasons: [] }
-  };
+      lastUpdated: raw.lastUpdated,
+      dataYear: raw.dataYear,
+      mode: raw.mode,
+      warnings: raw.warnings || [],
+      officialScorecard: raw.officialScorecard || { weekly: [], monthly: [] },
+      leaveFormOptions: raw.leaveFormOptions || { leaveTypes: [], reasons: [] },
+      status: raw.status || {}
+    };
 
   Object.keys(raw.packed).forEach(function (name) {
     var t = raw.packed[name], cols = t.c;

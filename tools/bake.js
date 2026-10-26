@@ -78,6 +78,8 @@ const out = {
   warnings: [],
   officialScorecard: d.officialScorecard || { weekly: [], monthly: [] },
   leaveFormOptions: d.leaveFormOptions || { leaveTypes: [], reasons: [] },
+  // Agent status history (Team Danielle) - nested object, kept as-is (not packed)
+  status: d.status || {},
   strings: strings,
   packed: {}
 };

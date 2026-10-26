@@ -203,6 +203,24 @@ select,input{font:inherit;color:var(--ink)}
 .sched-table .agent-cell{text-align:left;background:#FBF1F7;font-weight:700;position:sticky;left:0}
 .sched-table td:empty:before{content:'\2014';color:var(--ink3)}
 .qa-by-agent{display:flex;flex-direction:column;gap:16px}
+.qa-agent-list{display:flex;flex-direction:column;gap:8px}
+.qa-agent-row{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;background:#FBF7FA;border:1px solid var(--line);border-radius:12px;cursor:pointer;text-align:left;transition:background .15s,transform .1s}
+.qa-agent-row:hover{background:linear-gradient(180deg,#FFF0F6,#FDEAF3);border-color:var(--rose);transform:translateX(2px)}
+.qa-agent-row .qa-agent-name{flex:1;font-weight:700;font-size:14px;color:var(--ink)}
+.qa-agent-row .qa-agent-score{font-weight:800;font-size:14px}
+.qa-agent-row .qa-agent-evals{font-size:12px;color:var(--ink3);font-weight:600;min-width:70px;text-align:right}
+.qa-agent-row .qa-agent-arrow{color:var(--rose);font-size:12px}
+.qa-lb-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:14px 18px;background:linear-gradient(180deg,#FFF0F6,#FDEAF3);border-radius:14px 14px 0 0;border-bottom:1px solid var(--line)}
+.qa-lb-title{font-weight:800;font-size:18px;color:var(--ink)}
+.qa-lb-meta{font-size:13px;color:var(--ink3);font-weight:600}
+#lbContent{width:min(96vw,1100px);max-height:92vh;overflow:auto;background:#fff;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.5);cursor:default}
+#lbContent .tscroll{max-height:calc(92vh - 60px);overflow:auto}
+#ovStatusPerAgent{overflow-x:auto}
+#ovStatusPerAgent table th.n,#ovStatusPerAgent table td.n,#ovStatusDaily table th.n,#ovStatusDaily table td.n{text-align:right}
+#ovStatusPerAgent table td,#ovStatusDaily table td{white-space:nowrap}
+.legend{font-size:11.5px;color:var(--ink3);padding:8px 2px 0;line-height:1.7}
+.legend .lg{margin-right:10px;white-space:nowrap}
+#ovStatusDaily{overflow-x:auto}
 .qa-agent-block{background:#FBF7FA;border:1px solid var(--line);border-radius:14px;overflow:hidden}
 .qa-agent-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:10px 14px;background:linear-gradient(180deg,#FFF0F6,#FDEAF3)}
 .qa-agent-name{font-weight:800;font-size:14.5px;color:var(--ink)}

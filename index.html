@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Team Danielle Dashboard</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="stylesheet" href="styles.css?v=347">
+<link rel="stylesheet" href="styles.css?v=349">
 </head>
 <body>
 
@@ -74,8 +74,27 @@
       </div>
     </div>
     <div class="top-performer" id="topPerformer"></div>
-    <div class="card"><h3>Team Leaderboard</h3><div class="tscroll" id="ovBoard"></div></div>
-  </section>
+        <div class="card"><h3>Team Leaderboard</h3><div class="tscroll" id="ovBoard"></div></div>
+
+        <!-- Agent Status History (Team Danielle) -->
+        <div class="card">
+          <div class="card-head"><h3>Agent Status History</h3>
+            <select class="search" id="ovStatusWeek"></select>
+          </div>
+          <div class="kpis" id="ovStatusKpis"></div>
+          <div class="card card-flat">
+            <div class="card-head"><h4>Time in Status per Status &mdash; per Agent</h4></div>
+            <div class="tscroll" id="ovStatusPerAgent"></div>
+            <div id="ovStatusLegend" class="legend"></div>
+          </div>
+          <div class="card card-flat">
+            <div class="card-head"><h4>Daily Status Hours per Agent</h4>
+              <select class="search" id="ovStatusDailySel"></select>
+            </div>
+            <div class="tscroll" id="ovStatusDaily"></div>
+          </div>
+        </div>
+      </section>
 
   <!-- DAILY PRODUCTIVITY -->
   <section class="page" id="pageProductivity" hidden>
@@ -137,12 +156,9 @@
       <div class="tscroll" id="qaJacky"></div>
     </div>
     <div class="card">
-      <div class="card-head"><h3>QA Evaluations by Agent</h3>
-        <select class="search" id="qaAgentSel"></select>
-      </div>
-      <div id="qaByAgent" class="qa-by-agent"></div>
-      <div class="pager" id="qaPager"></div>
-    </div>
+          <div class="card-head"><h3>QA Evaluations by Agent</h3></div>
+          <div id="qaAgentList" class="qa-agent-list"></div>
+        </div>
   </section>
 
   <!-- SCORECARDS (weekly + monthly toggle) -->
@@ -311,17 +327,17 @@
 
 <div class="loader" id="loader" hidden><div class="spin"></div><p>Updating dashboard&hellip;</p></div>
 <div class="toast" id="toast" hidden></div>
-<div class="lb" id="lb"><span class="lb-close" id="lbClose">&times;</span><img id="lbImg" src="" alt=""><iframe id="lbFrame" src="" style="display:none" frameborder="0" allowfullscreen allow="autoplay; fullscreen"></iframe></div>
+<div class="lb" id="lb"><span class="lb-close" id="lbClose">&times;</span><img id="lbImg" src="" alt=""><iframe id="lbFrame" src="" style="display:none" frameborder="0" allowfullscreen allow="autoplay; fullscreen"></iframe><div id="lbContent" style="display:none"></div></div>
 
 <script src="chart.umd.min.js"></script>
 <script src="config.js?v=330"></script>
 <script src="data.js?v=344"></script>
-<script src="app-core.js?v=330"></script>
+<script src="app-core.js?v=331"></script>
 <script src="app-emoji.js?v=330"></script>
 <script src="app-charts.js?v=330"></script>
-<script src="app-render.js?v=342"></script>
+<script src="app-render.js?v=344"></script>
 <script src="app-render2.js?v=330"></script>
-<script src="app-init.js?v=349"></script>
+<script src="app-init.js?v=351"></script>
 
 </body>
 </html>

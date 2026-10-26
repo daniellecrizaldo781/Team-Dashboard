@@ -1,0 +1,6 @@
+# Generated artifact - fetch_status.py downloads/aggregates this each run
+tools/status.json
+tools/qa.xlsx
+tools/sched.xlsx
+tools/casc.xlsx
+tools/prod.xlsx

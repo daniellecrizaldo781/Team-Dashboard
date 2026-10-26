@@ -108,11 +108,11 @@ function wire() {
   $('backdrop').onclick = closeNav;
 
   // lightbox close
-  var lb = $('lb');
-  if (lb) {
-    lb.onclick = function () { lb.classList.remove('show'); };
-    var lc = $('lbClose'); if (lc) lc.onclick = function (e) { e.stopPropagation(); lb.classList.remove('show'); };
-  }
+    var lb = $('lb');
+    if (lb) {
+      lb.onclick = function () { lb.classList.remove('show'); var c = $('lbContent'); if (c) c.style.display = 'none'; };
+      var lc = $('lbClose'); if (lc) lc.onclick = function (e) { e.stopPropagation(); lb.classList.remove('show'); var c = $('lbContent'); if (c) c.style.display = 'none'; };
+    }
 
   $('fAgent').onchange = function () { F.agent = this.value; render(); };
   $('fWeek').onchange  = function () {
