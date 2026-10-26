@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 """Fetches the Call EOD (callsstats) dashboard's data.js and extracts the
-Team Danielle agent-status history, pre-aggregated into the two table shapes
+agent-status history for ALL teams, pre-aggregated into the two table shapes
 the Overview page renders:
 
   statusByAgent : { agent: { status: hours } }        -> "Time in Status per Status"
   statusDaily   : { agent: { date: { status: hours }}} -> "Daily Status Hours per Agent"
 
 The source data.js is public (link-shared) at callsstats.daniellecrizaldo.com.
-We only keep Team Danielle rows (team_key == 'danielle') and only the fields the
-two tables need, so the baked payload stays small (~170 KB) instead of the full
-30 MB call cube.
+We keep every team's rows (brai / danielle / cess) and only the fields the two
+tables need, so the baked payload stays small instead of the full 30 MB cube.
 
 Writes tools/status.json (consumed by mkmock.js).
 """
@@ -40,20 +39,22 @@ def main():
     data = json.loads(m.group(1))
     st = data.get('status') or {}
     rows = st.get('rows') or []
-    dan = [r for r in rows if (r.get('team_key') or '') == 'danielle']
-    print('  Team Danielle status rows:', len(dan))
+    print('  total status rows:', len(rows))
 
     # Time in Status per Status: agent -> {status: hours}
     byAgent = {}
     # Daily Status Hours: agent -> {date: {status: hours}}
     daily = {}
-    for r in dan:
+    # agent -> team label / team_key
+    teams = {}
+    for r in rows:
         agent = r.get('agent') or ''
         status = r.get('status') or ''
         d = r.get('d') or ''
         mins = float(r.get('min') or 0)
         if not agent or not status:
             continue
+        teams[agent] = {'key': r.get('team_key') or '', 'label': r.get('team') or ''}
         h = mins / 60.0
         a = byAgent.setdefault(agent, {})
         a[status] = a.get(status, 0.0) + h
@@ -63,6 +64,7 @@ def main():
     out = {
         'byAgent': byAgent,
         'daily': daily,
+        'teams': teams,
         'dates': sorted({d for a in daily.values() for d in a}),
         'statuses': sorted({s for a in byAgent.values() for s in a}),
         'generated': data.get('generated', ''),

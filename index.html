@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Team Danielle Dashboard</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="stylesheet" href="styles.css?v=349">
+<link rel="stylesheet" href="styles.css?v=350">
 </head>
 <body>
 
@@ -76,11 +76,12 @@
     <div class="top-performer" id="topPerformer"></div>
         <div class="card"><h3>Team Leaderboard</h3><div class="tscroll" id="ovBoard"></div></div>
 
-        <!-- Agent Status History (Team Danielle) -->
-        <div class="card">
-          <div class="card-head"><h3>Agent Status History</h3>
-            <select class="search" id="ovStatusWeek"></select>
-          </div>
+        <!-- Agent Status History (all call teams) -->
+                <div class="card">
+                  <div class="card-head"><h3>Agent Status History</h3>
+                    <select class="search" id="ovStatusTeam"></select>
+                    <select class="search" id="ovStatusWeek"></select>
+                  </div>
           <div class="kpis" id="ovStatusKpis"></div>
           <div class="card card-flat">
             <div class="card-head"><h4>Time in Status per Status &mdash; per Agent</h4></div>
@@ -335,7 +336,7 @@
 <script src="app-core.js?v=331"></script>
 <script src="app-emoji.js?v=330"></script>
 <script src="app-charts.js?v=330"></script>
-<script src="app-render.js?v=344"></script>
+<script src="app-render.js?v=345"></script>
 <script src="app-render2.js?v=330"></script>
 <script src="app-init.js?v=351"></script>
 

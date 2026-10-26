@@ -193,6 +193,7 @@ function renderOverviewStatus() {
   var dates = st.dates || [];
   var statuses = st.statuses || [];
   var wkSel = $('ovStatusWeek');
+  var teamSel = $('ovStatusTeam');
   var kpis = $('ovStatusKpis');
   var perAgent = $('ovStatusPerAgent');
   var legend = $('ovStatusLegend');
@@ -210,11 +211,26 @@ function renderOverviewStatus() {
   }
   var scopeWeek = F.ovStatusWeek || '';
 
-  // filter daily to the selected week
+    // team selector (All / Danielle / Brai / Cess) from the teams map
+    var teamKeys = uniq(Object.keys(st.teams || {}).map(function (a) { return st.teams[a].key; })).filter(Boolean).sort();
+    var teamMap = {}; Object.keys(st.teams || {}).forEach(function (a) { teamMap[st.teams[a].key] = st.teams[a].label; });
+    if (teamSel) {
+      var tOpts = [{ key: 'ALL', label: 'All Call Teams' }].concat(teamKeys.map(function (k) { return { key: k, label: teamMap[k] || k }; }));
+      if (F.ovStatusTeam && !tOpts.some(function (o) { return o.key === F.ovStatusTeam; })) F.ovStatusTeam = 'ALL';
+      if (!F.ovStatusTeam) F.ovStatusTeam = 'ALL';
+      teamSel.innerHTML = tOpts.map(function (o) { return '<option value="' + esc(o.key) + '">' + esc(o.label) + '</option>'; }).join('');
+      teamSel.value = F.ovStatusTeam;
+      teamSel.onchange = function () { F.ovStatusTeam = this.value; renderOverviewStatus(); };
+    }
+    var scopeTeam = (F.ovStatusTeam && F.ovStatusTeam !== 'ALL') ? F.ovStatusTeam : 'ALL';
+
+    // filter daily to the selected week
   var weekDates = scopeWeek ? dates.filter(function (d) { return weekStart(d) === scopeWeek; }) : dates;
 
   // ---- Time in Status per Status (per agent) ----
-  var agents = Object.keys(byAgent).sort();
+    var agents = Object.keys(byAgent).filter(function (a) {
+      return scopeTeam === 'ALL' || (st.teams[a] && st.teams[a].key === scopeTeam);
+    }).sort();
   var allSt = statuses.slice().sort(function (x, y) {
     var ix = STATUS_ORDER.indexOf(x), iy = STATUS_ORDER.indexOf(y);
     return (ix < 0 ? 99 : ix) - (iy < 0 ? 99 : iy) || x.localeCompare(y);
@@ -247,7 +263,8 @@ function renderOverviewStatus() {
       var byAD = {}; var dset = {};
       weekDates.forEach(function (d) { dset[d] = 1; });
       Object.keys(daily).forEach(function (a) {
-        Object.keys(daily[a]).forEach(function (d) {
+              if (scopeTeam !== 'ALL' && !(st.teams[a] && st.teams[a].key === scopeTeam)) return;
+              Object.keys(daily[a]).forEach(function (d) {
           if (!dset[d]) return;
           var v = daily[a][d][stSel];
           if (v === undefined) return;
