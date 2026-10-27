@@ -71,67 +71,74 @@ function renderScorecards() {
 
 // Build the per-agent Weekly Scorecard Detail (sheet-style, like the source tab)
 function renderScDetail(rank) {
-  var wrap = $('scDetailWrap');
-  var sel = $('scAgentSel');
-  if (!wrap || !sel) return;
+  var list = $('scAgentList');
+  if (!list) return;
 
   // agents that actually have scorecard rows
   var agents = uniq((DATA.scorecards || []).map(function (r) { return r.agent; })).sort();
-  if (!agents.length) { wrap.innerHTML = '<div class="empty">No scorecard detail available.</div>'; return; }
+  if (!agents.length) { list.innerHTML = '<div class="empty">No scorecard detail available.</div>'; return; }
 
-  // weeks available (desc), so the selector can choose which week
+  // weeks available (desc)
   var weeks = uniq((DATA.scorecards || []).map(function (r) { return r.week; })).sort().reverse();
 
-  sel.innerHTML = agents.map(function (a) { return '<option value="' + esc(a) + '">' + esc(a) + '</option>'; }).join('');
-  if (F.scAgent && agents.indexOf(F.scAgent) >= 0) sel.value = F.scAgent;
-  else { F.scAgent = agents[0]; sel.value = F.scAgent; }
-  sel.onchange = function () { F.scAgent = this.value; renderScDetail(rank); };
+  // list of agent names (clickable) -> opens the scorecard lightbox
+  list.innerHTML = agents.map(function (a) {
+    var latest = weeks.filter(function (w) {
+      return (DATA.scorecards || []).some(function (r) { return r.agent === a && r.week === w; });
+    })[0] || '';
+    return '<button type="button" class="qa-agent-row" onclick="openScAgent(\'' + esc(a) + '\')">' +
+      '<span class="qa-agent-name">' + esc(a) + '</span>' +
+      (latest ? '<span class="qa-agent-evals">' + esc(fmtWeek(latest)) + '</span>' : '') +
+      '<span class="qa-agent-arrow">&#9654;</span>' +
+      '</button>';
+  }).join('');
+}
 
-  // week selector (rebuilt each time so it can reflect the chosen agent's weeks)
-  var agentWeeks = weeks.filter(function (w) {
-    return (DATA.scorecards || []).some(function (r) { return r.agent === F.scAgent && r.week === w; });
-  });
-  var wkSel = $('scWeekSel');
-  if (!wkSel) {
-    wkSel = document.createElement('select');
-    wkSel.id = 'scWeekSel';
-    wkSel.className = 'search';
-    sel.insertAdjacentElement('afterend', wkSel);
-  }
-  wkSel.innerHTML = agentWeeks.map(function (w) { return '<option value="' + esc(w) + '">' + esc(fmtWeek(w)) + '</option>'; }).join('');
-  if (F.scWeek && agentWeeks.indexOf(F.scWeek) >= 0) wkSel.value = F.scWeek;
-  else { F.scWeek = agentWeeks[0]; wkSel.value = F.scWeek; }
-  wkSel.onchange = function () { F.scWeek = this.value; renderScDetail(rank); };
+/* Open the scorecard lightbox for one agent: fullscreen sheet-style scorecard. */
+function openScAgent(agent) {
+  var lb = document.getElementById('lb');
+  var img = document.getElementById('lbImg');
+  var fr = document.getElementById('lbFrame');
+  var content = document.getElementById('lbContent');
+  if (!lb || !content) return;
+  if (img) img.style.display = 'none';
+  if (fr) fr.style.display = 'none';
+  content.style.display = 'block';
 
-  // gather rows for this agent+week, grouped by section, sheet order
-  var rows = (DATA.scorecards || []).filter(function (r) { return r.agent === F.scAgent && r.week === F.scWeek; });
-  if (!rows.length) { wrap.innerHTML = '<div class="empty">No scorecard detail for ' + esc(F.scAgent) + ' in ' + esc(fmtWeek(F.scWeek)) + '.</div>'; return; }
+  var weeks = uniq((DATA.scorecards || []).filter(function (r) { return r.agent === agent; })
+    .map(function (r) { return r.week; })).sort().reverse();
+  var week = weeks[0] || '';
+  var rows = (DATA.scorecards || []).filter(function (r) { return r.agent === agent && r.week === week; });
 
   var bySection = {};
-  rows.forEach(function (r) {
-    (bySection[r.section] = bySection[r.section] || []).push(r);
-  });
+  rows.forEach(function (r) { (bySection[r.section] = bySection[r.section] || []).push(r); });
   var sectionOrder = ['ATTENDANCE', 'QUALITY', 'PRODUCTIVITY', 'FINAL SCORE'];
 
-  // pretty label for each metric; map raw values cleanly
   function fmtRow(r) {
     var v = r.raw;
     if (v === null || v === undefined || v === '') v = '—';
-    // percentages show as % ; numbers show as-is
-    var show = v;
     return '<tr><td class="sc-metric">' + esc(r.metric || '—') + '</td>' +
-           '<td class="sc-value">' + esc(show) + '</td></tr>';
+           '<td class="sc-value">' + esc(v) + '</td></tr>';
   }
 
-  var html = '';
-  sectionOrder.forEach(function (sec) {
-    var srows = bySection[sec];
-    if (!srows || !srows.length) return;
-    html += '<div class="sc-section"><div class="sc-section-head">' + esc(sec) + '</div><table class="sc-detail-table"><tbody>';
-    srows.forEach(function (r) { html += fmtRow(r); });
-    html += '</tbody></table></div>';
-  });
-  wrap.innerHTML = html;
+  var html = '<div class="qa-lb-head">' +
+    '<span class="qa-lb-title">' + esc(agent) + '</span>' +
+    '<span class="qa-lb-meta">' + (week ? esc(fmtWeek(week)) : '') + '</span></div>';
+  if (!rows.length) {
+    html += '<div class="empty"><b>No scorecard</b>No scorecard detail for ' + esc(agent) + '.</div>';
+  } else {
+    html += '<div class="sc-detail">';
+    sectionOrder.forEach(function (sec) {
+      var srows = bySection[sec];
+      if (!srows || !srows.length) return;
+      html += '<div class="sc-section"><div class="sc-section-head">' + esc(sec) + '</div><table class="sc-detail-table"><tbody>';
+      srows.forEach(function (r) { html += fmtRow(r); });
+      html += '</tbody></table></div>';
+    });
+    html += '</div>';
+  }
+  content.innerHTML = html;
+  lb.classList.add('show');
 }
 
 /* ---------------- MONTHLY SCORECARD ---------------- */
