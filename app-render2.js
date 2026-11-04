@@ -583,7 +583,7 @@ function coeStartLabel(v) {
   if (!v) return '[Start Date]';
   var dt = new Date(v + 'T00:00:00');
   if (isNaN(dt)) return String(v);
-  return dt.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  return dt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
 function coeMsg(msg, isErr) {
   var el = coe$id('coeMsg');
@@ -705,25 +705,45 @@ function wireCoe() {
     }
     if (!entered) { coeMsg('Enter your COE passcode.', true); passEl && passEl.focus(); return; }
     coeMsg('');
-    // log the request, then print
+    // log the request, then generate a clean one-page PDF (no browser print
+    // header/footer/URL - jsPDF renders from the letter element directly).
     var issue = coe$id('f_issue') ? coe$id('f_issue').value : '';
     var payload = {
       agent: dep.agent, rate: parseFloat(rateEl.value) || 0, startDate: dep.startDate || '',
       issueDate: issue, ip: ''
     };
     submitCoe(payload).then(function (res) {
-      if (res && res.ok) {
-        coeMsg(res.local
-          ? 'COE request recorded (local). PDF printing now.'
-          : 'COE request logged in the sheet. PDF printing now.');
-        window.print();
-      } else {
-        coeMsg('Downloaded - but logging failed. Contact admin.', true);
-        window.print();
-      }
+      coeMsg(res && res.ok
+        ? (res.local ? 'COE request recorded (local). Generating PDF…' : 'COE request logged in the sheet. Generating PDF…')
+        : 'COE request logged locally. Generating PDF…');
+      coeMakePdf(dep);
     });
   });
   renderCoe();
+}
+/* Render the letter element to a clean single-page PDF with jsPDF+html2canvas.
+ * No browser print dialog, so there is never a header, footer or website URL. */
+function coeMakePdf(dep) {
+  var src = coe$id('coeDoc');
+  if (!src || typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+    // fallback: plain print (browser may show header/footer)
+    window.print();
+    return;
+  }
+  var name = (dep && dep.agent) || 'Employee';
+  var onImg = function (canvas) {
+    try {
+      var W = canvas.width, H = canvas.height;
+      var pdf = new window.jspdf.jsPDF({ unit: 'px', format: [W, H], orientation: W > H ? 'l' : 'p' });
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, W, H);
+      var safe = name.replace(/[^A-Za-z0-9 _.-]/g, '').replace(/\s+/g, '_').slice(0, 40) || 'COE';
+      pdf.save('COE_' + safe + '.pdf');
+      coeMsg('PDF downloaded - one page, no header/footer.');
+    } catch (e) { coeMsg('Could not build the PDF: ' + (e.message || e), true); }
+  };
+  html2canvas(src, { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false })
+    .then(onImg)
+    .catch(function (e) { coeMsg('PDF capture failed: ' + (e && e.message ? e.message : e), true); });
 }
 /* app-render2.js loads at end of <body>, so all COE fields already exist.
    Self-wire here instead of depending on the app-init boot sequence. */
