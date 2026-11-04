@@ -6,6 +6,7 @@ const qa = JSON.parse(fs.readFileSync(J('qa.json'), 'utf8'));
 const sc = JSON.parse(fs.readFileSync(J('sched.json'), 'utf8'));
 const casc = fs.existsSync(J('casc.json')) ? JSON.parse(fs.readFileSync(J('casc.json'), 'utf8')) : {};
 const prod = fs.existsSync(J('prod.json')) ? JSON.parse(fs.readFileSync(J('prod.json'), 'utf8')) : {};
+const coe = fs.existsSync(J('coe.json')) ? JSON.parse(fs.readFileSync(J('coe.json'), 'utf8')) : {};
 const rev = g => g.map(r => r.map(c => {
   if (c && typeof c === 'object' && c.__d) { const p = c.__d.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
   return c;
@@ -25,7 +26,7 @@ eval(srcNoGrid);
 var grid = (ss, tab) => (ss.__d[tab] || []);
 
 global.PropertiesService = { getScriptProperties: () => ({ getProperty: () => 'FAKE' }) };
-const PERF = { __d: qa }, SCHED = { __d: sc }, CASC = { __d: casc }, PROD = { __d: prod };
+const PERF = { __d: qa }, SCHED = { __d: sc }, CASC = { __d: casc }, PROD = { __d: prod }, COE = { __d: coe };
 // Agent status history (Team Danielle) - pre-aggregated from the Call EOD
 // dashboard's data.js by fetch_status.py. Optional: if missing, status stays {}.
 const status = fs.existsSync(J('status.json')) ? JSON.parse(fs.readFileSync(J('status.json'), 'utf8')) : {};
@@ -47,7 +48,8 @@ const out = {
   breakSchedule: parseBreaks(SCHED),
   leaveRequests: parseLeave(SCHED),
   cascades: parseCascades(CASC),
-    products: parseProducts(PROD)
+    products: parseProducts(PROD),
+    coeDeps: parseCoe(COE)
   };
   // Merge product update notices (from the 'PRODUCT UPDATE' tab) onto the matching
   // product by name, so the dashboard's Product Updates section + per-square badges

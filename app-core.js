@@ -384,6 +384,7 @@ function expandSnapshot(raw) {
       warnings: raw.warnings || [],
       officialScorecard: raw.officialScorecard || { weekly: [], monthly: [] },
       leaveFormOptions: raw.leaveFormOptions || { leaveTypes: [], reasons: [] },
+      coeDeps: raw.coeDeps || [],
       status: raw.status || {}
     };
 

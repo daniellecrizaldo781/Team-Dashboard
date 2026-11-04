@@ -119,3 +119,5 @@ if os.path.exists("casc.xlsx"):
     grid("casc.xlsx", "casc.json")
 if os.path.exists("prod.xlsx"):
     grid("prod.xlsx", "prod.json")
+if os.path.exists("coe.xlsx"):
+    grid("coe.xlsx", "coe.json")

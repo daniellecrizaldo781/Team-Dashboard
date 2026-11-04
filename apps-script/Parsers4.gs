@@ -399,3 +399,48 @@ function parseProducts(ss) {
       }
       return out;
     }
+
+/* ---------------- COE REQUEST ---------------- */
+/** Parse the "COE Request" tab: Agent Name | Start Date | Email | COE Password Request.
+ *  Returns [{ agent, startDate, email, password }] for active rows (name + start date set). */
+function parseCoe(ss) {
+  var out = [];
+  var names;
+  if (ss && typeof ss.getSheets === 'function') names = ss.getSheets().map(function (s) { return s.getName(); });
+  else if (ss && ss.__d && typeof ss.__d === 'object') names = Object.keys(ss.__d);
+  else return out;
+  for (var t = 0; t < names.length; t++) {
+    var g = grid(ss, names[t]);
+    if (!g || !g.length) continue;
+    var head = (g[0] || []).map(function (c) { return S(c).toLowerCase().trim(); });
+    var iA = head.indexOf('agent name');
+    if (iA < 0) continue;                       // not the COE tab
+    var iS = head.indexOf('start date'), iE = head.indexOf('email'),
+        iP = head.indexOf('coe password request');
+    for (var r = 1; r < g.length; r++) {
+      var name = S(g[r][iA]);
+      if (!name) continue;
+      var start = iS >= 0 ? coeDateText(g[r][iS]) : '';
+      var email = iE >= 0 ? S(g[r][iE]) : '';
+      var pass = '';
+      if (iP >= 0) { var p = g[r][iP]; pass = (p === null || p === undefined) ? '' : String(p).replace(/\.0$/, '').trim(); }
+      if (!start) continue;                     // skip blank placeholder rows
+      out.push({ agent: name, startDate: start, email: email, password: pass });
+      if (out.length >= 200) return out;
+    }
+  }
+  return out;
+}
+
+/** Normalise a Start Date cell to 'YYYY-MM-DD' (accepts Date, __d, or string). */
+function coeDateText(c) {
+  if (c === null || c === undefined || c === '') return '';
+  if (c instanceof Date) { var y = c.getFullYear(), m = c.getMonth() + 1, d = c.getDate(); return y + '-' + (m < 10 ? '0' : '') + m + '-' + (d < 10 ? '0' : '') + d; }
+  if (typeof c === 'object' && c.__d) return S(c.__d);
+  var s = S(c);
+  var mm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (mm) return s;
+  var dm = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(s);
+  if (dm) return dm[3] + '-' + (dm[1].length < 2 ? '0' : '') + dm[1] + '-' + (dm[2].length < 2 ? '0' : '') + dm[2];
+  return s;
+}

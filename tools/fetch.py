@@ -12,6 +12,7 @@ Sheet IDs come from the environment so they stay out of the committed files:
   SCHED_SHEET_ID  - Leave / Schedule sheet id
   CASC_SHEET_ID   - Cascades & Handling sheet id (repo secret, link-shared)
   PRODUCT_SHEET_ID - Products sheet id (repo secret, link-shared)
+  COE_SHEET_ID    - COE Request sheet id (repo secret, link-shared)
 
 Run locally:
   PERF_SHEET_ID=... SCHED_SHEET_ID=... CASC_SHEET_ID=... python tools/fetch.py
@@ -77,6 +78,7 @@ def main():
     sched = os.environ.get('SCHED_SHEET_ID', '').strip()
     casc = os.environ.get('CASC_SHEET_ID', '').strip()
     prod = os.environ.get('PRODUCT_SHEET_ID', '').strip()
+    coe = os.environ.get('COE_SHEET_ID', '').strip()
     missing = [n for n, v in (('PERF_SHEET_ID', perf), ('SCHED_SHEET_ID', sched), ('PRODUCT_SHEET_ID', prod)) if not v]
     if missing:
         die('missing environment variable(s): ' + ', '.join(missing))
@@ -87,6 +89,8 @@ def main():
     if casc:
         get(casc, 'casc.xlsx')
     get(prod, 'prod.xlsx')
+    if coe:
+        get(coe, 'coe.xlsx')
 
 
 if __name__ == '__main__':

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Team Danielle Dashboard</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="stylesheet" href="styles.css?v=400">
+<link rel="stylesheet" href="styles.css?v=401">
 </head>
 <body>
 
@@ -327,54 +327,33 @@
       <div class="card-head coe-topbar">
         <h3>COE Request &mdash; Certificate of Employment</h3>
         <div class="coe-actions">
-          <input type="password" id="coePass" class="coe-pass" placeholder="Passcode" autocomplete="off">
-          <span class="coe-note" id="coeNote" style="font-size:12px;color:#B04141;font-weight:600;display:none"></span>
+          <span class="coe-note" id="coeMsg" style="font-size:12.5px;color:var(--ink2);font-weight:600"></span>
           <button class="btn" id="coeDlBtn" style="background:linear-gradient(100deg,var(--rose),var(--rose-d));color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:700;box-shadow:0 5px 16px rgba(232,87,142,.35)">&#11015; Download PDF</button>
         </div>
       </div>
-      <p class="coe-note" style="font-size:12.5px;color:var(--ink3);margin:-4px 0 14px">Fill the employee and compensation fields &mdash; the letter updates as you type using the official 4am Media template (logo, layout and wording unchanged). Enter the passcode then Download PDF to save.</p>
+      <p class="coe-note" style="font-size:12.5px;color:var(--ink3);margin:-4px 0 14px">Pick your name, review the auto-filled dates, enter your hourly rate &amp; passcode. The letter uses the official 4am Media template (logo, layout and wording unchanged). Every download is logged for tracking.</p>
       <div class="coe-grid">
         <div class="coe-form">
-          <div class="sec-head" style="background:var(--blush);padding:8px 14px;border-radius:8px;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--rose-d)">&#128100; Employee</div>
+          <div class="sec-head" style="background:var(--blush);padding:8px 14px;border-radius:8px;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--rose-d)">&#128100; Employee &mdash; fill these</div>
           <div class="sec" style="padding:14px 0 4px">
-            <label class="coe-f"><span>Employee Name</span><input id="f_name" placeholder="Full name"></label>
-            <label class="coe-f"><span>Position <em style="font-weight:400;font-style:normal;text-transform:none;letter-spacing:0">(locked)</em></span><input id="f_pos" value="Customer Service Representative" disabled></label>
-            <label class="coe-f"><span>Employment Status</span>
-              <select id="f_stat"><option>currently employed</option><option>previously employed</option></select></label>
+            <label class="coe-f coe-required"><span>Employee Name</span>
+              <select id="f_agent"><option value="">Select your name&hellip;</option></select></label>
+            <label class="coe-f"><span>Position (locked)</span><input id="f_pos" value="Customer Service Representative" disabled></label>
             <div class="coe-2col">
-              <label class="coe-f"><span>Start Date</span><input id="f_start" type="date"></label>
-              <label class="coe-f"><span>Issue Date</span><input id="f_issue" type="date"></label>
+              <label class="coe-f"><span>Start Date (auto)</span><input id="f_start" type="date" disabled></label>
+              <label class="coe-f"><span>Issue Date (auto &mdash; today)</span><input id="f_issue" type="date" disabled></label>
             </div>
           </div>
-          <div class="sec-head" style="background:var(--blush);padding:8px 14px;border-radius:8px;font-weight:800;font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--rose-d)">&#128176; Compensation</div>
+          <div class="sec-head" style="background:var(--blush);padding:8px 14px;border-radius:8px;font-weight:800;font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--rose-d)">&#128176; Compensation &mdash; fill this</div>
           <div class="sec" style="padding:14px 0 4px">
-            <div class="coe-2col">
-              <label class="coe-f"><span>Hourly Rate ($)</span><input id="f_rate" type="number" step="0.01" placeholder="0.00"></label>
-              <label class="coe-f"><span>Hrs / Week <em style="font-weight:400;font-style:normal;text-transform:none;letter-spacing:0">(locked)</em></span><input id="f_hrs" type="number" value="40" disabled></label>
-            </div>
+            <label class="coe-f coe-required"><span>Hourly Rate ($)</span><input id="f_rate" type="number" step="0.01" placeholder="0.00"></label>
+            <label class="coe-f"><span>Hrs / Week (locked)</span><input id="f_hrs" value="40" disabled></label>
           </div>
-          <div class="sec-head" style="background:var(--blush);padding:8px 14px;border-radius:8px;font-weight:800;font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--rose-d)">&#127970; Company <span style="float:right;text-transform:none;font-weight:600;letter-spacing:0">locked</span></div>
-          <div class="sec" style="padding:14px 0 4px">
-            <label class="coe-f"><span>Company Name</span><input id="f_company" value="4am Media, LLC" disabled></label>
-            <label class="coe-f"><span>Phone</span><input id="f_phone" value="619-977-5996" disabled></label>
-            <label class="coe-f"><span>Address</span>
-              <div class="coe-2col">
-                <input id="f_add1" value="2400 Kettner Blvd." disabled style="width:100%">
-                <input id="f_add2" value="#238" disabled style="width:100%">
-              </div>
-              <div class="coe-3col">
-                <input id="f_city" value="San Diego" disabled><input id="f_state" value="CA" disabled style="width:70px"><input id="f_zip" value="92101" disabled style="width:80px">
-              </div>
-            </label>
-          </div>
-          <div class="sec-head" style="background:var(--blush);padding:8px 14px;border-radius:8px;font-weight:800;font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--rose-d)">&#9999; Signatory</div>
+          <div class="sec-head" style="background:var(--blush);padding:8px 14px;border-radius:8px;font-weight:800;font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--rose-d)">&#128272; Unlock download &mdash; fill this</div>
           <div class="sec" style="padding:14px 0 0">
-            <div class="coe-2col">
-              <label class="coe-f"><span>Signatory Name</span><input id="f_signame" value="Nick Urbani" disabled></label>
-              <label class="coe-f"><span>Title</span><input id="f_sigtitle" value="Owner" disabled></label>
-            </div>
+            <label class="coe-f coe-required"><span>Your COE passcode</span><input type="password" id="f_pass" class="coe-pass" placeholder="4-digit passcode" autocomplete="off"></label>
           </div>
-          <p class="coe-locknote" style="font-size:11.5px;color:var(--ink3);margin-top:12px">&#128274; Position, hours, company and signatory are locked to the official 4am Media template. Ask an admin to change them in the source.</p>
+          <p class="coe-locknote" style="font-size:11.5px;color:var(--ink3);margin-top:14px">&#128274; Your passcode is the one listed for you in the COE Request sheet. Position, hours and company are locked to the official 4am Media template.</p>
         </div>
         <div class="coe-preview">
           <div class="card-head" style="margin-bottom:10px"><h4>Letter Preview</h4><span class="coe-note" style="font-size:12px;color:var(--ink3)">Official 4am Media COE template &mdash; logo and format unchanged.</span></div>
@@ -395,13 +374,13 @@
 
 <script src="chart.umd.min.js"></script>
 <script src="config.js?v=373"></script>
-<script src="data.js?v=387"></script>
-<script src="app-core.js?v=374"></script>
+<script src="data.js?v=388"></script>
+<script src="app-core.js?v=375"></script>
 <script src="app-emoji.js?v=373"></script>
 <script src="app-charts.js?v=373"></script>
 <script src="app-render.js?v=389"></script>
-<script src="app-render2.js?v=377"></script>
-<script src="app-init.js?v=394"></script>
+<script src="app-render2.js?v=378"></script>
+<script src="app-init.js?v=395"></script>
 
 </body>
 </html>

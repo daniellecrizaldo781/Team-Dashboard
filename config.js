@@ -16,6 +16,13 @@ window.DATA_SOURCE_NOTE = 'Auto-updates hourly';
 window.DASHBOARD_CONFIG = window.DASHBOARD_CONFIG || {};
 window.DASHBOARD_CONFIG.leaveWebAppUrl = 'https://script.google.com/macros/s/AKfycbxBF0FZwUavwneXqr9w4iDZXHGm2y0cZowJt8T7YVEfq8BlL1-h-F_EZ00YMHkJ17Emgw/exec';
 
+/* COE Request write + logging endpoint. Empty ('') logs each COE download as a
+ * local record only (still shown in the page + console). To record every COE
+ * request in the sheet for tracking, deploy apps-script/CoeLog.gs bound to the
+ * COE Request sheet (Deploy > Web app > Execute as Me > Anyone) and paste its
+ * URL here - exactly like leaveWebAppUrl above. */
+window.DASHBOARD_CONFIG.coeLogWebAppUrl = '';
+
 /* Per-agent passcode gate for the Leave Request tab (Option B).
  * Each agent types their 4-digit PIN; the Agent field then locks to their name.
  * NOTE: this is a lightweight gate, NOT real security - the map is public in the

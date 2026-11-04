@@ -698,6 +698,11 @@ td.c,th.c{text-align:center}
 .coe-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .coe-pass{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:13.5px;min-width:120px}
 .coe-pass:focus{outline:none;border-color:var(--rose);box-shadow:0 0 0 3px rgba(232,87,142,.15)}
+.coe-required{position:relative}
+.coe-required>span{display:flex;align-items:center;gap:6px}
+.coe-required>span::after{content:'required';font-size:10px;font-weight:700;color:#fff;background:linear-gradient(100deg,var(--rose),var(--rose-d));border-radius:6px;padding:1px 7px;letter-spacing:.04em;text-transform:none}
+.coe-required input,.coe-required select{border-color:var(--rose);box-shadow:0 0 0 3px rgba(232,87,142,.12);background:linear-gradient(100deg,#fff,#FFF2F7)}
+.coe-required input:focus,.coe-required select:focus{border-color:var(--rose-d);box-shadow:0 0 0 4px rgba(232,87,142,.20)}
 @media print{
   body *{visibility:hidden}
   .coe-docwrap,.coe-docwrap *,.doc,.doc *{visibility:visible}

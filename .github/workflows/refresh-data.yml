@@ -42,6 +42,7 @@ jobs:
           SCHED_SHEET_ID: ${{ secrets.SCHED_SHEET_ID }}
           CASC_SHEET_ID: ${{ secrets.CASC_SHEET_ID }}
           PRODUCT_SHEET_ID: ${{ secrets.PRODUCT_SHEET_ID }}
+          COE_SHEET_ID: ${{ secrets.COE_SHEET_ID }}
         run: python fetch.py
 
       - name: Convert sheets to grids

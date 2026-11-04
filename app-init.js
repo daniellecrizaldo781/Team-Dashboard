@@ -30,6 +30,7 @@ function render() {
   try { renderLeaves(); }       catch (e) { console.error('leave', e); }
   try { renderProducts(); }     catch (e) { console.error('products', e); }
   try { renderResources(); }    catch (e) { console.error('resources', e); }
+  try { if (typeof coePopulateAgents === 'function') coePopulateAgents(); } catch (e) { console.error('coe', e); }
   setTimeout(resizeCharts, 30);
 }
 
