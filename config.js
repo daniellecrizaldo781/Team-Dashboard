@@ -21,6 +21,8 @@ window.DASHBOARD_CONFIG.leaveWebAppUrl = 'https://script.google.com/macros/s/AKf
  * request in the sheet for tracking, deploy apps-script/CoeLog.gs bound to the
  * COE Request sheet (Deploy > Web app > Execute as Me > Anyone) and paste its
  * URL here - exactly like leaveWebAppUrl above. */
+window.DASHBOARD_CONFIG.supabaseUrl = 'https://azkcfwfsznqwrwaaaltp.supabase.co';
+window.DASHBOARD_CONFIG.supabaseAnonKey = 'sb_publishable_TocTfURGWstJCWhCMb7flA_obIbU_Q9';
 window.DASHBOARD_CONFIG.coeLogWebAppUrl = '';
 
 /* Per-agent passcode gate for the Leave Request tab (Option B).
