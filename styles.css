@@ -48,6 +48,7 @@ select,input{font:inherit;color:var(--ink)}
   color:var(--ink2);font-size:13.5px;font-weight:500;transition:.16s;
 }
 .nav-btn span{font-size:14px;opacity:.65;width:16px;text-align:center}
+a.nav-btn{text-decoration:none}
 .nav-btn:hover{background:var(--blush2);color:var(--rose-d)}
 .nav-btn.active{
   background:linear-gradient(100deg,var(--rose),var(--rose-d));
