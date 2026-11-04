@@ -49,9 +49,9 @@
     }).catch(function (e) { console.error('auth gate', e); showOverlay(); return false; });
   }
 
-  function sendMagicLink(email) {
+  function signIn(email, password) {
     if (!sb) return Promise.resolve({ error: { message: 'Supabase not configured' } });
-    return sb.auth.signInWithOtp({ email: email, options: { emailRedirectTo: window.location.origin + window.location.pathname } });
+    return sb.auth.signInWithPassword({ email: email, password: password });
   }
 
   function signOut() {
@@ -67,12 +67,19 @@
     var msg = document.getElementById('authMsg');
     if (btn) btn.addEventListener('click', function () {
       var email = (input && input.value || '').trim();
+      var passInput = document.getElementById('authPass');
+      var password = (passInput && passInput.value || '').trim();
       if (!email) { if (msg) msg.textContent = 'Enter your email.'; return; }
+      if (!password) { if (msg) msg.textContent = 'Enter your password.'; passInput && passInput.focus(); return; }
       btn.disabled = true;
-      sendMagicLink(email).then(function (r) {
+      signIn(email, password).then(function (r) {
         btn.disabled = false;
         if (r.error) { if (msg) msg.textContent = r.error.message; return; }
-        if (msg) msg.textContent = 'Magic link sent. Check your email and click the link to sign in.';
+        // enforce allowed_emails allow-list
+        isAllowed(email).then(function (ok) {
+          if (ok) { user = r.data && r.data.user; hideOverlay(); if (typeof render === 'function') render(); }
+          else { if (msg) msg.textContent = 'This email is not authorized.'; sb.auth.signOut(); showOverlay(); }
+        });
       });
     });
     // listen for auth state changes (magic link callback)
