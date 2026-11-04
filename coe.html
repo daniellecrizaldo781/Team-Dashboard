@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COE Generator — 4am Media, LLC</title>
+<style>
+:root{
+  --bg:#eef2f7;--panel:#fff;--ink:#1f2430;--ink2:#5b6472;--line:#dde3ec;
+  --blue:#2563eb;--blue-d:#1d4ed8;--blue-bg:#eff4ff;--head-bg:#1e3a5f;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Inter,Roboto,system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+.topbar{background:linear-gradient(100deg,var(--head-bg),#27496e);color:#fff;padding:14px 28px;
+  display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.topbar h1{font-size:19px;font-weight:700;letter-spacing:.02em}
+.topbar p{font-size:12.5px;opacity:.85}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.actions button{border:none;border-radius:8px;padding:9px 18px;font-size:13.5px;font-weight:600;cursor:pointer}
+#copyBtn{background:rgba(255,255,255,.14);color:#fff}
+#printBtn{background:rgba(255,255,255,.14);color:#fff}
+#dlBtn{background:#fff;color:var(--blue-d)}
+#dlBtn:hover{background:#e6edff}
+.wrap{display:grid;grid-template-columns:410px 1fr;gap:22px;padding:22px;max-width:1400px;margin:0 auto}
+@media(max-width:960px){.wrap{grid-template-columns:1fr}}
+
+/* LEFT FORM */
+.form{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;height:max-content}
+.form .sec-head{background:var(--blue-bg);color:var(--blue-d);font-weight:800;font-size:12px;
+  letter-spacing:.08em;text-transform:uppercase;padding:8px 16px;border-bottom:1px solid var(--line)}
+.form .sec{padding:14px 16px;border-bottom:1px solid var(--line)}
+.form .sec:last-child{border-bottom:none}
+.field{margin-bottom:12px}
+.field:last-child{margin-bottom:0}
+.field label{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--ink2);
+  text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px}
+.field label .ic{color:var(--blue);font-size:13px}
+.field input,.field select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;
+  background:#fff;font-size:13.5px;color:var(--ink);font-family:inherit}
+.field input:focus,.field select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+.field input:disabled,.field select:disabled{background:#f4f6f9;color:#87909f}
+.lock-note{font-size:11.5px;color:#8893a6;padding:10px 16px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:2fr 2fr 1fr;gap:8px}
+
+/* RIGHT PREVIEW */
+.preview{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.preview .p-head{display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:12px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.preview .p-head h2{font-size:15px;font-weight:700}
+.preview .p-head span{font-size:12px;color:var(--ink2)}
+.doc-wrap{flex:1;padding:26px;overflow:auto}
+.doc{max-width:760px;margin:0 auto;background:#fff;border:1px solid #e3e3e3;
+  box-shadow:0 6px 22px rgba(20,40,80,.08);padding:52px 58px;font-family:Georgia,'Times New Roman',serif;
+  color:#111;line-height:1.55;font-size:14.5px}
+.doc .logo{text-align:center}
+.doc .logo .name{font-size:26px;font-weight:800;letter-spacing:.04em}
+.doc .logo .sub{font-size:12px;color:#555;letter-spacing:.02em;margin-top:3px}
+.doc .addr{text-align:center;font-size:12.5px;color:#444;margin-top:12px;line-height:1.6}
+.doc .date{text-align:right;font-size:13.5px;margin-top:30px;margin-bottom:26px}
+.doc .subject{font-size:15px;font-weight:700;margin-bottom:14px}
+.doc .body{margin-bottom:16px}
+.doc .bullets{margin:14px 0 14px 22px;list-style:disc;font-size:14.5px}
+.doc .bullets li{margin-bottom:7px}
+.doc .closing{margin-bottom:26px}
+.doc .sign{margin-top:44px;font-size:14.5px;line-height:1.8}
+.doc .sig-line{border-top:1px solid #222;width:260px;margin-top:52px;padding-top:6px;font-size:13px;color:#222}
+.empty-emp{color:#d00}
+@media print{
+  body *{visibility:hidden}
+  .doc-wrap,.doc{visibility:visible}
+  .doc-wrap{position:absolute;left:0;top:0;width:100%;padding:0}
+  .doc{box-shadow:none;border:none;max-width:100%;padding:30px}
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div>
+    <h1>COE Details</h1>
+    <p>Company and signatory details are locked from the template. Compensation and employee details stay editable.</p>
+  </div>
+  <div class="actions">
+    <button id="copyBtn">⧉ Copy</button>
+    <button id="printBtn">🖨 Print</button>
+    <button id="dlBtn">⬇ Download PDF</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="form">
+    <div class="sec-head">👤 Employee</div>
+    <div class="sec">
+      <div class="field"><label><span class="ic">👤</span> Employee Name</label>
+        <input id="f_name" placeholder="Full name"></div>
+      <div class="field"><label><span class="ic">💼</span> Position</label>
+        <input id="f_pos" value="Customer Service Representative"></div>
+      <div class="field"><label>Employment Status</label>
+        <select id="f_stat"><option>currently employed</option><option>previously employed</option></select></div>
+      <div class="row">
+        <div class="field"><label><span class="ic">📅</span> Start Date</label><input id="f_start" type="date"></div>
+        <div class="field"><label><span class="ic">📅</span> Issue Date</label><input id="f_issue" type="date"></div>
+      </div>
+    </div>
+    <div class="sec-head">💰 Compensation</div>
+    <div class="sec">
+      <div class="row">
+        <div class="field"><label><span class="ic">💵</span> Hourly Rate</label><input id="f_rate" type="number" step="0.01" placeholder="0.00"></div>
+        <div class="field"><label><span class="ic">⏱</span> Hrs / Week</label><input id="f_hrs" type="number" value="40"></div>
+      </div>
+    </div>
+    <div class="sec-head">🏢 Company <span style="float:right;font-weight:600;text-transform:none;letter-spacing:0">locked</span></div>
+    <div class="sec">
+      <div class="field"><label><span class="ic">🏢</span> Company Name</label><input id="f_company" value="4am Media, LLC" disabled></div>
+      <div class="field"><label><span class="ic">📞</span> Phone</label><input id="f_phone" value="619-977-5996" disabled></div>
+      <div class="field"><label>Address</label>
+        <div class="row3">
+          <input id="f_add1" value="2400 Kettner Blvd." style="grid-column:span 2" disabled>
+          <input id="f_add2" value="#238" disabled>
+          <input id="f_city" value="San Diego" disabled>
+          <input id="f_state" value="CA" disabled>
+          <input id="f_zip" value="92101" disabled>
+        </div>
+      </div>
+    </div>
+    <div class="sec-head">✍ Signatory</div>
+    <div class="sec">
+      <div class="row">
+        <div class="field"><label>Signatory Name</label><input id="f_signame" value="Nick Urbani"></div>
+        <div class="field"><label>Title</label><input id="f_sigtitle" value="Owner"></div>
+      </div>
+    </div>
+    <div class="lock-note">🔒 Company &amp; signatory names are locked to the 4am Media template. Ask an admin to edit them in the source if needed.</div>
+  </div>
+
+  <div class="preview">
+    <div class="p-head">
+      <div><h2>Letter Preview</h2><span>Review the wording before sending or saving.</span></div>
+    </div>
+    <div class="doc-wrap">
+      <div class="doc" id="doc"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var C = {
+    name:'4am Media, LLC',
+    phone:'619-977-5996',
+    addr:['2400 Kettner Blvd.','#238 San Diego,','CA 92101']
+  };
+  function $id(x){return document.getElementById(x)}
+  var nameEl=$id('f_name'),posEl=$id('f_pos'),rateEl=$id('f_rate'),hrsEl=$id('f_hrs'),
+      startEl=$id('f_start'),issueEl=$id('f_issue'),
+      signEl=$id('f_signame'),sigTitleEl=$id('f_sigtitle');
+
+  function money(v){
+    if(v===''||v==null) return '[Salary]';
+    var n=parseFloat(v);
+    if(isNaN(n)) return '[Salary]';
+    return '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+  function fmtDate(d){
+    if(!d) return '[Issue Date]';
+    var dt=new Date(d+'T00:00:00');
+    if(isNaN(dt)) return d;
+    return dt.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  }
+  function fmtStartDate(d){
+    if(!d) return '[Start Date]';
+    var dt=new Date(d+'T00:00:00');
+    if(isNaN(dt)) return d;
+    return dt.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  }
+  function wordNum(n){
+    var map=['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen','twenty','thirty','forty','fifty'];
+    var h=parseInt(n,10)||40;
+    if(h<=20) return map[h];
+    if(h<30) return 'twenty-'+(map[h-20]||'');
+    if(h<40) return 'thirty-'+(map[h-30]||'');
+    return map[Math.min(h,50)]||String(h);
+  }
+
+  function render(){
+    var name=nameEl.value.trim()||'<span class="empty-emp">[Employee Name]</span>';
+    var pos=posEl.value.trim()||'Customer Service Representative';
+    var rate=money(rateEl.value);
+    var hrs=parseInt(hrsEl.value)||40;
+    var hrsWord=wordNum(hrs);
+    var start=fmtStartDate(startEl.value);
+    var issue=fmtDate(issueEl.value);
+    var sign=signEl.value.trim()||'Nick Urbani';
+    var sigTitle=sigTitleEl.value.trim()||'Owner';
+    var addr=C.addr.join(', ')+'<br>'+C.phone;
+
+    $id('doc').innerHTML =
+      '<div class="logo"><div class="name">4AM MEDIA</div><div class="sub">4am Media, LLC</div></div>'+
+      '<div class="addr">'+C.addr[0]+' '+C.addr[1]+' '+C.addr[2]+' &bull; '+C.phone+'</div>'+
+      '<div class="date">'+issue+'</div>'+
+      '<div class="subject">Re: Verification of Employment for '+name+'</div>'+
+      '<div class="body">To Whom It May Concern,<br><br>'+
+      'Please accept this letter as confirmation that '+name+' has been employed with '+C.name+' since '+start+'. Currently, '+name+':</div>'+
+      '<ul class="bullets">'+
+        '<li>Holds the title of '+pos+'.</li>'+
+        '<li>Earns '+rate+' per hour.</li>'+
+        '<li>Works on a full-time basis of '+hrsWord+' ('+hrs+') hours per week.</li>'+
+      '</ul>'+
+      '<div class="closing">If you have any questions or require additional information, please give me a call at the above number.</div>'+
+      '<div>Best regards,</div>'+
+      '<div class="sign">'+sign+'<br>'+sigTitle+' &mdash; '+C.name+'</div>';
+  }
+
+  ['f_name','f_pos','f_rate','f_hrs','f_start','f_issue','f_signame','f_sigtitle'].forEach(function(id){
+    $id(id).addEventListener('input',render);
+  });
+
+  $id('copyBtn').addEventListener('click',function(){
+    var name=nameEl.value.trim()||'[Employee Name]';
+    var issue=fmtDate(issueEl.value);
+    var txt='4am Media, LLC\n2400 Kettner Blvd. #238 San Diego, CA 92101\n619-977-5996\n\n'+
+      issue+'\n\nRe: Verification of Employment for '+name+'\n\nTo Whom It May Concern,\n'+
+      'Please accept this letter as confirmation that '+name+' has been employed with 4am Media, LLC since '+fmtStartDate(startEl.value)+'. Currently, '+name+':\n\n'+
+      '• Holds the title of '+(posEl.value.trim()||'Customer Service Representative')+'.\n'+
+      '• Earns '+money(rateEl.value)+' per hour.\n'+
+      '• Works on a full-time basis of '+(parseInt(hrsEl.value)||40)+' hours per week.\n\n'+
+      'If you have any questions or require additional information, please give me a call at the above number.\n\nBest regards,\n\n'+
+      (signEl.value.trim()||'Nick Urbani')+', '+(sigTitleEl.value.trim()||'Owner')+' - 4am Media, LLC';
+    (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(function(){alert('Copied to clipboard');})
+      .catch(function(){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);alert('Copied to clipboard');});
+  });
+  $id('printBtn').addEventListener('click',function(){window.print();});
+  $id('dlBtn').addEventListener('click',function(){
+    // printable layout -> save as PDF via print dialog
+    window.print();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
