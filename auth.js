@@ -34,11 +34,15 @@
     var o = document.getElementById('authOverlay');
     if (o) o.style.display = 'flex';
     document.body.style.overflow = 'hidden';
+    var lb = document.getElementById('authLogoutBtn');
+    if (lb) lb.style.display = 'none';
   }
   function hideOverlay() {
     var o = document.getElementById('authOverlay');
     if (o) o.style.display = 'none';
     document.body.style.overflow = '';
+    var lb = document.getElementById('authLogoutBtn');
+    if (lb) { lb.style.display = 'inline-block'; lb.onclick = function(){ window.AUTH.signOut(); }; }
   }
 
   function gate() {
