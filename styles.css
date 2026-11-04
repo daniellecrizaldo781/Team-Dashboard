@@ -685,17 +685,19 @@ td.c,th.c{text-align:center}
 .coe-docwrap{background:#fff;border:1px solid var(--line);border-radius:12px;padding:22px;overflow:auto;max-height:78vh}
 .doc{max-width:680px;margin:0 auto;background:#fff;box-shadow:0 6px 22px rgba(20,40,80,.08);border:1px solid #e3e3e3;padding:44px 48px;font-family:Georgia,'Times New Roman',serif;color:#111;line-height:1.55;font-size:14.5px}
 .doc-logo{text-align:center;font-size:26px;font-weight:800;letter-spacing:.04em}
-.doc-company{text-align:center;font-size:13px;color:#555;margin-top:3px}
-.doc-addr{text-align:center;font-size:12.5px;color:#444;margin-top:12px}
-.doc-date{text-align:right;font-size:13.5px;margin-top:30px;margin-bottom:26px}
-.doc-subject{font-size:15px;font-weight:700;margin:0 0 14px}
+.doc-logo img{max-width:170px;height:auto;display:block;margin:0 auto}
+.doc-addr{text-align:left;font-size:12.5px;color:#444;margin-top:22px;line-height:1.7}
+.doc-date{text-align:left;font-size:13.5px;margin-top:32px;margin-bottom:8px}
+.doc-subject{font-size:15px;font-weight:700;margin:14px 0}
 .doc-body{margin-bottom:6px}
-.doc-bullets{margin:14px 0 14px 22px;list-style:disc}
+.doc-bullets{margin:14px 0 14px 26px;list-style:disc}
 .doc-bullets li{margin-bottom:7px}
-.doc-closing{margin:18px 0 20px}
+.doc-closing{margin:18px 0 24px}
 .doc-sign{font-size:14.5px}
-.doc-sign-block{margin-top:38px}
-.coe-btns .btn{cursor:pointer}
+.doc-sig-name{font-weight:600}
+.coe-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.coe-pass{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:13.5px;min-width:120px}
+.coe-pass:focus{outline:none;border-color:var(--rose);box-shadow:0 0 0 3px rgba(232,87,142,.15)}
 @media print{
   body *{visibility:hidden}
   .coe-docwrap,.coe-docwrap *,.doc,.doc *{visibility:visible}

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Team Danielle Dashboard</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="stylesheet" href="styles.css?v=399">
+<link rel="stylesheet" href="styles.css?v=400">
 </head>
 <body>
 
@@ -324,13 +324,21 @@
   <!-- COE REQUEST -->
   <section class="page" id="pageCoe" hidden>
     <div class="card coe-wrap">
-      <div class="card-head"><h3>COE Details</h3><span class="coe-note" style="font-size:12.5px;color:var(--ink3)">Company &amp; signatory are locked to the 4am Media template. Fill employee &amp; compensation; the letter updates as you type and downloads as PDF.</span></div>
+      <div class="card-head coe-topbar">
+        <h3>COE Request &mdash; Certificate of Employment</h3>
+        <div class="coe-actions">
+          <input type="password" id="coePass" class="coe-pass" placeholder="Passcode" autocomplete="off">
+          <span class="coe-note" id="coeNote" style="font-size:12px;color:#B04141;font-weight:600;display:none"></span>
+          <button class="btn" id="coeDlBtn" style="background:linear-gradient(100deg,var(--rose),var(--rose-d));color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:700;box-shadow:0 5px 16px rgba(232,87,142,.35)">&#11015; Download PDF</button>
+        </div>
+      </div>
+      <p class="coe-note" style="font-size:12.5px;color:var(--ink3);margin:-4px 0 14px">Fill the employee and compensation fields &mdash; the letter updates as you type using the official 4am Media template (logo, layout and wording unchanged). Enter the passcode then Download PDF to save.</p>
       <div class="coe-grid">
         <div class="coe-form">
           <div class="sec-head" style="background:var(--blush);padding:8px 14px;border-radius:8px;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--rose-d)">&#128100; Employee</div>
           <div class="sec" style="padding:14px 0 4px">
             <label class="coe-f"><span>Employee Name</span><input id="f_name" placeholder="Full name"></label>
-            <label class="coe-f"><span>Position</span><input id="f_pos" value="Customer Service Representative"></label>
+            <label class="coe-f"><span>Position <em style="font-weight:400;font-style:normal;text-transform:none;letter-spacing:0">(locked)</em></span><input id="f_pos" value="Customer Service Representative" disabled></label>
             <label class="coe-f"><span>Employment Status</span>
               <select id="f_stat"><option>currently employed</option><option>previously employed</option></select></label>
             <div class="coe-2col">
@@ -341,8 +349,8 @@
           <div class="sec-head" style="background:var(--blush);padding:8px 14px;border-radius:8px;font-weight:800;font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--rose-d)">&#128176; Compensation</div>
           <div class="sec" style="padding:14px 0 4px">
             <div class="coe-2col">
-              <label class="coe-f"><span>Hourly Rate</span><input id="f_rate" type="number" step="0.01" placeholder="0.00"></label>
-              <label class="coe-f"><span>Hrs / Week</span><input id="f_hrs" type="number" value="40"></label>
+              <label class="coe-f"><span>Hourly Rate ($)</span><input id="f_rate" type="number" step="0.01" placeholder="0.00"></label>
+              <label class="coe-f"><span>Hrs / Week <em style="font-weight:400;font-style:normal;text-transform:none;letter-spacing:0">(locked)</em></span><input id="f_hrs" type="number" value="40" disabled></label>
             </div>
           </div>
           <div class="sec-head" style="background:var(--blush);padding:8px 14px;border-radius:8px;font-weight:800;font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--rose-d)">&#127970; Company <span style="float:right;text-transform:none;font-weight:600;letter-spacing:0">locked</span></div>
@@ -362,20 +370,16 @@
           <div class="sec-head" style="background:var(--blush);padding:8px 14px;border-radius:8px;font-weight:800;font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--rose-d)">&#9999; Signatory</div>
           <div class="sec" style="padding:14px 0 0">
             <div class="coe-2col">
-              <label class="coe-f"><span>Signatory Name</span><input id="f_signame" value="Nick Urbani"></label>
-              <label class="coe-f"><span>Title</span><input id="f_sigtitle" value="Owner"></label>
+              <label class="coe-f"><span>Signatory Name</span><input id="f_signame" value="Nick Urbani" disabled></label>
+              <label class="coe-f"><span>Title</span><input id="f_sigtitle" value="Owner" disabled></label>
             </div>
           </div>
-          <div class="coe-btns" style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
-            <button class="btn" id="coeCopyBtn" style="background:linear-gradient(100deg,var(--rose),var(--rose-d));color:#fff;border:none;border-radius:10px;padding:10px 18px;font-weight:600">&#10548; Copy Text</button>
-            <button class="btn" id="coePrintBtn" style="background:linear-gradient(100deg,var(--rose),var(--rose-d));color:#fff;border:none;border-radius:10px;padding:10px 18px;font-weight:600">&#128424; Print</button>
-            <button class="btn" id="coeDlBtn" style="background:linear-gradient(100deg,var(--rose),var(--rose-d));color:#fff;border:none;border-radius:10px;padding:10px 18px;font-weight:700;box-shadow:0 5px 16px rgba(232,87,142,.35)">&#11015; Download PDF</button>
-          </div>
+          <p class="coe-locknote" style="font-size:11.5px;color:var(--ink3);margin-top:12px">&#128274; Position, hours, company and signatory are locked to the official 4am Media template. Ask an admin to change them in the source.</p>
         </div>
         <div class="coe-preview">
-          <div class="card-head" style="margin-bottom:10px"><h4>Letter Preview</h4><span class="coe-note" style="font-size:12px;color:var(--ink3)">Review the wording before saving.</span></div>
+          <div class="card-head" style="margin-bottom:10px"><h4>Letter Preview</h4><span class="coe-note" style="font-size:12px;color:var(--ink3)">Official 4am Media COE template &mdash; logo and format unchanged.</span></div>
           <div class="coe-docwrap" id="coeDocwrap">
-            <div class="doc" id="coeDoc"></div>
+            <div class="doc coe-doc" id="coeDoc"></div>
           </div>
         </div>
       </div>
@@ -396,7 +400,7 @@
 <script src="app-emoji.js?v=373"></script>
 <script src="app-charts.js?v=373"></script>
 <script src="app-render.js?v=389"></script>
-<script src="app-render2.js?v=376"></script>
+<script src="app-render2.js?v=377"></script>
 <script src="app-init.js?v=394"></script>
 
 </body>
