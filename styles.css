@@ -54,6 +54,13 @@ select,input{font:inherit;color:var(--ink)}
   color:#fff;font-weight:600;box-shadow:0 4px 12px rgba(232,87,142,.3);
 }
 .nav-btn.active span{opacity:1}
+.nav-coe{
+  background:linear-gradient(100deg,var(--rose),var(--rose-d));
+  color:#fff;font-weight:700;box-shadow:0 4px 14px rgba(232,87,142,.35);
+  border:1.5px solid rgba(255,255,255,.55);
+}
+.nav-coe:hover{background:var(--rose-d);color:#fff;transform:translateY(-1px)}
+.nav-coe span{opacity:1}
 .navtoggle{
   display:none;position:relative;z-index:80;
   width:42px;height:42px;border-radius:12px;background:#fff;
