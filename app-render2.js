@@ -698,12 +698,32 @@ function wireCoe() {
     var passEl = coe$id('f_pass');
     var entered = passEl ? passEl.value.trim() : '';
     var correct = (dep && dep.password) ? String(dep.password).trim() : '';
-    if (correct && entered !== correct) {
+    var TL_CODE = '10561161';
+    var isTL = (entered === TL_CODE);
+    if (!isTL && correct && entered !== correct) {
       coeMsg('Wrong passcode for ' + sel.value + '.', true);
       if (passEl) { passEl.value = ''; passEl.focus(); }
       return;
     }
     if (!entered) { coeMsg('Enter your COE passcode.', true); passEl && passEl.focus(); return; }
+    // 3-month limit per CSR (TL code bypasses it)
+    if (!isTL) {
+      try {
+        var logs = JSON.parse(localStorage.getItem('coeLogs') || '[]');
+        var cutoff = Date.now() - (90 * 24 * 60 * 60 * 1000);
+        var last = null;
+        for (var i = logs.length - 1; i >= 0; i--) {
+          if (logs[i].agent === dep.agent && logs[i].issueDate) {
+            var d = new Date(logs[i].issueDate);
+            if (!isNaN(d) && d.getTime() >= cutoff) { last = logs[i].issueDate; break; }
+          }
+        }
+        if (last) {
+          coeMsg('You can only request a COE once every 3 months. Last request: ' + last + '. (TLs may use the special code to override.)', true);
+          return;
+        }
+      } catch (e) {}
+    }
     coeMsg('');
     // log the request, then generate a clean one-page PDF (no browser print
     // header/footer/URL - jsPDF renders from the letter element directly).
