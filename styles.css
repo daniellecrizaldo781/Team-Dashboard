@@ -670,3 +670,35 @@ td.c,th.c{text-align:center}
   .prod-media img,.prod-photo-ph{width:100%;max-width:380px}
   .prod-video-wrap{width:100%;max-width:380px}
 }
+
+/* ---------------- COE REQUEST PAGE ---------------- */
+.coe-grid{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:20px}
+@media(max-width:960px){.coe-grid{grid-template-columns:1fr}}
+.coe-form{background:var(--blush);border:1px solid var(--line);border-radius:14px;padding:16px;height:max-content}
+.coe-f{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;color:var(--ink2);margin-bottom:12px;text-transform:uppercase;letter-spacing:.03em}
+.coe-f input,.coe-f select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);font-size:13.5px;font-weight:400;text-transform:none;letter-spacing:normal;font-family:inherit}
+.coe-f input:focus,.coe-f select:focus{outline:none;border-color:var(--rose);box-shadow:0 0 0 3px rgba(232,87,142,.15)}
+.coe-f input:disabled,.coe-f select:disabled{background:#f4f6f9;color:#87909f}
+.coe-2col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.coe-3col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px}
+.coe-preview{min-width:0}
+.coe-docwrap{background:#fff;border:1px solid var(--line);border-radius:12px;padding:22px;overflow:auto;max-height:78vh}
+.doc{max-width:680px;margin:0 auto;background:#fff;box-shadow:0 6px 22px rgba(20,40,80,.08);border:1px solid #e3e3e3;padding:44px 48px;font-family:Georgia,'Times New Roman',serif;color:#111;line-height:1.55;font-size:14.5px}
+.doc-logo{text-align:center;font-size:26px;font-weight:800;letter-spacing:.04em}
+.doc-company{text-align:center;font-size:13px;color:#555;margin-top:3px}
+.doc-addr{text-align:center;font-size:12.5px;color:#444;margin-top:12px}
+.doc-date{text-align:right;font-size:13.5px;margin-top:30px;margin-bottom:26px}
+.doc-subject{font-size:15px;font-weight:700;margin:0 0 14px}
+.doc-body{margin-bottom:6px}
+.doc-bullets{margin:14px 0 14px 22px;list-style:disc}
+.doc-bullets li{margin-bottom:7px}
+.doc-closing{margin:18px 0 20px}
+.doc-sign{font-size:14.5px}
+.doc-sign-block{margin-top:38px}
+.coe-btns .btn{cursor:pointer}
+@media print{
+  body *{visibility:hidden}
+  .coe-docwrap,.coe-docwrap *,.doc,.doc *{visibility:visible}
+  .coe-docwrap{position:absolute;left:0;top:0;width:100%;max-height:none;padding:0;border:none}
+  .doc{box-shadow:none;border:none;max-width:100%;padding:26px}
+}

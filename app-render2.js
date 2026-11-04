@@ -558,3 +558,109 @@ function submitLeave(payload) {
   }).then(function (r) { return r.json(); }).catch(function () { return { ok: false }; });
 }
 
+/* ---------------- COE REQUEST PAGE ---------------- */
+var COE_ = {
+  company: '4am Media, LLC',
+  addr: ['2400 Kettner Blvd.', '#238', 'San Diego', 'CA', '92101'],
+  phone: '619-977-5996'
+};
+function coe$id(x) { return document.getElementById(x); }
+function coeMoney(v) {
+  if (v === '' || v === null || v === undefined) return '[Salary]';
+  var n = parseFloat(v);
+  if (isNaN(n)) return '[Salary]';
+  return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function coeDate(v) {
+  if (!v) return '[Issue Date]';
+  var dt = new Date(v + 'T00:00:00');
+  if (isNaN(dt)) return v;
+  return dt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+function coeStartDate(v) {
+  if (!v) return '[Start Date]';
+  var dt = new Date(v + 'T00:00:00');
+  if (isNaN(dt)) return v;
+  return dt.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
+function coeWordNum(n) {
+  var map = ['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen','twenty','thirty','forty','fifty'];
+  var h = parseInt(n, 10) || 40;
+  if (h <= 20) return map[h];
+  if (h < 30) return 'twenty-' + (map[h - 20] || '');
+  if (h < 40) return 'thirty-' + (map[h - 30] || '');
+  return map[Math.min(h, 50)] || String(h);
+}
+function renderCoe() {
+  var doc = coe$id('coeDoc');
+  if (!doc) return;
+  var name = (coe$id('f_name').value || '').trim() || '[Employee Name]';
+  var pos = (coe$id('f_pos').value || '').trim() || 'Customer Service Representative';
+  var rate = coeMoney(coe$id('f_rate').value);
+  var hrs = parseInt(coe$id('f_hrs').value, 10) || 40;
+  var hrsWord = coeWordNum(hrs);
+  var start = coeStartDate(coe$id('f_start').value);
+  var issue = coeDate(coe$id('f_issue').value);
+  var sign = (coe$id('f_signame').value || '').trim() || 'Nick Urbani';
+  var sigTitle = (coe$id('f_sigtitle').value || '').trim() || 'Owner';
+  var addr = COE_.addr[0] + ' ' + COE_.addr[1] + ' ' + COE_.addr[2] + ', ' + COE_.addr[3] + ' ' + COE_.addr[4];
+
+  doc.innerHTML =
+    '<div class="doc-logo">4AM MEDIA</div>' +
+    '<div class="doc-company">4am Media, LLC</div>' +
+    '<div class="doc-addr">' + addr + ' &bull; ' + COE_.phone + '</div>' +
+    '<div class="doc-date">' + issue + '</div>' +
+    '<div class="doc-subject">Re: Verification of Employment for ' + name + '</div>' +
+    '<div class="doc-body">To Whom It May Concern,<br><br>' +
+      'Please accept this letter as confirmation that ' + name + ' has been employed with ' + COE_.company + ' since ' + start + '. Currently, ' + name + ':</div>' +
+    '<ul class="doc-bullets">' +
+      '<li>Holds the title of ' + pos + '.</li>' +
+      '<li>Earns ' + rate + ' per hour.</li>' +
+      '<li>Works on a full-time basis of ' + hrsWord + ' (' + hrs + ') hours per week.</li>' +
+    '</ul>' +
+    '<div class="doc-closing">If you have any questions or require additional information, please give me a call at the above number.</div>' +
+    '<div class="doc-sign">Best regards,</div>' +
+    '<div class="doc-sign-block">' + sign + '<br>' + sigTitle + ' &mdash; ' + COE_.company + '</div>';
+}
+function wireCoe() {
+  var fields = ['f_name','f_pos','f_rate','f_hrs','f_start','f_issue','f_signame','f_sigtitle'];
+  fields.forEach(function (id) {
+    var el = coe$id(id);
+    if (el) el.addEventListener('input', renderCoe);
+  });
+  var copy = coe$id('coeCopyBtn');
+  if (copy) copy.addEventListener('click', function () {
+    var name = (coe$id('f_name').value || '').trim() || '[Employee Name]';
+    var pos = (coe$id('f_pos').value || '').trim() || 'Customer Service Representative';
+    var start = coeStartDate(coe$id('f_start').value);
+    var issue = coeDate(coe$id('f_issue').value);
+    var sign = (coe$id('f_signame').value || '').trim() || 'Nick Urbani';
+    var sigTitle = (coe$id('f_sigtitle').value || '').trim() || 'Owner';
+    var addr = COE_.addr.join(' ');
+    var txt = COE_.company + '\n' + addr + '\n' + COE_.phone + '\n\n' +
+      issue + '\n\nRe: Verification of Employment for ' + name + '\n\n' +
+      'To Whom It May Concern,\n' +
+      'Please accept this letter as confirmation that ' + name + ' has been employed with ' + COE_.company + ' since ' + start + '. Currently, ' + name + ':\n\n' +
+      '• Holds the title of ' + pos + '.\n' +
+      '• Earns ' + coeMoney(coe$id('f_rate').value) + ' per hour.\n' +
+      '• Works on a full-time basis of ' + (parseInt(coe$id('f_hrs').value, 10) || 40) + ' hours per week.\n\n' +
+      'If you have any questions or require additional information, please give me a call at the above number.\n\n' +
+      'Best regards,\n\n' + sign + ', ' + sigTitle + ' - ' + COE_.company;
+    (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(
+      function () { toast('Copied to clipboard'); })
+      .catch(function () {
+        var ta = document.createElement('textarea');
+        ta.value = txt; document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta); toast('Copied to clipboard');
+      });
+  });
+  var print = coe$id('coePrintBtn');
+  if (print) print.addEventListener('click', function () { window.print(); });
+  var dl = coe$id('coeDlBtn');
+  if (dl) dl.addEventListener('click', function () { window.print(); });
+  renderCoe();
+}
+/* app-render2.js loads at end of <body>, so all COE fields already exist.
+   Self-wire here instead of depending on the app-init boot sequence. */
+try { wireCoe(); } catch (e) { console.error('coe', e); }
+

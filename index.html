@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Team Danielle Dashboard</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="stylesheet" href="styles.css?v=398">
+<link rel="stylesheet" href="styles.css?v=399">
 </head>
 <body>
 
@@ -25,7 +25,7 @@
     <button class="nav-btn" data-page="products"><span>&#128230;</span>Products</button>
     <button class="nav-btn" data-page="resources"><span>&#128218;</span>Resources</button>
     <button class="nav-btn" data-page="cascades"><span>&#128279;</span>Cascades &amp; Handling</button>
-    <a class="nav-btn nav-coe" href="coe.html" target="_blank" rel="noopener"><span>&#128196;</span>COE Request</a>
+    <button class="nav-btn nav-coe" data-page="coe"><span>&#128196;</span>COE Request</button>
   </nav>
   <button class="navtoggle" id="navToggle" aria-label="Menu">&#9776;</button>
 </header>
@@ -321,6 +321,67 @@
     </div>
   </section>
 
+  <!-- COE REQUEST -->
+  <section class="page" id="pageCoe" hidden>
+    <div class="card coe-wrap">
+      <div class="card-head"><h3>COE Details</h3><span class="coe-note" style="font-size:12.5px;color:var(--ink3)">Company &amp; signatory are locked to the 4am Media template. Fill employee &amp; compensation; the letter updates as you type and downloads as PDF.</span></div>
+      <div class="coe-grid">
+        <div class="coe-form">
+          <div class="sec-head" style="background:var(--blush);padding:8px 14px;border-radius:8px;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--rose-d)">&#128100; Employee</div>
+          <div class="sec" style="padding:14px 0 4px">
+            <label class="coe-f"><span>Employee Name</span><input id="f_name" placeholder="Full name"></label>
+            <label class="coe-f"><span>Position</span><input id="f_pos" value="Customer Service Representative"></label>
+            <label class="coe-f"><span>Employment Status</span>
+              <select id="f_stat"><option>currently employed</option><option>previously employed</option></select></label>
+            <div class="coe-2col">
+              <label class="coe-f"><span>Start Date</span><input id="f_start" type="date"></label>
+              <label class="coe-f"><span>Issue Date</span><input id="f_issue" type="date"></label>
+            </div>
+          </div>
+          <div class="sec-head" style="background:var(--blush);padding:8px 14px;border-radius:8px;font-weight:800;font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--rose-d)">&#128176; Compensation</div>
+          <div class="sec" style="padding:14px 0 4px">
+            <div class="coe-2col">
+              <label class="coe-f"><span>Hourly Rate</span><input id="f_rate" type="number" step="0.01" placeholder="0.00"></label>
+              <label class="coe-f"><span>Hrs / Week</span><input id="f_hrs" type="number" value="40"></label>
+            </div>
+          </div>
+          <div class="sec-head" style="background:var(--blush);padding:8px 14px;border-radius:8px;font-weight:800;font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--rose-d)">&#127970; Company <span style="float:right;text-transform:none;font-weight:600;letter-spacing:0">locked</span></div>
+          <div class="sec" style="padding:14px 0 4px">
+            <label class="coe-f"><span>Company Name</span><input id="f_company" value="4am Media, LLC" disabled></label>
+            <label class="coe-f"><span>Phone</span><input id="f_phone" value="619-977-5996" disabled></label>
+            <label class="coe-f"><span>Address</span>
+              <div class="coe-2col">
+                <input id="f_add1" value="2400 Kettner Blvd." disabled style="width:100%">
+                <input id="f_add2" value="#238" disabled style="width:100%">
+              </div>
+              <div class="coe-3col">
+                <input id="f_city" value="San Diego" disabled><input id="f_state" value="CA" disabled style="width:70px"><input id="f_zip" value="92101" disabled style="width:80px">
+              </div>
+            </label>
+          </div>
+          <div class="sec-head" style="background:var(--blush);padding:8px 14px;border-radius:8px;font-weight:800;font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--rose-d)">&#9999; Signatory</div>
+          <div class="sec" style="padding:14px 0 0">
+            <div class="coe-2col">
+              <label class="coe-f"><span>Signatory Name</span><input id="f_signame" value="Nick Urbani"></label>
+              <label class="coe-f"><span>Title</span><input id="f_sigtitle" value="Owner"></label>
+            </div>
+          </div>
+          <div class="coe-btns" style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn" id="coeCopyBtn" style="background:linear-gradient(100deg,var(--rose),var(--rose-d));color:#fff;border:none;border-radius:10px;padding:10px 18px;font-weight:600">&#10548; Copy Text</button>
+            <button class="btn" id="coePrintBtn" style="background:linear-gradient(100deg,var(--rose),var(--rose-d));color:#fff;border:none;border-radius:10px;padding:10px 18px;font-weight:600">&#128424; Print</button>
+            <button class="btn" id="coeDlBtn" style="background:linear-gradient(100deg,var(--rose),var(--rose-d));color:#fff;border:none;border-radius:10px;padding:10px 18px;font-weight:700;box-shadow:0 5px 16px rgba(232,87,142,.35)">&#11015; Download PDF</button>
+          </div>
+        </div>
+        <div class="coe-preview">
+          <div class="card-head" style="margin-bottom:10px"><h4>Letter Preview</h4><span class="coe-note" style="font-size:12px;color:var(--ink3)">Review the wording before saving.</span></div>
+          <div class="coe-docwrap" id="coeDocwrap">
+            <div class="doc" id="coeDoc"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <footer class="foot">Created by Danielle Ann Mari Crizaldo &mdash; Call Team Lead</footer>
 </main>
 
@@ -335,7 +396,7 @@
 <script src="app-emoji.js?v=373"></script>
 <script src="app-charts.js?v=373"></script>
 <script src="app-render.js?v=389"></script>
-<script src="app-render2.js?v=374"></script>
+<script src="app-render2.js?v=376"></script>
 <script src="app-init.js?v=394"></script>
 
 </body>

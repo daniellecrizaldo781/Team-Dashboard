@@ -13,6 +13,7 @@ var PAGE_META = {
   leave:        ['Leave Requests', 'File and view leave requests'],
   products:      ['Products', 'Product guides, inclusions and handling'],
   resources:     ['Resources', 'Quick links, guides and contacts for the team'],
+  coe:           ['COE Request', 'Generate a Certificate of Employment'],
 };
 
 /** Single dispatcher - every page re-renders from current filter state. */
@@ -45,7 +46,7 @@ function setPage(p) {
   // Schedule, OT&Break, Leave, Scorecards, Products, Resources & Overview use
   // their own controls, not the global filter bar (Overview shows no filters)
   var filters = $('filters');
-  if (filters) filters.style.display = (p === 'roster' || p === 'cascades' || p === 'leave' || p === 'scorecards' || p === 'resources' || p === 'products' || p === 'overview') ? 'none' : '';
+  if (filters) filters.style.display = (p === 'roster' || p === 'cascades' || p === 'leave' || p === 'scorecards' || p === 'resources' || p === 'products' || p === 'overview' || p === 'coe') ? 'none' : '';
   closeNav();
   window.scrollTo(0, 0);
   setTimeout(resizeCharts, 40);   // charts sized inside a hidden box measure 0
