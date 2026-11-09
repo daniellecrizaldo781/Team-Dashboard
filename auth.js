@@ -16,7 +16,7 @@
     sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
     return sb.auth.getSession().then(function (res) {
       var s = res && res.data && res.data.session;
-      if (s && s.user) { user = s.user; return isAllowed(user.email); }
+      if (s && s.user) { user = s.user; return true; }
       return false;
     });
   }
@@ -46,8 +46,8 @@
   }
 
   function gate() {
-    return init().then(function (allowed) {
-      if (allowed && user) { hideOverlay(); return true; }
+    return init().then(function (authed) {
+      if (authed && user) { hideOverlay(); return true; }
       showOverlay();
       return false;
     }).catch(function (e) { console.error('auth gate', e); showOverlay(); return false; });
@@ -79,20 +79,18 @@
       signIn(email, password).then(function (r) {
         btn.disabled = false;
         if (r.error) { if (msg) msg.textContent = r.error.message; return; }
-        // enforce allowed_emails allow-list
-        isAllowed(email).then(function (ok) {
-          if (ok) { user = r.data && r.data.user; hideOverlay(); if (typeof render === 'function') render(); }
-          else { if (msg) msg.textContent = 'This email is not authorized.'; sb.auth.signOut(); showOverlay(); }
-        });
+        // Successful sign-in (users are pre-approved in Supabase Auth) -> unlock
+        user = r.data && r.data.user;
+        hideOverlay();
+        if (typeof render === 'function') render();
       });
     });
-    // listen for auth state changes (magic link callback)
+    // handle sign-in / sign-out state changes (and restore on reload)
     if (sb) sb.auth.onAuthStateChange(function (event, session) {
       if (session && session.user) {
-        isAllowed(session.user.email).then(function (ok) {
-          if (ok) { user = session.user; hideOverlay(); if (typeof render === 'function') render(); }
-          else { if (msg) msg.textContent = 'This email is not authorized.'; sb.auth.signOut(); showOverlay(); }
-        });
+        user = session.user;
+        hideOverlay();
+        if (typeof render === 'function') render();
       } else {
         showOverlay();
       }
