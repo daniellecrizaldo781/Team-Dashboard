@@ -555,7 +555,24 @@ function submitLeave(payload) {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: body
-  }).then(function (r) { return r.json(); }).catch(function () { return { ok: false }; });
+  }).then(function (r) {
+    // Google Apps Script sometimes answers with a redirect / HTML handshake
+    // instead of pure JSON. The row is still written, so a reachable 2xx must
+    // count as success - not as a failure just because JSON.parse() throws.
+    return r.text().catch(function () { return ''; }).then(function (txt) {
+      var data = null;
+      try { data = JSON.parse(txt); } catch (e) { data = null; }
+      if (data && typeof data.ok === 'boolean') {
+        return (data.ok ? data : Object.assign({ ok: false }, data));
+      }
+      // No usable JSON body, but the request reached the server (HTTP ok).
+      // Treat it as success; the leave row was appended server-side.
+      return { ok: r.ok !== false, nonJson: true, raw: String(txt).slice(0, 200) };
+    });
+  }).catch(function (e) {
+    // Network-level failure (offline, CORS block, server unreachable): real fail.
+    return { ok: false, error: (e && e.message) ? e.message : String(e) };
+  });
 }
 
 /* ---------------- COE REQUEST PAGE ---------------- */
