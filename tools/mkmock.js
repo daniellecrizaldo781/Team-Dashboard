@@ -45,6 +45,7 @@ const out = {
   officialScorecard: os,
   teamSchedule: parseTeamSchedule(SCHED),
   otSchedule: parseOT(SCHED),
+  otRendered: parseOtRendered(SCHED),
   breakSchedule: parseBreaks(SCHED),
   leaveRequests: parseLeave(SCHED),
   cascades: parseCascades(CASC),
@@ -171,7 +172,7 @@ const scorecardsFull = out.scorecards;
 restrictFrom(out, DATA_FROM);
 out.scorecards = scorecardsFull;
 // Schedule-type datasets capped at DATA_TO (August) so future roster weeks drop.
-['teamSchedule', 'otSchedule', 'breakSchedule'].forEach(k => {
+['teamSchedule', 'otSchedule', 'otRendered', 'breakSchedule'].forEach(k => {
   if (Array.isArray(out[k])) out[k] = out[k].filter(r => rowFrom(r, DATA_FROM) && beforeTo(r, DATA_TO));
 });
 out.dataYear = DATA_YEAR;

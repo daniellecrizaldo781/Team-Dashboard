@@ -60,6 +60,7 @@ function closeNav() { $('topnav').classList.remove('open'); $('backdrop').classL
 function renderRoster() {
   try { renderSchedule(); } catch (e) { console.error('schedule', e); }
   try { renderOtBreak(); }  catch (e) { console.error('otbreak', e); }
+  try { renderOtRendered(); } catch (e) { console.error('otrendered', e); }
 }
 
 /** Populate filter dropdowns from the data - nothing hard-coded. */
@@ -123,9 +124,9 @@ function wire() {
   };
   $('btnReset').onclick = function () {
     F = { agent: 'ALL', week: 'ALL', moMonth: '', moAgent: '', lvMonth: '', qaAgent: 'ALL', scAgent: '', scWeek: '',
-          tsWeek: '', otWeek: '', scRankWeek: '', from: '', to: '' };
+          tsWeek: '', otWeek: '', otrWeek: '', scRankWeek: '', from: '', to: '' };
     $('fAgent').value = 'ALL'; $('fWeek').value = 'ALL';
-    ['otWeek', 'scRankWeek'].forEach(function (id) { if ($(id)) $(id).value = ''; });
+    ['otWeek', 'otrWeek', 'scRankWeek'].forEach(function (id) { if ($(id)) $(id).value = ''; });
     ['prSearch', 'clSearch', 'scSearch', 'bkSearch']
       .forEach(function (id) { if ($(id)) $(id).value = ''; });
     ['prTable', 'clOhaTable', 'clNbTable', 'scTable', 'bkTable']

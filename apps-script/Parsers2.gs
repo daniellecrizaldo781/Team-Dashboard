@@ -176,9 +176,10 @@ function parseOT(ss) {
   return out;
 }
 
-/** '10AM - 12PM' -> 2 ; returns null when unparseable. */
+/**
+ * '10AM - 12PM' -> 2 ; returns null when unparseable. */
 function otHours(t) {
-  var m = S(t).match(/(\d{1,2})(?::(\d{2}))?\s*([AP]M)?\s*[-\u2013to]+\s*(\d{1,2})(?::(\d{2}))?\s*([AP]M)?/i);
+  var m = S(t).match(/(\d{1,2})(?::(\d{2}))?\s*([AP]M)?\s*[-–\u2013to]+\s*(\d{1,2})(?::(\d{2}))?\s*([AP]M)?/i);
   if (!m) return null;
   function h24(h, mi, ap) {
     h = +h; mi = mi ? +mi : 0;
@@ -189,6 +190,55 @@ function otHours(t) {
   var diff = b - a;
   if (diff < 0) diff += 24;
   return Math.round(diff * 100) / 100 || null;
+}
+
+/* ============ OT HOURS RENDERED ============
+ * Second block of the 'OT SCHEDULE' tab: same shape as the OVERTIME SCHEDULE
+ * block, but the date cells hold the HOURS actually rendered (2, 4, 6, 8...)
+ * instead of the scheduled time window. One row per (agent, date). */
+function parseOtRendered(ss) {
+  var g = grid(ss, 'OT SCHEDULE');
+  var out = [];
+  // find the "OVERTIME HOURS RENDERED" header row, then parse its block
+  for (var r = 0; r < g.length; r++) {
+    if (!/OVERTIME HOURS RENDERED/i.test(S(g[r][0]))) continue;
+
+    // the block's date header is 1-2 rows below the marker (Team Danielle + date row)
+    var block = -1;
+    for (var k = r + 1; k < g.length; k++) {
+      var dateCols = [];
+      for (var c = 1; c < g[k].length; c++) if (isDate(g[k][c])) dateCols.push({ c: c, d: iso(g[k][c]) });
+      if (dateCols.length >= 3) { block = k; break; }
+    }
+    if (block < 0) continue;
+
+    var hotCol = -1;
+    for (var c2 = 1; c2 < dateCols[0].c; c2++) if (S(g[block][c2])) hotCol = c2;
+
+    var start = block + 1, days = {};
+    if (start < g.length && /^(mon|monday)$/i.test(S(g[start][dateCols[0].c]))) {
+      dateCols.forEach(function (x) { days[x.c] = S(g[start][x.c]); });
+      start++;
+    }
+
+    for (var i = start; i < g.length; i++) {
+      var nm = S(g[i][0]);
+      if (!nm) break;
+      if (notAgentRow(nm)) break;
+      var hotline = hotCol > 0 ? S(g[i][hotCol]) : '';
+      dateCols.forEach(function (x) {
+        var hrs = S(g[i][x.c]);
+        if (hrs === '' || hrs === '0') return;
+        out.push({
+          agent: canonAgent(nm), date: x.d, week: weekStart(x.d),
+          day: days[x.c] || '', hotline: hotline,
+          hoursRendered: parseFloat(hrs) || 0
+        });
+      });
+    }
+    break; // only one rendered-block per tab
+  }
+  return out;
 }
 
 /* ============ BREAK SCHEDULE ============

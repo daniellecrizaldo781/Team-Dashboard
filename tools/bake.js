@@ -33,6 +33,7 @@ const T = {
   monthlyScores:     ['agent','period','label','type','score'],
   teamSchedule:      ['agent','date','week','day','shift','off','source'],
   otSchedule:        ['agent','date','week','day','otTime','hours','hotline'],
+  otRendered:        ['agent','date','week','day','hoursRendered','hotline'],
   breakSchedule:     ['agent','day','firstBreak','lunchBreak','lastBreak','team','off','source'],
   leaveRequests:     ['agent','month','leaveType','reason','details','dateManila','datePST',
                      'date','week','status','statusNorm','requestedOn','approvedOn','notes'],

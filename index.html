@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Team Danielle Dashboard</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="stylesheet" href="styles.css?v=464">
+<link rel="stylesheet" href="styles.css?v=465">
 </head>
 <body>
 
@@ -237,6 +237,15 @@
         <div class="tscroll" id="bkTable"></div>
       </div>
     </div>
+
+    <div class="card">
+      <div class="card-head"><h3>OT Hours Rendered</h3>
+        <select class="search" id="otrWeek"></select>
+      </div>
+      <div class="kpis" id="otrKpis"></div>
+      <div class="tscroll" id="otrGrid"></div>
+      <div class="otr-hint">Tip: click any hours cell to see the day's OT note.</div>
+    </div>
   </section>
 
   <!-- LEAVE REQUESTS -->
@@ -380,8 +389,8 @@
 <script src="app-emoji.js?v=436"></script>
 <script src="app-charts.js?v=436"></script>
 <script src="app-render.js?v=452"></script>
-<script src="app-render2.js?v=444"></script>
-<script src="app-init.js?v=458"></script>
+<script src="app-render2.js?v=445"></script>
+<script src="app-init.js?v=459"></script>
 <script src="assets/supabase.js"></script>
 <script src="auth.js?v=65"></script>
 <script src="assets/jspdf.umd.min.js"></script>

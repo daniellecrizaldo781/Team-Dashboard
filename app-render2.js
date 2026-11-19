@@ -389,6 +389,107 @@ function renderOtBreak() {
   ], bk, { sort: 'agent', dir: 'asc', empty: 'No break schedule available for this agent.' });
 }
 
+/* ---------------- OT HOURS RENDERED ---------------- */
+/* Mirrors the "OVERTIME HOURS RENDERED" block of the OT SCHEDULE tab: one row
+ * per agent, Mon..Sun columns holding the hours actually rendered. Each hours
+ * cell is clickable and opens a lightbox with that day's OT note. */
+function renderOtRendered() {
+  var grid = $('otrGrid');
+  var kpis = $('otrKpis');
+  var sel = $('otrWeek');
+  if (!grid) return;
+  var all = (DATA.otRendered || []).slice();
+  var now = thisWeekStart();
+  var upcoming = all.filter(function (r) { return (r.week || '') >= now; });
+  var base = upcoming.length ? upcoming : all;
+  var weeks = uniq(base.map(function (r) { return r.week; })).sort();
+  if (sel) {
+    sel.innerHTML = weeks.map(function (w) { return '<option value="' + esc(w) + '">' + esc(fmtWeek(w)) + '</option>'; }).join('');
+    var def = (weeks.indexOf(now) >= 0) ? now : (weeks[weeks.length - 1] || '');
+    if (F.otrWeek && weeks.indexOf(F.otrWeek) >= 0) sel.value = F.otrWeek;
+    else { F.otrWeek = def; sel.value = def; }
+    sel.onchange = function () { F.otrWeek = this.value; renderOtRendered(); };
+  }
+  var rows = base.filter(function (r) { return r.week === (F.otrWeek || weeks[0] || ''); });
+  var target = rows.length ? rows[0].week : (weeks[weeks.length - 1] || '');
+  rows = base.filter(function (r) { return r.week === target; });
+
+  if (kpis) {
+    kpi(kpis.id || 'otrKpis', [
+      { label: 'OT Entries', value: n0(rows.length), sub: 'this week' },
+      { label: 'OT Hours Rendered', value: n1(sum(rows.map(function (r) { return r.hoursRendered || 0; }))), sub: 'this week' },
+      { label: 'Agents on OT', value: n0(uniq(rows.map(function (r) { return r.agent; })).length), sub: 'unique agents' },
+      { label: 'Avg Hours / Day', value: n1(avg(rows.map(function (r) { return r.hoursRendered || 0; }))), sub: 'per rendered day' }
+    ]);
+  }
+
+  if (!target) {
+    grid.innerHTML = '<div class="empty"><b>No OT hours rendered</b>No rendered OT records for the selected week.</div>';
+    return;
+  }
+  var dayKeys = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  var agents = uniq(rows.map(function (r) { return r.agent; })).sort();
+  var idx = {}, hotlineOf = {};
+  rows.forEach(function (r) { idx[r.agent + '|' + r.day] = r; if (r.hotline) hotlineOf[r.agent] = r.hotline; });
+  var h = '<table><thead><tr><th>Agent</th><th>Hotline Assignment</th>';
+  dayKeys.forEach(function (d) { h += '<th>' + d + '</th>'; });
+  h += '<th>Total</th></tr></thead><tbody>';
+  agents.forEach(function (a) {
+    var wkTotal = sum(rows.filter(function (r) { return r.agent === a; }).map(function (r) { return r.hoursRendered || 0; }));
+    h += '<tr><td><b>' + esc(a) + '</b></td>' +
+         '<td>' + (hotlineOf[a] ? '<span class="pill n">' + esc(hotlineOf[a]) + '</span>' : '—') + '</td>';
+    dayKeys.forEach(function (d) {
+      var r = idx[a + '|' + d];
+      if (r) {
+        h += '<td><button type="button" class="otr-cell" data-agent="' + esc(a) + '" data-date="' + esc(r.date) + '" title="View OT note">' +
+             n1(r.hoursRendered || 0) + '</button></td>';
+      } else {
+        h += '<td class="muted">—</td>';
+      }
+    });
+    h += '<td><b>' + n1(wkTotal) + '</b></td></tr>';
+  });
+  h += '</tbody></table>';
+  grid.innerHTML = h;
+
+  // make each hours cell clickable -> lightbox with the OT note
+  Array.prototype.forEach.call(grid.querySelectorAll('button.otr-cell'), function (b) {
+    b.onclick = function () {
+      var a = b.getAttribute('data-agent'), d = b.getAttribute('data-date');
+      var rec = rows.filter(function (r) { return r.agent === a && r.date === d; })[0];
+      if (!rec) return;
+      openOtNote(rec);
+    };
+  });
+}
+
+/* Open the OT rendered note for one (agent, date) in the lightbox. */
+function openOtNote(rec) {
+  var lb = document.getElementById('lb');
+  var img = document.getElementById('lbImg');
+  var fr = document.getElementById('lbFrame');
+  var content = document.getElementById('lbContent');
+  if (!lb || !content) return;
+  if (img) img.style.display = 'none';
+  if (fr) fr.style.display = 'none';
+  content.style.display = 'block';
+
+  // pull the matching scheduled OT time for the same agent+day (looks up OVERTIME SCHEDULE block)
+  var sched = (DATA.otSchedule || [])
+    .filter(function (s) { return s.agent === rec.agent && s.date === rec.date; })[0];
+
+  var dateTxt = rec.date ? fmtDate(rec.date) : '—';
+  var html = '<div class="qa-lb-head"><span class="qa-lb-title">' + esc(rec.agent) + '</span>' +
+    '<span class="qa-lb-meta">' + dateTxt + (rec.day ? ' &middot; ' + esc(rec.day) : '') + '</span></div>' +
+    '<div class="otr-note">' +
+      '<div class="otr-note-row"><span>Hours Rendered</span><b>' + n1(rec.hoursRendered || 0) + ' hr' + ((rec.hoursRendered||0)===1?'':'s') + '</b></div>' +
+      '<div class="otr-note-row"><span>Hotline</span><b>' + esc(rec.hotline || '—') + '</b></div>' +
+      '<div class="otr-note-row"><span>Scheduled OT</span><b>' + (sched ? esc(sched.otTime) : '—') + '</b></div>' +
+    '</div>';
+  content.innerHTML = html;
+  lb.classList.add('show');
+}
+
 /* ---------------- LEAVE REQUESTS ---------------- */
 var STATUS_CLASS = { Approved: 'ok', Pending: 'warn', Declined: 'bad' };
 
